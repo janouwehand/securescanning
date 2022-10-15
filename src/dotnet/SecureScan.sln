@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureScanMFP", "SecureScanMFP\SecureScanMFP.csproj", "{1318433B-6726-44EB-A12E-5D0504F04EE7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureScan.Bluetooth", "SecureScan.Bluetooth\SecureScan.Bluetooth.csproj", "{50B77693-A120-4BB5-9859-18568FB39BF5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureScan.Base", "SecureScan.Base\SecureScan.Base.csproj", "{E84831E5-FDBB-48E7-B30D-E1E9D6BDF294}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1318433B-6726-44EB-A12E-5D0504F04EE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1318433B-6726-44EB-A12E-5D0504F04EE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1318433B-6726-44EB-A12E-5D0504F04EE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1318433B-6726-44EB-A12E-5D0504F04EE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50B77693-A120-4BB5-9859-18568FB39BF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50B77693-A120-4BB5-9859-18568FB39BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50B77693-A120-4BB5-9859-18568FB39BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50B77693-A120-4BB5-9859-18568FB39BF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E84831E5-FDBB-48E7-B30D-E1E9D6BDF294}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E84831E5-FDBB-48E7-B30D-E1E9D6BDF294}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E84831E5-FDBB-48E7-B30D-E1E9D6BDF294}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E84831E5-FDBB-48E7-B30D-E1E9D6BDF294}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FAA50E28-7965-46AC-A704-82E4B3A11C7E}
+	EndGlobalSection
+EndGlobal
