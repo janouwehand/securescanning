@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Windows.Forms;
-using SecureScanMFP.CalculatorBluetoothTest;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SecureScanMFP
 {
   internal static class Program
   {
+    private static IServiceProvider ServiceProvider { get; set; }
+
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
@@ -14,7 +16,11 @@ namespace SecureScanMFP
     {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
-      Application.Run(new FormCalculatorBluetoothTest());
+
+      var services = new ServiceCollection();
+      Services.RegisterServices(services);
+      ServiceProvider = services.BuildServiceProvider();
+      Application.Run(ServiceProvider.GetService<FormMFP>());
     }
   }
 }

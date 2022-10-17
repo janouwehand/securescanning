@@ -8,7 +8,7 @@ using Windows.Storage.Streams;
 
 namespace SecureScan.Bluetooth
 {
-  public class GattService
+  public class GattService : IDisposable
   {
     // Decorator for characteristic binding the user definition with the actual characteristic.
     private class CharacteristicContainer
@@ -44,7 +44,7 @@ namespace SecureScan.Bluetooth
 
     public bool IsStarted => serviceProvider != null;
 
-    public async Task StartAsync()
+    public async Task StartAdvertisingAsync()
     {
       var supported = await CheckPeripheralRoleSupportAsync();
       if (!supported)
@@ -90,6 +90,12 @@ namespace SecureScan.Bluetooth
       };
 
       serviceProvider.StartAdvertising(advParameters);
+    }
+
+    public void StopAdvertising()
+    {
+      serviceProvider?.StopAdvertising();
+      serviceProvider = null;
     }
 
     private async Task CreateCharacteristicsAsync()
@@ -241,5 +247,15 @@ namespace SecureScan.Bluetooth
       return (eventObject.Error, eventObject.Value);
     }
 
+    public void Dispose()
+    {
+      if (!IsStarted)
+      {
+        return;
+      }
+
+      serviceProvider.StopAdvertising();
+      serviceProvider = null;
+    }
   }
 }

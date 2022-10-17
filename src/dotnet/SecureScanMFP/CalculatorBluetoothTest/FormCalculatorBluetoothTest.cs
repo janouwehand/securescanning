@@ -51,7 +51,7 @@ namespace SecureScanMFP.CalculatorBluetoothTest
       service.RegisterCharacteristic(new GattCharacteristicDefinition(Constants.Op2CharacteristicUuid, "Operand 2", GattCharacteristicModes.Write));
       service.RegisterCharacteristic(new GattCharacteristicDefinition(Constants.OperatorCharacteristicUuid, "Operator", GattCharacteristicModes.Write));
       service.RegisterCharacteristic(new GattCharacteristicDefinition(Constants.ResultCharacteristicUuid, "Result", GattCharacteristicModes.Read));
-      await service.StartAsync();
+      await service.StartAdvertisingAsync();
       Log("Started");
     }
 
