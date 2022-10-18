@@ -11,7 +11,7 @@ namespace SecureScanMFP
   {
     private GattService service;
     private ProcessStates processState = ProcessStates.Initial;
-    private readonly string smartphoneInfo;
+    private string smartphoneInfo;
     private readonly IWaitForm waitForm;
 
     public FormMFP(IWaitForm waitForm)
@@ -173,7 +173,7 @@ namespace SecureScanMFP
         return;
       }
 
-      e.
+      
     }
 
     private void Service_ValueRequested(object sender, CharacteristicRequestValueEventArgs e)
