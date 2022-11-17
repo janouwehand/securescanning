@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 public class MyHostApduService extends HostApduService {
 
 	private int messageCounter = 0;
+	private static Object lock = new Object();
 
 	@Override
 	public byte[] processCommandApdu(byte[] apdu, Bundle extras) {
@@ -36,12 +37,18 @@ public class MyHostApduService extends HostApduService {
 	}
 
 	private byte[] getWelcomeMessage() {
+		synchronized(lock) {
 		messageCounter=0;
-		return ("Hello " + messageCounter++ + " welcome Home  ").getBytes(Charset.forName("UTF8"));
+		Log.i("HCEDEMO", "Current counter: " + messageCounter);
+			return ("Hello " + messageCounter++ + " welcome Home  ").getBytes(Charset.forName("UTF8"));
+		}
 	}
 
 	private byte[] getNextMessage() {
-		return ("A new message from android: " + (messageCounter++) + "    ").getBytes();
+		synchronized(lock) {
+			Log.i("HCEDEMO", "Current counter: " + messageCounter);
+			return ("A new message from android: " + (messageCounter++) + "    ").getBytes();
+		}
 	}
 
 	private boolean selectAidApdu(byte[] apdu) {
