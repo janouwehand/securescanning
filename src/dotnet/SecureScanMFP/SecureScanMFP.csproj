@@ -121,6 +121,10 @@
       <Project>{50b77693-a120-4bb5-9859-18568fb39bf5}</Project>
       <Name>SecureScan.Bluetooth</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SecureScan.NFC\SecureScan.NFC.csproj">
+      <Project>{B42CDCDF-F397-4AF9-9500-BD9C30410EE5}</Project>
+      <Name>SecureScan.NFC</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

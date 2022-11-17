@@ -34,6 +34,7 @@
       this.buttonInitiateSecureScanProcess = new System.Windows.Forms.Button();
       this.labelBluetoothStatus = new System.Windows.Forms.Label();
       this.edtlog = new System.Windows.Forms.RichTextBox();
+      this.button1 = new System.Windows.Forms.Button();
       this.SuspendLayout();
       // 
       // buttonPlaceDocument
@@ -97,11 +98,22 @@
       this.edtlog.TabIndex = 5;
       this.edtlog.Text = "";
       // 
+      // button1
+      // 
+      this.button1.Location = new System.Drawing.Point(443, 29);
+      this.button1.Name = "button1";
+      this.button1.Size = new System.Drawing.Size(169, 70);
+      this.button1.TabIndex = 6;
+      this.button1.Text = "1. Place document on flatbed";
+      this.button1.UseVisualStyleBackColor = true;
+      this.button1.Click += new System.EventHandler(this.button1_Click);
+      // 
       // FormMFP
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.ClientSize = new System.Drawing.Size(665, 438);
+      this.Controls.Add(this.button1);
       this.Controls.Add(this.edtlog);
       this.Controls.Add(this.labelBluetoothStatus);
       this.Controls.Add(this.buttonInitiateSecureScanProcess);
@@ -124,5 +136,6 @@
         private System.Windows.Forms.Button buttonInitiateSecureScanProcess;
         private System.Windows.Forms.Label labelBluetoothStatus;
         private System.Windows.Forms.RichTextBox edtlog;
+        private System.Windows.Forms.Button button1;
     }
 }

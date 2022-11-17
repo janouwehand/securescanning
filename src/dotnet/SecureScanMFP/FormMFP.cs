@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Net;
+using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using SecureScan.Base.WaitForm;
 using SecureScan.Bluetooth;
+using SecureScan.NFC.PCSC;
+using SecureScan.NFC.PCSC.Controller;
 using SecureScanMFP.Bluetooth;
+using Timer = System.Windows.Forms.Timer;
 
 namespace SecureScanMFP
 {
@@ -169,16 +174,47 @@ namespace SecureScanMFP
       if (e.GattCharacteristicDefinition != SecureScanGattCharacteristics.SmartphoneInfoCharacteristicDefinition)
       {
         Log("Unexpected value received!");
-        e.Error = GattErrors.UnlikelyError;        
+        e.Error = GattErrors.UnlikelyError;
         return;
       }
 
-      
+      smartphoneInfo = Encoding.UTF8.GetString(e.ReceivedValue);
+
+
     }
 
     private void Service_ValueRequested(object sender, CharacteristicRequestValueEventArgs e)
     {
 
     }
+
+    private PCSCController pcsc;
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+      pcsc = PCSCFactory.CreateController();
+      var result = pcsc.WaitForConnection(connection =>
+      {
+        if (!connection.IsConnected)
+        {
+          Console.WriteLine("nyet");
+        }
+        else
+        {
+          var str = Encoding.UTF8.GetString(connection.ReturnData);
+
+          for (var i = 0; i < 10; i++)
+          {
+            var response = connection.Transceiver.Transceive(0x00, 0x00, 0x00, 0x00, null);
+            str = Encoding.UTF8.GetString(response.Data);
+            Console.WriteLine(str);
+            Application.DoEvents();
+          }
+        }
+      });
+
+      Console.WriteLine(result);
+    }
+   
   }
 }

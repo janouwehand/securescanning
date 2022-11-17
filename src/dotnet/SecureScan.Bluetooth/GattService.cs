@@ -74,7 +74,7 @@ namespace SecureScan.Bluetooth
       {
         // IsConnectable determines whether a call to publish will attempt to start advertising and 
         // put the service UUID in the ADV packet (best effort)
-        IsConnectable = supported,
+        IsConnectable = true,
 
         // IsDiscoverable determines whether a remote device can query the local device for support 
         // of this service
@@ -148,7 +148,7 @@ namespace SecureScan.Bluetooth
           var reader = DataReader.FromBuffer(request.Value);
           reader.ByteOrder = ByteOrder.LittleEndian;
           var bytes = new byte[request.Value.Length];
-          reader.ReadBytes(bytes);
+          reader.ReadBytes(bytes);          
 
           var error = HandleWriteReceiveEvent(characteristicContainer, bytes);
 
