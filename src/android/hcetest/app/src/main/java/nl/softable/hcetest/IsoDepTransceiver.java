@@ -39,7 +39,7 @@ public class IsoDepTransceiver implements Runnable {
 
 	@Override
 	public void run() {
-		int messageCounter = 0;
+		/*int messageCounter = 0;
 		try {
 			isoDep.connect();
 			byte[] response = isoDep.transceive(createSelectAidApdu(AID_ANDROID));
@@ -52,6 +52,6 @@ public class IsoDepTransceiver implements Runnable {
 		}
 		catch (IOException e) {
 			onMessageReceived.onError(e);
-		}
+		}*/
 	}
 }

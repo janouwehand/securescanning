@@ -40,7 +40,7 @@ public class MainActivity extends Activity implements OnMessageReceived, ReaderC
     @Override
     public void onPause() {
         super.onPause();
-        nfcAdapter.disableReaderMode(this);
+        //nfcAdapter.disableReaderMode(this);
     }
 
     @Override

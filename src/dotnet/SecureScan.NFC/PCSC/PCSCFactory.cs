@@ -4,6 +4,6 @@ namespace SecureScan.NFC.PCSC
 {
   public static class PCSCFactory
   {
-    public static PCSCController CreateController() => new PCSCController();
+    public static PCSCController CreateController(AID aid) => new PCSCController(aid);
   }
 }

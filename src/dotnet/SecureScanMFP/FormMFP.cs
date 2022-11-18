@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Text;
-using System.Threading;
 using System.Windows.Forms;
 using SecureScan.Base.WaitForm;
 using SecureScan.Bluetooth;
@@ -188,11 +187,9 @@ namespace SecureScanMFP
 
     }
 
-    private PCSCController pcsc;
-
     private void button1_Click(object sender, EventArgs e)
     {
-      pcsc = PCSCFactory.CreateController();
+      var pcsc = PCSCFactory.CreateController(AID.Parse("F4078D5A92B5B8"));
       var result = pcsc.WaitForConnection(connection =>
       {
         if (!connection.IsConnected)
@@ -215,6 +212,6 @@ namespace SecureScanMFP
 
       Console.WriteLine(result);
     }
-   
+
   }
 }

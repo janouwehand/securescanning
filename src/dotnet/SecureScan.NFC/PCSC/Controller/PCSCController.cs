@@ -9,7 +9,7 @@ namespace SecureScan.NFC.PCSC.Controller
 {
   public class PCSCController
   {
-    public PCSCController() : this(new AID(new byte[] { 0xF0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 })) { }
+    //public PCSCController() : this(new AID(new byte[] { 0xF0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 })) { }
 
     public PCSCController(AID aid) => Aid = aid;
 
@@ -21,7 +21,7 @@ namespace SecureScan.NFC.PCSC.Controller
       IsoReader isoReader = null;
 
       var timeout = DateTime.Now.AddSeconds(timeoutSeconds);
-      
+
       while (isoReader == null && DateTime.Now < timeout)
       {
         var tryOpenResult = TryOpenApplication();
@@ -86,7 +86,13 @@ namespace SecureScan.NFC.PCSC.Controller
         context?.Dispose();
         return (null, null);
       }
+      catch (ReaderUnavailableException)
+      {
+        context?.Dispose();
+        return (null, null);
+      }
     }
 
   }
 }
+

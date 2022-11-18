@@ -1,5 +1,6 @@
 package nl.softable.hcetest;
 
+import android.content.Intent;
 import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,6 +38,11 @@ public class MyHostApduService extends HostApduService {
 	}
 
 	private byte[] getWelcomeMessage() {
+
+		Intent intent = new Intent(this, MainActivity.class)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(intent);
+
 		synchronized(lock) {
 		messageCounter=0;
 		Log.i("HCEDEMO", "Current counter: " + messageCounter);
