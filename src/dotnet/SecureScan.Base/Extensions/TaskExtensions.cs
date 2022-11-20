@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SecureScanMFP
+namespace SecureScan.Base.Extensions
 {
-  public static class FormExtensions
+  public static class TaskExtensions
   {
     public static void ResponsiveWait(this Task task)
     {

@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using SecureScan.Base.Extensions;
 using SecureScan.Base.WaitForm;
 using SecureScan.NFC;
 
@@ -22,6 +23,19 @@ namespace SecureScanMFP
       this.waitForm = waitForm;
       this.secureScanNFC = secureScanNFC;
       UpdateUI();
+    }
+
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+      if (state == MFPStates.SecureScanInitiated)
+      {
+        cancellationTokenSource.Cancel();
+        e.Cancel = true;
+      }
+      else
+      {
+        cancellationTokenSource?.Dispose();
+      }
     }
 
     /// <summary>
@@ -137,6 +151,7 @@ namespace SecureScanMFP
 
     private void buttonAbort_Click(object sender, EventArgs e)
     {
+      Log("Abort requested.");
       cancellationTokenSource?.Cancel();
       SetState(MFPStates.Idle);
     }
