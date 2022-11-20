@@ -1,7 +1,7 @@
 ﻿using System;
 using SecureScan.Base.Extensions;
 
-namespace SecureScan.NFC.PCSC.Controller
+namespace SecureScan.NFC.PCSC
 {
   public class AID
   {

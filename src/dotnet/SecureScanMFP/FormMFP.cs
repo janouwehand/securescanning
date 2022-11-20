@@ -1,217 +1,167 @@
 ﻿using System;
-using System.Net;
-using System.Text;
+using System.Drawing;
+using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using SecureScan.Base.WaitForm;
-using SecureScan.Bluetooth;
-using SecureScan.NFC.PCSC;
-using SecureScan.NFC.PCSC.Controller;
-using SecureScanMFP.Bluetooth;
-using Timer = System.Windows.Forms.Timer;
+using SecureScan.NFC;
 
 namespace SecureScanMFP
 {
   public partial class FormMFP : Form
   {
-    private GattService service;
-    private ProcessStates processState = ProcessStates.Initial;
-    private string smartphoneInfo;
+    private MFPStates state = MFPStates.Idle;
     private readonly IWaitForm waitForm;
+    private readonly ISecureScanNFC secureScanNFC;
+    private OwnerInfo ownerInfo;
+    private CancellationTokenSource cancellationTokenSource;
 
-    public FormMFP(IWaitForm waitForm)
+    public FormMFP(IWaitForm waitForm, ISecureScanNFC secureScanNFC)
     {
       InitializeComponent();
       this.waitForm = waitForm;
+      this.secureScanNFC = secureScanNFC;
+      UpdateUI();
     }
-
-    protected override void OnFormClosed(FormClosedEventArgs e) => service?.Dispose();
 
     /// <summary>
     /// Log method that allows calls from a non-UI thread to synchronize with the UI thread.
     /// </summary>
-    private void Log(string s)
+    private void Log(string s, bool isError = false, bool isStateChange = false)
     {
       if (InvokeRequired)
       {
-        Invoke(new Action<string>(Log), new object[] { s });
+        Invoke(new Action<string, bool, bool>(Log), new object[] { s, isError, isStateChange });
       }
       else
       {
-        edtlog.AppendText($"{s}\r\n");
-        edtlog.ScrollToCaret();
-      }
-    }
-
-    private void buttonPlaceDocument_Click(object sender, EventArgs e)
-    {
-      using (var od = new OpenFileDialog())
-      {
-        od.Filter = "PDF files|*.pdf|MS Word files|*.docx|TIF files|*.tiff|Other files|*.*";
-        if (od.ShowDialog() == DialogResult.OK)
+        if (isError)
         {
-          labelDocumentFileName.Text = od.FileName;
-          buttonPlaceDocument.Enabled = false;
-          buttonInitiateSecureScanProcess.Enabled = true;
+          edtlog.SelectionColor = Color.Red;
+          s = string.Concat("Error: ", s);
+        }
+        else if (!isStateChange)
+        {
+          edtlog.SelectionColor = Color.Green;
+        }
+
+        edtlog.AppendText($"{DateTime.Now:HH:mm:ss} {s}\r\n");
+        edtlog.ScrollToCaret();
+
+        if (isError || !isStateChange)
+        {
+          edtlog.SelectionColor = Color.Black;
         }
       }
     }
 
-    private void buttonReset_Click(object sender, EventArgs e)
+    private void SetState(MFPStates state)
     {
-      labelDocumentFileName.Text = string.Empty;
-      buttonPlaceDocument.Enabled = true;
-
-      labelBluetoothStatus.Text = string.Empty;
-      buttonInitiateSecureScanProcess.Enabled = false;
-
-      service = null;
-      edtlog.Clear();
-    }
-
-    private Timer waitTimer;
-
-    private async void buttonInitiateSecureScanProcess_Click(object sender, EventArgs e)
-    {
-      buttonInitiateSecureScanProcess.Enabled = false;
-      labelBluetoothStatus.Text = "Bluetooth started advertising. Open Secure Scan App on smartphone.";
-
-      service = new GattService(SecureScanGattCharacteristics.SecureScanningMFPServiceUuid);
-
-      waitForm.Show("BLE Broadcasting. Please use your smartphone to continue.", this, Abort);
-      service.ValueReceived += Service_ValueReceived;
-      service.ValueRequested += Service_ValueRequested;
-      service.RegisterCharacteristic(SecureScanGattCharacteristics.SmartphoneInfoCharacteristicDefinition);
-      await service.StartAdvertisingAsync();
-      Log("Broadcasting Bluetooth Low Energy advertisements. Please use your smartphone to continue.");
-
-      processState = ProcessStates.Advertising;
-
-      waitTimer = new Timer
+      if (this.state == state)
       {
-        Interval = 30000,
-        Enabled = true
-      };
-      waitTimer.Tick += FormMFP_Tick;
-    }
-
-    private void Abort()
-    {
-      processState = ProcessStates.Initial;
-      smartphoneInfo = null;
-
-      waitTimer?.Dispose();
-      waitTimer = null;
-      waitForm.Hide();
-
-      Log("Time out!");
-      service?.Dispose();
-      service = null;
-      buttonInitiateSecureScanProcess.Enabled = true;
-      labelBluetoothStatus.Text = "Time out. try again.";
-    }
-
-    private void FormMFP_Tick(object sender, EventArgs e)
-    {
-      if (sender is Timer timer)
-      {
-        timer.Enabled = false;
-        timer.Dispose();
+        return;
       }
 
-      Abort();
+      if (state != MFPStates.SecureScanWaitForGO)
+      {
+        ownerInfo = null;
+      }
+
+      Log($"State changed to {state}", isStateChange: true);
+
+      this.state = state;
+      UpdateUI();
     }
 
-    private void Service_ValueReceived(object sender, CharacteristicReceiveValueEventArgs e)
+    private void UpdateUI()
     {
-      //Handle characteriscs based on state.
-      switch (processState)
+      labelState.Text = state.ToString();
+
+      switch (state)
       {
-        case ProcessStates.Initial:
+        case MFPStates.Idle:
+          buttonAbort.Enabled = false;
+          buttonGO.Enabled = true;
+          buttonSecureScan.Enabled = true;
           break;
-        case ProcessStates.Advertising:
-          ValueReceivedOnAdvertising(e);
-          return;
-        case ProcessStates.SmartphoneConnected:
+
+        case MFPStates.CopyingDocument:
+          buttonAbort.Enabled = true;
+          buttonGO.Enabled = false;
+          buttonSecureScan.Enabled = false;
           break;
-        case ProcessStates.SmartphoneStartCommandReceived:
+
+        case MFPStates.SecureScanInitiated:
+          buttonAbort.Enabled = true;
+          buttonGO.Enabled = false;
+          buttonSecureScan.Enabled = false;
           break;
-        case ProcessStates.KeyExchange:
+
+        case MFPStates.SecureScanWaitForGO:
+          buttonAbort.Enabled = true;
+          buttonGO.Enabled = true;
+          buttonSecureScan.Enabled = false;
           break;
-        case ProcessStates.OwnerInfoReceived:
-          break;
-        case ProcessStates.ProtectedContainerCreated:
-          break;
-        case ProcessStates.LicenseSent:
-          break;
-        case ProcessStates.EmailSent:
-          break;
+
         default:
           break;
       }
 
-      throw new ProtocolViolationException("Protocol error");
+      buttonAbort.BackColor = buttonAbort.Enabled ? Color.Red : Color.DarkGray;
+      buttonGO.BackColor = buttonGO.Enabled ? Color.FromArgb(0, 192, 0) : Color.DarkGray;
+      buttonSecureScan.BackColor = buttonSecureScan.Enabled ? Color.Yellow : Color.DarkGray;
 
-      /*var value = BitConverter.ToInt32(e.ReceivedValue, 0);
-      values[e.GattCharacteristicDefinition.Name] = value;
-      Calculate();
-      Log($"Waarde ontvangen voor '{e.GattCharacteristicDefinition.Name}': {value}. Het resultaat is nu: {values["Result"]}");*/
+      Application.DoEvents();
     }
 
-    private void ValueReceivedOnAdvertising(CharacteristicReceiveValueEventArgs e)
+    private void buttonGO_Click(object sender, EventArgs e)
     {
-      // From this state we expect that
-      // - no smartphone has registered
-      // - smartphone info is received.
-
-      if (!string.IsNullOrEmpty(smartphoneInfo))
+      switch (state)
       {
-        Log("Smartphone already connected!");
-        e.Error = GattErrors.UnlikelyError;
-        return;
+        case MFPStates.Idle:
+          SetState(MFPStates.CopyingDocument);
+          Thread.Sleep(2000);
+          SetState(MFPStates.Idle);
+          break;
+
+        case MFPStates.CopyingDocument:
+          break;
+        case MFPStates.SecureScanInitiated:
+          break;
+        case MFPStates.SecureScanWaitForGO:
+          break;
+        default:
+          break;
+      }
+    }
+
+    private void buttonAbort_Click(object sender, EventArgs e)
+    {
+      cancellationTokenSource?.Cancel();
+      SetState(MFPStates.Idle);
+    }
+
+    private void buttonSecureScan_Click(object sender, EventArgs e)
+    {
+      SetState(MFPStates.SecureScanInitiated);
+
+      cancellationTokenSource = new CancellationTokenSource();
+
+      var task = secureScanNFC.RetrieveOwnerInfoAsync(TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
+      Log("Please hold your smartphone to the NFC tag.");
+      task.ResponsiveWait();
+
+      var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);
+      if (isTimeOut)
+      {
+        Log("Waiting for NFC time-out", true);
+      }
+      else if (!task.IsCanceled)
+      {
+        ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
       }
 
-      if (e.GattCharacteristicDefinition != SecureScanGattCharacteristics.SmartphoneInfoCharacteristicDefinition)
-      {
-        Log("Unexpected value received!");
-        e.Error = GattErrors.UnlikelyError;
-        return;
-      }
-
-      smartphoneInfo = Encoding.UTF8.GetString(e.ReceivedValue);
-
-
+      SetState(MFPStates.Idle);
     }
-
-    private void Service_ValueRequested(object sender, CharacteristicRequestValueEventArgs e)
-    {
-
-    }
-
-    private void button1_Click(object sender, EventArgs e)
-    {
-      var pcsc = PCSCFactory.CreateController(AID.Parse("F4078D5A92B5B8"));
-      var result = pcsc.WaitForConnection(connection =>
-      {
-        if (!connection.IsConnected)
-        {
-          Console.WriteLine("nyet");
-        }
-        else
-        {
-          var str = Encoding.UTF8.GetString(connection.ReturnData);
-
-          for (var i = 0; i < 10; i++)
-          {
-            var response = connection.Transceiver.Transceive(0x00, 0x00, 0x00, 0x00, null);
-            str = Encoding.UTF8.GetString(response.Data);
-            Console.WriteLine(str);
-            Application.DoEvents();
-          }
-        }
-      });
-
-      Console.WriteLine(result);
-    }
-
   }
 }
