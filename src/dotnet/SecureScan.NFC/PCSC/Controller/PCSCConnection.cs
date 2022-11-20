@@ -1,16 +1,29 @@
-﻿namespace SecureScan.NFC.PCSC.Controller
+﻿using System;
+using PCSC;
+using PCSC.Iso7816;
+
+namespace SecureScan.NFC.PCSC.Controller
 {
-  public class PCSCConnection
+  public class PCSCConnection : IDisposable
   {
-    public PCSCConnection(bool isConnected, byte[] returnData, Transceiver transceiver)
+    private readonly ISCardContext context;
+    private readonly IsoReader isoReader;
+
+    public PCSCConnection(ISCardContext context, IsoReader isoReader, byte[] returnData)
     {
-      IsConnected = isConnected;
+      this.context = context;
+      this.isoReader = isoReader;
       ReturnData = returnData;
-      Transceiver = transceiver;
+      Transceiver = new Transceiver(isoReader);
     }
 
-    public bool IsConnected { get; }
     public byte[] ReturnData { get; }
     public Transceiver Transceiver { get; }
+
+    public void Dispose()
+    {
+      context.Dispose();
+      isoReader.Dispose();
+    }
   }
 }

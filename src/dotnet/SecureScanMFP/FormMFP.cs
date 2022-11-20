@@ -171,9 +171,16 @@ namespace SecureScanMFP
       {
         Log("Waiting for NFC time-out", true);
       }
+      else if (task.IsFaulted)
+      {
+        foreach(var ex in task.Exception.InnerExceptions)
+        {
+          Log(ex.Message, true);
+        }
+      }
       else if (!task.IsCanceled)
       {
-        ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
+        //ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
       }
 
       SetState(MFPStates.Idle);

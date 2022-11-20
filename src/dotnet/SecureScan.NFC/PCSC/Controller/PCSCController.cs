@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 using PCSC;
 using PCSC.Exceptions;
 using PCSC.Iso7816;
@@ -9,13 +9,11 @@ namespace SecureScan.NFC.PCSC.Controller
 {
   public class PCSCController
   {
-    //public PCSCController() : this(new AID(new byte[] { 0xF0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 })) { }
-
     public PCSCController(AID aid) => Aid = aid;
 
     public AID Aid { get; }
 
-    public bool WaitForConnection(Action<PCSCConnection> onConnection, int timeoutSeconds = 10)
+    public async Task<PCSCConnection> WaitForConnectionAsync(int timeoutSeconds = 10)
     {
       ISCardContext context = null;
       IsoReader isoReader = null;
@@ -30,42 +28,37 @@ namespace SecureScan.NFC.PCSC.Controller
 
         if (isoReader == null)
         {
-          Thread.Sleep(500);
+          await Task.Delay(500);
         }
       }
 
       if (isoReader == null)
       {
-        return false;
+        throw new Exception("No IsoDepReader!");
       }
-      else
-      {
-        using (context)
-        using (isoReader)
-        {
-          var apdu = new CommandApdu(IsoCase.Case4Short, isoReader.ActiveProtocol)
-          {
-            CLA = 0x00, // Class
-            Instruction = InstructionCode.SelectFile,
-            P1 = 0x04, // Parameter 1
-            P2 = 0x00, // Parameter 2
-            Le = 13, // Expected length of the returned data					 
-            Data = Aid
-          };
 
-          var response = isoReader.Transmit(apdu);
-          if (response.HasData)
-          {
-            var data = response.GetData();
-            onConnection?.Invoke(new PCSCConnection(true, data, new Transceiver(isoReader)));
-            return true;
-          }
-          else
-          {
-            // Application error
-            onConnection?.Invoke(new PCSCConnection(false, null, null));
-            return false;
-          }
+      using (context)
+      using (isoReader)
+      {
+        var apdu = new CommandApdu(IsoCase.Case4Short, isoReader.ActiveProtocol)
+        {
+          CLA = 0x00, // Class
+          Instruction = InstructionCode.SelectFile,
+          P1 = 0x04, // Parameter 1
+          P2 = 0x00, // Parameter 2
+          Le = 13, // Expected length of the returned data					 
+          Data = Aid
+        };
+
+        var response = isoReader.Transmit(apdu);
+        if (response.HasData)
+        {
+          var data = response.GetData();
+          return new PCSCConnection(context, isoReader, data);
+        }
+        else
+        {
+          throw new Exception("Application not found on smartphone!");
         }
       }
     }
