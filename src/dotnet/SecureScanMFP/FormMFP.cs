@@ -162,8 +162,8 @@ namespace SecureScanMFP
 
       cancellationTokenSource = new CancellationTokenSource();
 
-      var task = secureScanNFC.RetrieveOwnerInfoAsync(TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
       Log("Please hold your smartphone to the NFC tag.");
+      var task = secureScanNFC.RetrieveOwnerInfoAsync(TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);      
       task.ResponsiveWait();
 
       var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);

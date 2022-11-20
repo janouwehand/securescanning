@@ -6,7 +6,7 @@
 
     public string Email { get; set; }
 
-    public byte[] RsaPublicKey { get; set; }
+    public byte[] ECPublicKey { get; set; }
 
     public string ApplicationVersion { get; set; }
   }

@@ -28,7 +28,7 @@ namespace SecureScan.NFC.PCSC.Controller
 
         if (isoReader == null)
         {
-          await Task.Delay(500);
+          await Task.Delay(100);
         }
       }
 

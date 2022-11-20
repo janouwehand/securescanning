@@ -3,27 +3,37 @@ package nl.ou.securescan
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.SecureRandom
 
 class SecureScanApduService : HostApduService() {
 
-    private fun isSelectApdu(apdu: ByteArray?): Boolean {
-        return apdu!!.size >= 2 && apdu!![0] === 0.toByte() && apdu!![1] === 0xa4.toByte()
+    private var keypair: KeyPair?
+
+    init {
+        var generator = KeyPairGenerator.getInstance("RSA")
+        generator.initialize(4096, SecureRandom())
+        keypair = generator.genKeyPair()
     }
+
+    private fun isSelectApdu(apdu: ByteArray?): Boolean =
+        apdu!!.size >= 2 && apdu!![0] === 0.toByte() && apdu!![1] === 0xa4.toByte()
 
     override fun processCommandApdu(apdu: ByteArray?, extra: Bundle?): ByteArray {
 
         var str = apdu!!.toHexString()
         Log.i("SecureScan", "Received APDU: $str")
 
-        if (isSelectApdu(apdu)) {
+        return if (isSelectApdu(apdu)) {
             var ret = "APPV://1.0.0"
             Log.i("SecureScan", ret)
             var bs = combineResult(ret.encodeToByteArray())
-            return bs
+            bs
         } else {
             var (bs, sw1, sw2) = process(apdu)
             var result = bs.plus(sw1).plus(sw2)
-            return result
+            result
         }
     }
 
@@ -31,23 +41,31 @@ class SecureScanApduService : HostApduService() {
 
     private fun process(apdu: ByteArray): ProcessResult {
         var instruction = apdu[1]
+        var block = apdu[2]
+
         return when (instruction) {
-            0x10.toByte() -> {
-                ProcessResult(processGetName(), instruction, 0x00)
-            }
-            else -> {
-                ProcessResult(byteArrayOf(), 0x00, 0x00)
-            }
+            0x10.toByte() -> ProcessResult(processGetName(), instruction, 0x00)
+            0x20.toByte() -> ProcessResult(processGetEmail(), instruction, 0x00)
+            0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
+            else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
         }
     }
 
-    private fun processGetName(): ByteArray {
-        return "J.L. Ouwehand".encodeToByteArray()
+    private fun processGetName(): ByteArray = "J.L. Ouwehand".encodeToByteArray()
+
+    private fun processGetEmail(): ByteArray = "jan.ouwehand@mvgs.nl".encodeToByteArray()
+
+    private fun processGetKey(block: Int): ByteArray {
+        var fromIndex = (block - 1) * 110
+        var size = 110
+        var bs = keypair!!.public.encoded
+
+        var ret = bs.sliceArray(IntRange(fromIndex, fromIndex + size - 1))
+        return ret
     }
 
-    private fun combineResult(data: ByteArray, sw1: Byte = 0x00, sw2: Byte = 0x00): ByteArray {
-        return data.plus(sw1).plus(sw2)
-    }
+    private fun combineResult(data: ByteArray, sw1: Byte = 0x00, sw2: Byte = 0x00): ByteArray =
+        data.plus(sw1).plus(sw2)
 
     override fun onDeactivated(p0: Int) {
         Log.i("SecureScan", "deactivated!")
