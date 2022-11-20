@@ -4,7 +4,7 @@ using PCSC.Iso7816;
 
 namespace SecureScan.NFC.PCSC.Controller
 {
-  public class PCSCConnection : IDisposable
+  public class PCSCConnection: IDisposable
   {
     private readonly ISCardContext context;
     private readonly IsoReader isoReader;

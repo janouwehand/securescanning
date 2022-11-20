@@ -37,29 +37,25 @@ namespace SecureScan.NFC.PCSC.Controller
         throw new Exception("No IsoDepReader!");
       }
 
-      using (context)
-      using (isoReader)
+      var apdu = new CommandApdu(IsoCase.Case4Short, isoReader.ActiveProtocol)
       {
-        var apdu = new CommandApdu(IsoCase.Case4Short, isoReader.ActiveProtocol)
-        {
-          CLA = 0x00, // Class
-          Instruction = InstructionCode.SelectFile,
-          P1 = 0x04, // Parameter 1
-          P2 = 0x00, // Parameter 2
-          Le = 13, // Expected length of the returned data					 
-          Data = Aid
-        };
+        CLA = 0x00, // Class
+        Instruction = InstructionCode.SelectFile,
+        P1 = 0x04, // Parameter 1
+        P2 = 0x00, // Parameter 2
+        Le = 13, // Expected length of the returned data					 
+        Data = Aid
+      };
 
-        var response = isoReader.Transmit(apdu);
-        if (response.HasData)
-        {
-          var data = response.GetData();
-          return new PCSCConnection(context, isoReader, data);
-        }
-        else
-        {
-          throw new Exception("Application not found on smartphone!");
-        }
+      var response = isoReader.Transmit(apdu);
+      if (response.HasData)
+      {
+        var data = response.GetData();
+        return new PCSCConnection(context, isoReader, data);
+      }
+      else
+      {
+        throw new Exception("Application not found on smartphone!");
       }
     }
 

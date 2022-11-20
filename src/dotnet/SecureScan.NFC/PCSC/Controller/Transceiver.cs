@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using PCSC.Iso7816;
 
 namespace SecureScan.NFC.PCSC.Controller
@@ -8,6 +9,19 @@ namespace SecureScan.NFC.PCSC.Controller
     private readonly IsoReader reader;
 
     public Transceiver(IsoReader reader) => this.reader = reader;
+
+    public TransceiverResponse Transceive(Command command, int? block = null, byte[] data = null)
+    {
+      if (command is null)
+      {
+        throw new ArgumentNullException(nameof(command));
+      }
+
+      var p1 = block == null ? (byte)0x00 : (byte)block.Value;
+
+      var response = Transceive(0x00, command.Instruction, p1, 0x00, data);
+      return response;
+    }
 
     public TransceiverResponse Transceive(byte cla, byte instruction, byte p1, byte p2, byte[] data)
     {
@@ -27,6 +41,15 @@ namespace SecureScan.NFC.PCSC.Controller
 
       var response = reader.Transmit(apdu);
       var responseData = response.HasData ? response.GetData() : null;
+
+      if (responseData != null)
+      {
+        if (response.SW1 != instruction)
+        {
+          throw new Exception("Not the result for the instruction!");
+        }
+      }
+
       return new TransceiverResponse(response.SW1, response.SW2, responseData);
     }
 

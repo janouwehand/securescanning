@@ -2,17 +2,17 @@
 {
   public class Command
   {
-    public Command(string name, byte p1, int? p2count = null)
+    public Command(string name, byte instruction, int? blockCount = null)
     {
       Name = name;
-      P1 = p1;
-      P2Count = p2count;
+      Instruction = instruction;
+      BlockCount = blockCount;
     }
 
     public string Name { get; }
 
-    public byte P1 { get; }
+    public byte Instruction { get; }
 
-    public int? P2Count { get; }
+    public int? BlockCount { get; }
   }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using SecureScan.Base.Extensions;
-using SecureScan.Base.WaitForm;
+using SecureScan.Base.Logger;
 using SecureScan.NFC;
 
 namespace SecureScanMFP
@@ -12,17 +12,17 @@ namespace SecureScanMFP
   public partial class FormMFP : Form
   {
     private MFPStates state = MFPStates.Idle;
-    private readonly IWaitForm waitForm;
     private readonly ISecureScanNFC secureScanNFC;
     private OwnerInfo ownerInfo;
     private CancellationTokenSource cancellationTokenSource;
 
-    public FormMFP(IWaitForm waitForm, ISecureScanNFC secureScanNFC)
+    public FormMFP(ILogger logger, ISecureScanNFC secureScanNFC)
     {
       InitializeComponent();
-      this.waitForm = waitForm;
       this.secureScanNFC = secureScanNFC;
       UpdateUI();
+
+      logger.OnLog += (s, e) => Log(e.Message, e.IsError);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
@@ -173,7 +173,7 @@ namespace SecureScanMFP
       }
       else if (task.IsFaulted)
       {
-        foreach(var ex in task.Exception.InnerExceptions)
+        foreach (var ex in task.Exception.InnerExceptions)
         {
           Log(ex.Message, true);
         }
