@@ -1,6 +1,7 @@
 package nl.ou.securescan
 
 import android.os.Bundle
+import android.util.Log
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -29,9 +30,15 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            createCert()
+            /*Snackbar.make(view, "create cert", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show()*/
         }
+    }
+
+    private fun createCert() {
+        var x509 = CreateX509().execute()
+        Log.i("SecureScan", x509!!.serialNumber.toString())
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.KeyStore
 import java.security.SecureRandom
+import java.util.*
 
 class SecureScanApduService : HostApduService() {
 
@@ -15,6 +17,19 @@ class SecureScanApduService : HostApduService() {
         var generator = KeyPairGenerator.getInstance("RSA")
         generator.initialize(4096, SecureRandom())
         keypair = generator.genKeyPair()
+
+        val ks: KeyStore = KeyStore.getInstance("PKCS12").apply {
+            load(null)
+        }
+        val aliases: Enumeration<String> = ks.aliases()
+
+
+        var rs=aliases.toList()
+
+        Log.i("SecureScan", "Aanal: " + rs.size.toString())
+
+        for (alias in aliases)
+            Log.i("SecureScan", alias)
     }
 
     private fun isSelectApdu(apdu: ByteArray?): Boolean =

@@ -43,6 +43,11 @@ namespace SecureScanMFP
     /// </summary>
     private void Log(string s, bool isError = false, bool isStateChange = false)
     {
+      if (IsDisposed || Disposing)
+      {
+        return;
+      }
+
       if (InvokeRequired)
       {
         Invoke(new Action<string, bool, bool>(Log), new object[] { s, isError, isStateChange });
