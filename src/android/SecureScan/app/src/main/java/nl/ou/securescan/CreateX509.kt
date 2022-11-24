@@ -1,5 +1,6 @@
 package nl.ou.securescan
 
+import android.content.Context
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
@@ -7,6 +8,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import java.io.FileInputStream
 import java.math.BigInteger
 import java.security.*
 import java.security.cert.X509Certificate
@@ -28,6 +30,12 @@ class CreateX509 {
         //println("Created ${keyFile.absoluteFile}")
         //certFile.writeText(certificateToPem(certificate))
         //println("Created ${certFile.absoluteFile}")
+
+        //var map = Environment.getExternalStorageDirectory()
+        //var bestand = File(map, "SecureScan.pfx")
+        //var bs = certificate.encoded
+        //bestand.writeBytes(bs)
+
         return certificate
     }
 
@@ -145,4 +153,29 @@ class CreateX509 {
 
         return cert
     }*/
+
+    private val CUSTOMER_CERTIFICATE_STORE = "CustomerKeyStore.keystore"
+    private val CUSTOMER_CERTIFICATE_ALIAS = "CZ1212121218"
+    private val CUSTOMER_KS_PASSWORD = "eet"
+
+    private val SERVER_CERTIFICATE_STORE = "ServerKeyStore.keystore"
+    private val SERVER_CERTIFICATE_ALIAS = "ca"
+    private val SERVER_KS_PASSWORD = ""
+
+    private fun getCustomerKeystore(context: Context): KeyStore? {
+        return try {
+            val keyStore = KeyStore.getInstance("PKCS12")
+            // Load Keystore form internal storage
+            val fis: FileInputStream = context.openFileInput(CUSTOMER_CERTIFICATE_STORE)
+            keyStore.load(fis, CUSTOMER_KS_PASSWORD.toCharArray())
+            keyStore
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw RuntimeException("Keystore not found.")
+        }
+    }
+
+    fun SaveX509InStore(context: Context, cert: X509Certificate){
+
+    }
 }
