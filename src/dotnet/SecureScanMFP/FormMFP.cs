@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Windows.Forms;
 using SecureScan.Base.Crypto;
+using SecureScan.Base.Crypto.Symmetric;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
 using SecureScan.NFC;
@@ -42,6 +43,8 @@ namespace SecureScanMFP
         cancellationTokenSource?.Dispose();
       }
     }
+
+    private void Log(string s, Color color) => Log(s, false, false, color);
 
     /// <summary>
     /// Log method that allows calls from a non-UI thread to synchronize with the UI thread.
@@ -231,27 +234,47 @@ namespace SecureScanMFP
       }
     }
 
+    private byte[] CalculateHash(byte[] bs)
+    {
+      using (var sha = SHA256.Create())
+      {
+        return sha.ComputeHash(bs);
+      }
+    }
+
     private void ExecuteSecureScanning()
     {
       SetState(MFPStates.CreatingSecureContainer);
 
       Log("Busy creating protected container...");
 
-      //Thread.Sleep(3000);
+      //Thread.Sleep(2000);
 
-      var randomPassword = CryptoRandom.GetBytes(16);
-      var randomPasswordStr = Convert.ToBase64String(randomPassword);
+      var randomPassword = CryptoRandom.GetBytes(32);
+      var randomPasswordStr = Convert.ToBase64String(randomPassword, Base64FormattingOptions.InsertLineBreaks);
 
-      Log($"Pseudo-random (PRNG) 16 byte symmetric key (Base64): {randomPasswordStr}", false, false, Color.DarkOliveGreen);
+      Log($"Pseudo-random (PRNG) 32 byte symmetric key (Base64): {randomPasswordStr}", Color.DarkOliveGreen);
 
       var encryptedPassword = EncryptSymmetricKeyData(ownerInfo.X509Certificate().Value, randomPassword);
-      var encryptedPasswordStr = Convert.ToBase64String(encryptedPassword);
+      var encryptedPasswordStr = Convert.ToBase64String(encryptedPassword, Base64FormattingOptions.InsertLineBreaks);
 
-      Log($"Pseudo-random (PRNG) 16 byte symmetric key (Base64), encrypted with public key of x.509 (size: {encryptedPassword.Length}): {encryptedPasswordStr}", false, false, Color.DarkOliveGreen);
+      Log($"Pseudo-random (PRNG) 32 byte symmetric key (Base64), encrypted with public key of x.509 (size: {encryptedPassword.Length}): {encryptedPasswordStr}", Color.DarkOliveGreen);
 
-      var testfile = new FileInfo( ConfigurationManager.AppSettings["TESTFILE"]);
+      var testfile = new FileInfo(ConfigurationManager.AppSettings["TESTFILE"]);
 
-      Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using symmetric password");
+      Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using AES-GCM (size: {testfile.Length:N0} bytes)", Color.DarkOliveGreen);
+
+      var symmetricCrypto = SymmetricEncryptionFactory.Create();
+
+      var bs = File.ReadAllBytes(testfile.FullName);
+      var bsenc = symmetricCrypto.Encrypt(bs, randomPassword);
+      var hash = CalculateHash(bsenc);
+
+      Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha256: {hash.ToHEX()})", Color.DarkOliveGreen);
+
+      SetState(MFPStates.SecureContainerCreated);
+
+      Log("Please hold your smartphone again to the NFC tag to receive the license.");
     }
 
   }
