@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
+using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,9 +22,10 @@ namespace SecureScan.NFC.Protocol
       using (var connection = await controller.WaitForConnectionAsync(waitForNFCTimeout.Seconds))
       {
         var ownerInfo = RetrieveInfo(connection);
+        return ownerInfo;
       }
 
-      return null;
+      //return null;
     }
 
     private OwnerInfo RetrieveInfo(PCSCConnection nfc)
@@ -37,18 +39,12 @@ namespace SecureScan.NFC.Protocol
       }
 
       info.ApplicationVersion = applicationVersion.Substring(Constants.APPVERSIONPREFIX.Length);
-      logger.Log($"NFC: remote application version = {info.ApplicationVersion}");
+      logger.Log($"NFC: remote application version = {info.ApplicationVersion}", Color.DarkGoldenrod);
+      
+      info.X509 = RetrieveOwnerPublicKey(nfc.Transceiver);
+      logger.Log($"NFC: X.509 received successfully (size: {info.X509.Length} bytes)", Color.DarkGoldenrod);
 
-      info.Name = RetrieveOwnerName(nfc.Transceiver);
-      logger.Log($"NFC: owner name = {info.Name}");
-
-      info.Email = RetrieveOwnerEmail(nfc.Transceiver);
-      logger.Log($"NFC: owner email = {info.Email}");
-
-      info.ECPublicKey = RetrieveOwnerPublicKey(nfc.Transceiver);
-      logger.Log($"NFC: EC public key = {BitConverter.ToString(info.ECPublicKey).Replace("-", "").ToLower()}");
-
-      TestKey(info.ECPublicKey);
+      TestKey(info.X509);
 
       return info;
     }
@@ -56,7 +52,7 @@ namespace SecureScan.NFC.Protocol
     private void TestKey(byte[] eCPublicKey)
     {
       //var rsa = RSACryptoServiceProvider.Create();
-      
+
     }
 
     private string RetrieveOwnerName(Transceiver transceiver)
@@ -75,10 +71,18 @@ namespace SecureScan.NFC.Protocol
     {
       var list = new List<byte>();
 
-      void AddPart(int partnr)
+      bool AddPart(int partnr)
       {
         var response = transceiver.Transceive(Constants.CMDPUBKEY, partnr);
-        list.AddRange(response.Data);
+        if (response.Data != null && response.Data.Any())
+        {
+          list.AddRange(response.Data);
+          return true;
+        }
+        else
+        {
+          return false;
+        }
       }
 
       for (var i = 1; i <= 5; i++)

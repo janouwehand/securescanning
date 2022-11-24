@@ -1,21 +1,26 @@
 package nl.ou.securescan
 
 import android.content.Context
+import android.os.Environment
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.KeyUsage
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.math.BigInteger
 import java.security.*
 import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 
 class CreateX509 {
@@ -73,28 +78,29 @@ class CreateX509 {
                 "\n-----END CERTIFICATE-----\n"
     }
 
+    /*fun ungzip(content: ByteArray): String =
+        GZIPInputStream(content.inputStream()).bufferedReader(UTF_8).use { it.readText() }*/
 
     private fun createSelfSignedCertificate(keyPair: KeyPair): X509Certificate {
-        val commonName = "INGTestAPI"
-        val organizationalUnit = "Test"
-        val organization = "Test"
-        val country = "NL"
-
-        val name = X500Name("CN=JANO SecureScan")
+        val name = X500Name("E=jan@softable.nl, CN=J.L. Ouwehand")
         val subPubKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.public.encoded)
         val start = Date()
-        val until = Date.from(
+        val until = Date.from(LocalDate.of(2100, 12, 31).atStartOfDay().toInstant(ZoneOffset.UTC))
+        /*val until = Date.from(
             LocalDate.now().plus(365, ChronoUnit.DAYS).atStartOfDay().toInstant(ZoneOffset.UTC)
-        )
+        )*/
 
         val builder = X509v3CertificateBuilder(
             name,
-            BigInteger(10, SecureRandom()),  //Choose something better for real use
+            BigInteger(128, SecureRandom()),
             start,
             until,
             name,
             subPubKeyInfo
         )
+
+        val usage = KeyUsage(KeyUsage.digitalSignature or KeyUsage.keyEncipherment)
+        builder.addExtension(Extension.keyUsage, false, usage)
 
         val signer: ContentSigner =
             JcaContentSignerBuilder("SHA256WithRSA").setProvider(BouncyCastleProvider())
@@ -175,7 +181,7 @@ class CreateX509 {
         }
     }
 
-    fun SaveX509InStore(context: Context, cert: X509Certificate){
+    fun SaveX509InStore(context: Context, cert: X509Certificate) {
 
     }
 }

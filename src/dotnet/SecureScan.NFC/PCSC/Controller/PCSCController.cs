@@ -34,7 +34,7 @@ namespace SecureScan.NFC.PCSC.Controller
 
       if (isoReader == null)
       {
-        throw new Exception("No IsoDepReader!");
+        throw new Exception("Time-out waiting for NFC.");
       }
 
       var apdu = new CommandApdu(IsoCase.Case4Short, isoReader.ActiveProtocol)

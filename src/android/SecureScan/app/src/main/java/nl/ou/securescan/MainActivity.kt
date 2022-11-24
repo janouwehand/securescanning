@@ -69,8 +69,6 @@ class MainActivity : AppCompatActivity() {
 
                     var x509 = CreateX509().execute()
 
-                    x509.tbsCertificate
-
                     bestand.writeBytes(x509.encoded)
                     //bestand.writeText("TEst")
                     Log.i("SecureScan", x509.serialNumber.toString())

@@ -5,6 +5,8 @@
     Idle,
     CopyingDocument,
     SecureScanInitiated,
-    SecureScanWaitForGO
+    SecureScanWaitForGO,
+    CreatingSecureContainer,
+    SecureContainerCreated
   }
 }

@@ -1,24 +1,24 @@
 package nl.ou.securescan
 
+import android.R.string
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.SecureRandom
+import java.io.ByteArrayOutputStream
+import java.security.cert.X509Certificate
 import java.util.*
+import java.util.zip.GZIPOutputStream
+
 
 class SecureScanApduService : HostApduService() {
 
-    private var keypair: KeyPair?
+    private val x509: X509Certificate
 
     init {
-        var generator = KeyPairGenerator.getInstance("RSA")
-        generator.initialize(4096, SecureRandom())
-        keypair = generator.genKeyPair()
 
-        val ks: KeyStore = KeyStore.getInstance("PKCS12").apply {
+        x509 = CreateX509().execute()
+
+        /*val ks: KeyStore = KeyStore.getInstance("PKCS12").apply {
             load(null)
         }
         val aliases: Enumeration<String> = ks.aliases()
@@ -29,8 +29,24 @@ class SecureScanApduService : HostApduService() {
         Log.i("SecureScan", "Aanal: " + rs.size.toString())
 
         for (alias in aliases)
-            Log.i("SecureScan", alias)
+            Log.i("SecureScan", alias)*/
     }
+
+//    private fun gzip(content: ByteArray): ByteArray {
+//       /* val bos = ByteArrayOutputStream()
+//        val os=GZIPOutputStream(bos) //.bufferedWriter(UTF_8).use { it.write(content) }
+//        os.write(content)
+//        os.flush()
+//        return bos.toByteArray()*/
+//
+//        val os = ByteArrayOutputStream(content.size)
+//        val gos = GZIPOutputStream(os)
+//        gos.write(content)
+//        gos.close()
+//        val compressed = os.toByteArray()
+//        os.close()
+//        return compressed
+//    }
 
     private fun isSelectApdu(apdu: ByteArray?): Boolean =
         apdu!!.size >= 2 && apdu!![0] === 0.toByte() && apdu!![1] === 0xa4.toByte()
@@ -71,11 +87,23 @@ class SecureScanApduService : HostApduService() {
     private fun processGetEmail(): ByteArray = "jan.ouwehand@mvgs.nl".encodeToByteArray()
 
     private fun processGetKey(block: Int): ByteArray {
-        var fromIndex = (block - 1) * 110
-        var size = 110
-        var bs = keypair!!.public.encoded
+        val size = 250
+        val fromIndex = (block - 1) * size
+        val bs = x509.encoded
 
-        var ret = bs.sliceArray(IntRange(fromIndex, fromIndex + size - 1))
+        var toIndex = fromIndex + size - 1
+
+        if (toIndex > bs.size) {
+            toIndex = bs.size - 1
+        }
+
+        if (toIndex <= fromIndex) {
+            Log.i("SecureScan", "Geen bytes meer over")
+            return arrayOf<Byte>().toByteArray()
+        }
+        Log.i("SecureScan", "Sending bytes $fromIndex to $toIndex (size: ${bs.size})")
+
+        val ret = bs.sliceArray(fromIndex..toIndex)
         return ret
     }
 

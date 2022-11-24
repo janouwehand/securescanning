@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 
 namespace SecureScan.Base.Logger
 {
@@ -7,5 +8,7 @@ namespace SecureScan.Base.Logger
     event EventHandler<LogEventArgs> OnLog;
 
     void Log(string message, bool isError = false);
+
+    void Log(string message, Color color);
   }
 }
