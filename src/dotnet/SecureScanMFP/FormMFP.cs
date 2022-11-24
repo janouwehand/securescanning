@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Configuration;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -221,7 +223,7 @@ namespace SecureScanMFP
       Log("Put physical document on scanner and press GO button");
     }
 
-    public static byte[] EncryptData(X509Certificate2 cert, byte[] data)
+    public static byte[] EncryptSymmetricKeyData(X509Certificate2 cert, byte[] data)
     {
       using (var rsa = cert.GetRSAPublicKey())
       {
@@ -242,12 +244,14 @@ namespace SecureScanMFP
 
       Log($"Pseudo-random (PRNG) 16 byte symmetric key (Base64): {randomPasswordStr}", false, false, Color.DarkOliveGreen);
 
-      var encryptedPassword = EncryptData(ownerInfo.X509Certificate().Value, randomPassword);
+      var encryptedPassword = EncryptSymmetricKeyData(ownerInfo.X509Certificate().Value, randomPassword);
       var encryptedPasswordStr = Convert.ToBase64String(encryptedPassword);
 
       Log($"Pseudo-random (PRNG) 16 byte symmetric key (Base64), encrypted with public key of x.509 (size: {encryptedPassword.Length}): {encryptedPasswordStr}", false, false, Color.DarkOliveGreen);
 
+      var testfile = new FileInfo( ConfigurationManager.AppSettings["TESTFILE"]);
 
+      Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using symmetric password");
     }
 
   }
