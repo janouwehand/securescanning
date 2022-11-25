@@ -3,6 +3,9 @@ package nl.ou.securescan
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.Signature
 import java.security.cert.X509Certificate
 import java.util.*
 
@@ -10,10 +13,19 @@ import java.util.*
 class SecureScanApduService : HostApduService() {
 
     private val x509: X509Certificate
+    private val keyPair: KeyPair
+    private var challengeSignature: ByteArray? = null
+
+    private fun generateKeyPair(): KeyPair {
+        val kpg = KeyPairGenerator.getInstance("RSA")
+        kpg.initialize(2048)
+        return kpg.genKeyPair()
+    }
 
     init {
 
-        x509 = CreateX509().execute()
+        keyPair = generateKeyPair()
+        x509 = CreateX509().execute(keyPair)
 
         /*val ks: KeyStore = KeyStore.getInstance("PKCS12").apply {
             load(null)
@@ -76,9 +88,7 @@ class SecureScanApduService : HostApduService() {
         return when (instruction) {
             0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
             0x60.toByte() -> ProcessResult(
-                processGetChallengeResult(data!!, blockInfo),
-                instruction,
-                0x00
+                processGetChallengeResult(data!!, block.toInt()), instruction, block
             )
             else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
         }
@@ -95,9 +105,51 @@ class SecureScanApduService : HostApduService() {
         return data
     }
 
-    private fun processGetChallengeResult(data: ByteArray, blockInfo: Byte): ByteArray {
-        Log.i("SecureScan", "Block info: $blockInfo")
-        return arrayOf(0xF0.toByte(), 0xF0.toByte()).toByteArray()
+    private fun processGetChallengeResult(data: ByteArray, block: Int): ByteArray {
+        Log.i(
+            "SecureScan",
+            "Executing challenge. Block $block. Data length: ${data.size}"
+        )
+
+        if (block == 1) {
+            var privateKey = keyPair.private
+            val privateSignature: Signature = Signature.getInstance("SHA256withRSA")
+            privateSignature.initSign(privateKey)
+            privateSignature.update(data)
+            challengeSignature = privateSignature.sign()
+            Log.i(
+                "SecureScan",
+                "Challenge result size: ${challengeSignature!!.size}. value: ${challengeSignature!!.toHexString()}"
+            )
+        }
+
+        var slice = sliceData(challengeSignature!!, block)
+        return slice
+
+        /*return if (block > 10)
+            byteArrayOf()
+        else
+            arrayOf(0xF0.toByte(), 0xF0.toByte()).toByteArray()*/
+    }
+
+    private fun sliceData(data: ByteArray, block: Int): ByteArray {
+        val size = 250
+        val fromIndex = (block - 1) * size
+
+        var toIndex = fromIndex + size - 1
+
+        if (toIndex > data.size) {
+            toIndex = data.size - 1
+        }
+
+        if (toIndex <= fromIndex) {
+            Log.i("SecureScan", "Geen bytes meer over")
+            return arrayOf<Byte>().toByteArray()
+        }
+        Log.i("SecureScan", "Sending bytes $fromIndex to $toIndex (size: ${data.size})")
+
+        val ret = data.sliceArray(fromIndex..toIndex)
+        return ret
     }
 
     private fun processGetKey(block: Int): ByteArray {

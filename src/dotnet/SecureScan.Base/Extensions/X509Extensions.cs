@@ -58,5 +58,13 @@ namespace SecureScan.Base.Extensions
       }
     }
 
+    public static bool VerifySignature(this X509Certificate2 x509, byte[] data, byte[] signature)
+    {
+      using (var rsa = x509.GetRSAPublicKey())
+      {
+        return rsa.VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+      }
+    }
+
   }
 }

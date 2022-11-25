@@ -19,6 +19,7 @@ import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.single.PermissionListener
 import nl.ou.securescan.databinding.ActivityMainBinding
 import java.io.File
+import java.security.KeyPair
 
 
 class MainActivity : AppCompatActivity() {
@@ -67,11 +68,11 @@ class MainActivity : AppCompatActivity() {
                     var bestand = File(map, "SecureScan.pfx")
                     Log.i("SecureScan", bestand.absolutePath)
 
-                    var x509 = CreateX509().execute()
+                    //var x509 = CreateX509().execute()
 
-                    bestand.writeBytes(x509.encoded)
+                    //bestand.writeBytes(x509.encoded)
                     //bestand.writeText("TEst")
-                    Log.i("SecureScan", x509.serialNumber.toString())
+                    //Log.i("SecureScan", x509.serialNumber.toString())
 
                 }
 

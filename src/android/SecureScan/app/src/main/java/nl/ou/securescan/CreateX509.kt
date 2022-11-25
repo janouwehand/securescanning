@@ -25,11 +25,10 @@ import java.util.zip.GZIPOutputStream
 
 class CreateX509 {
 
-    fun execute(): X509Certificate {
+    fun execute(keyPair: KeyPair): X509Certificate {
         var sort = "tls"
         //val keyFile = File("key-$sort.pem")
         //val certFile = File("cert-$sort.pem")
-        val keyPair = generateKeyPair()
         val certificate = createSelfSignedCertificate(keyPair)
         //keyFile.writeText(privateKeyToPem(keyPair.private))
         //println("Created ${keyFile.absoluteFile}")

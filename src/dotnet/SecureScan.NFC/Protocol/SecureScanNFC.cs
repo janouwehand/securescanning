@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Drawing;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SecureScan.Base.Crypto;
-using SecureScan.Base.Crypto.Symmetric;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
 using SecureScan.NFC.PCSC.Controller;
@@ -16,13 +14,8 @@ namespace SecureScan.NFC.Protocol
   internal class SecureScanNFC : ISecureScanNFC
   {
     private readonly ILogger logger;
-    private readonly ISymmetricEncryption symmetricEncryption;
 
-    public SecureScanNFC(ILogger logger, ISymmetricEncryption symmetricEncryption)
-    {
-      this.logger = logger;
-      this.symmetricEncryption = symmetricEncryption;
-    }
+    public SecureScanNFC(ILogger logger) => this.logger = logger;
 
     public async Task<OwnerInfo> RetrieveOwnerInfoAsync(TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
     {
@@ -52,31 +45,33 @@ namespace SecureScan.NFC.Protocol
 
       if (!PerformChallenge(nfc.Transceiver, info.X509Certificate().Value))
       {
-        throw new Exception("Challenge failed: smartphone did not prove to posess private key.");
+        throw new Exception("Challenge failed: smartphone did not prove to own private key.");
       }
-
 
       return info;
     }
 
     private bool PerformChallenge(Transceiver transceiver, X509Certificate2 x509)
     {
-      var plainText = CryptoRandom.GetBytes(32);
-      var cipherText = x509.EncryptWithPublicKey(plainText);
+      var randomData = CryptoRandom.GetBytes(32);
 
-      var str = cipherText.ToHEX();
-      logger.Log($"Sending challenge: {str} (size: {cipherText.Length} bytes)");
+      logger.Log($"Sending challenge: {randomData.ToHEX()} (size: {randomData.Length} bytes)");
 
-      var responses = transceiver.SendMultiApduData(Constants.CMDCHALLENGE, cipherText);
-      var response = responses.Last(); // last contains result
+      var signature = transceiver.RetrieveMultiApduData(Constants.CMDCHALLENGE, randomData, out _);
 
-      var retCipherText = response.Data;
-      var retPlainText = x509.DecryptWithPublicKey(retCipherText);
+      logger.Log($"Signature for challenge received (size: {signature.Length}). Now verifying...");
 
-      return plainText.TimedEquals(retPlainText);
+      var valid = x509.VerifySignature(randomData, signature);
+
+      if (valid)
+      {
+        logger.Log($"Signature sucessfully verified!");
+      }
+
+      return valid;
     }
 
-    private byte[] RetrieveX509(Transceiver transceiver) => transceiver.RetrieveMultiApduData(Constants.CMDGETX509, out _);
+    private byte[] RetrieveX509(Transceiver transceiver) => transceiver.RetrieveMultiApduData(Constants.CMDGETX509, null, out _);
 
   }
 }

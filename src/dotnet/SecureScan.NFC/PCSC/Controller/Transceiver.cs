@@ -43,7 +43,7 @@ namespace SecureScan.NFC.PCSC.Controller
       return responses.ToArray();
     }
 
-    public byte[] RetrieveMultiApduData(Command command, out TransceiverResponse[] responses)
+    public byte[] RetrieveMultiApduData(Command command, byte[] data, out TransceiverResponse[] responses)
     {
       if (command is null)
       {
@@ -55,7 +55,7 @@ namespace SecureScan.NFC.PCSC.Controller
 
       bool AddPart(int partnr)
       {
-        var response = Transceive(0x00, command.Instruction, (byte)partnr, 0x00, null);
+        var response = Transceive(0x00, command.Instruction, (byte)partnr, 0x00, data);
         resps.Add(response);
         if (response.Data != null && response.Data.Any())
         {
