@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SecureScan.Base.Crypto;
+using SecureScan.Base.Crypto.Symmetric;
+using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
 using SecureScan.NFC.PCSC.Controller;
 
@@ -13,8 +17,13 @@ namespace SecureScan.NFC.Protocol
   internal class SecureScanNFC : ISecureScanNFC
   {
     private readonly ILogger logger;
+    private readonly ISymmetricEncryption symmetricEncryption;
 
-    public SecureScanNFC(ILogger logger) => this.logger = logger;
+    public SecureScanNFC(ILogger logger, ISymmetricEncryption symmetricEncryption)
+    {
+      this.logger = logger;
+      this.symmetricEncryption = symmetricEncryption;
+    }
 
     public async Task<OwnerInfo> RetrieveOwnerInfoAsync(TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
     {
@@ -24,8 +33,6 @@ namespace SecureScan.NFC.Protocol
         var ownerInfo = RetrieveInfo(connection);
         return ownerInfo;
       }
-
-      //return null;
     }
 
     private OwnerInfo RetrieveInfo(PCSCConnection nfc)
@@ -40,40 +47,39 @@ namespace SecureScan.NFC.Protocol
 
       info.ApplicationVersion = applicationVersion.Substring(Constants.APPVERSIONPREFIX.Length);
       logger.Log($"NFC: remote application version = {info.ApplicationVersion}", Color.DarkGoldenrod);
-      
-      info.X509 = RetrieveOwnerPublicKey(nfc.Transceiver);
+
+      info.X509 = RetrieveX509(nfc.Transceiver);
       logger.Log($"NFC: X.509 received successfully (size: {info.X509.Length} bytes)", Color.DarkGoldenrod);
 
-      TestKey(info.X509);
+      if (!PerformChallenge(nfc.Transceiver, info.X509Certificate().Value))
+      {
+        throw new Exception("Challenge failed: smartphone did not prove to posess private key.");
+      }
+
 
       return info;
     }
 
-    private void TestKey(byte[] eCPublicKey)
+    private bool PerformChallenge(Transceiver transceiver, X509Certificate2 x509)
     {
-      //var rsa = RSACryptoServiceProvider.Create();
+      var plainText = CryptoRandom.GetBytes(32);
+      var cipherText = x509.EncryptWithPublicKey(plainText).Take(100).ToArray();
 
+      var response = transceiver.Transceive(Constants.CMDCHALLENGE, null, cipherText);
+
+      var retCipherText = response.Data;
+      var retPlainText = x509.DecryptWithPublicKey(retCipherText);
+
+      return plainText.TimedEquals(retPlainText);
     }
 
-    private string RetrieveOwnerName(Transceiver transceiver)
-    {
-      var response = transceiver.Transceive(Constants.CMDOWNERNAME);
-      return Encoding.UTF8.GetString(response.Data);
-    }
-
-    private string RetrieveOwnerEmail(Transceiver transceiver)
-    {
-      var response = transceiver.Transceive(Constants.CMDOWNEREMAIL);
-      return Encoding.UTF8.GetString(response.Data);
-    }
-
-    private byte[] RetrieveOwnerPublicKey(Transceiver transceiver)
+    private byte[] RetrieveX509(Transceiver transceiver)
     {
       var list = new List<byte>();
 
       bool AddPart(int partnr)
       {
-        var response = transceiver.Transceive(Constants.CMDPUBKEY, partnr);
+        var response = transceiver.Transceive(Constants.CMDGETX509, partnr);
         if (response.Data != null && response.Data.Any())
         {
           list.AddRange(response.Data);
@@ -85,10 +91,13 @@ namespace SecureScan.NFC.Protocol
         }
       }
 
-      for (var i = 1; i <= 5; i++)
+      var part = 1;
+      bool @continue;
+      do
       {
-        AddPart(i);
+        @continue = AddPart(part++);
       }
+      while (@continue);
 
       return list.ToArray();
     }

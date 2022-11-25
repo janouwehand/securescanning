@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 
 namespace SecureScan.Base.Extensions
 {
@@ -21,6 +22,14 @@ namespace SecureScan.Base.Extensions
       }
 
       return diff == 0;
+    }
+
+    public static byte[] ComputeSHA256(this byte[] bs)
+    {
+      using (var sha = SHA256.Create())
+      {
+        return sha.ComputeHash(bs);
+      }
     }
   }
 }

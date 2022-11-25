@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace SecureScan.Base.Extensions
@@ -40,5 +41,22 @@ namespace SecureScan.Base.Extensions
 ";
       return str;
     }
+
+    public static byte[] EncryptWithPublicKey(this X509Certificate2 x509, byte[] plainText)
+    {
+      using (var rsa = x509.GetRSAPublicKey())
+      {
+        return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA256);
+      }
+    }
+
+    public static byte[] DecryptWithPublicKey(this X509Certificate2 x509, byte[] ciptherText)
+    {
+      using (var rsa = x509.GetRSAPublicKey())
+      {
+        return rsa.Decrypt(ciptherText, RSAEncryptionPadding.OaepSHA256);
+      }
+    }
+
   }
 }

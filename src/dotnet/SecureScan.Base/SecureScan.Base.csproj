@@ -65,7 +65,6 @@
     <Compile Include="Crypto\CryptoRandom.cs" />
     <Compile Include="Crypto\Symmetric\AESGCM\AESGCMSymmetricEncryption.cs" />
     <Compile Include="Crypto\Symmetric\ISymmetricEncryption.cs" />
-    <Compile Include="Crypto\Symmetric\SymmetricEncryptionFactory.cs" />
     <Compile Include="Extensions\ByteExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />

@@ -75,16 +75,13 @@ class SecureScanApduService : HostApduService() {
         var block = apdu[2]
 
         return when (instruction) {
-            0x10.toByte() -> ProcessResult(processGetName(), instruction, 0x00)
-            0x20.toByte() -> ProcessResult(processGetEmail(), instruction, 0x00)
             0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
+            0x60.toByte() -> ProcessResult(processGetChallengeResult(), instruction, 0x00)
             else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
         }
     }
 
-    private fun processGetName(): ByteArray = "J.L. Ouwehand".encodeToByteArray()
-
-    private fun processGetEmail(): ByteArray = "jan.ouwehand@mvgs.nl".encodeToByteArray()
+    private fun processGetChallengeResult(): ByteArray = "jan.ouwehand@mvgs.nl".encodeToByteArray()
 
     private fun processGetKey(block: Int): ByteArray {
         val size = 250

@@ -4,7 +4,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Windows.Forms;
 using SecureScan.Base.Crypto;
@@ -19,13 +18,15 @@ namespace SecureScanMFP
   {
     private MFPStates state = MFPStates.Idle;
     private readonly ISecureScanNFC secureScanNFC;
+    private readonly ISymmetricEncryption symmetricEncryption;
     private OwnerInfo ownerInfo;
     private CancellationTokenSource cancellationTokenSource;
 
-    public FormMFP(ILogger logger, ISecureScanNFC secureScanNFC)
+    public FormMFP(ILogger logger, ISecureScanNFC secureScanNFC, ISymmetricEncryption symmetricEncryption)
     {
       InitializeComponent();
       this.secureScanNFC = secureScanNFC;
+      this.symmetricEncryption = symmetricEncryption;
       UpdateUI();
 
       logger.OnLog += (s, e) => Log(e.Message, e.IsError, false, e.Color);
@@ -226,22 +227,6 @@ namespace SecureScanMFP
       Log("Put physical document on scanner and press GO button");
     }
 
-    public static byte[] EncryptSymmetricKeyData(X509Certificate2 cert, byte[] data)
-    {
-      using (var rsa = cert.GetRSAPublicKey())
-      {
-        return rsa.Encrypt(data, RSAEncryptionPadding.OaepSHA1);
-      }
-    }
-
-    private byte[] CalculateHash(byte[] bs)
-    {
-      using (var sha = SHA256.Create())
-      {
-        return sha.ComputeHash(bs);
-      }
-    }
-
     private void ExecuteSecureScanning()
     {
       SetState(MFPStates.CreatingSecureContainer);
@@ -255,7 +240,7 @@ namespace SecureScanMFP
 
       Log($"Pseudo-random (PRNG) 32 byte symmetric key (Base64): {randomPasswordStr}", Color.DarkOliveGreen);
 
-      var encryptedPassword = EncryptSymmetricKeyData(ownerInfo.X509Certificate().Value, randomPassword);
+      var encryptedPassword = ownerInfo.X509Certificate().Value.EncryptWithPublicKey(randomPassword);
       var encryptedPasswordStr = Convert.ToBase64String(encryptedPassword, Base64FormattingOptions.InsertLineBreaks);
 
       Log($"Pseudo-random (PRNG) 32 byte symmetric key (Base64), encrypted with public key of x.509 (size: {encryptedPassword.Length}): {encryptedPasswordStr}", Color.DarkOliveGreen);
@@ -264,11 +249,9 @@ namespace SecureScanMFP
 
       Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using AES-GCM (size: {testfile.Length:N0} bytes)", Color.DarkOliveGreen);
 
-      var symmetricCrypto = SymmetricEncryptionFactory.Create();
-
       var bs = File.ReadAllBytes(testfile.FullName);
-      var bsenc = symmetricCrypto.Encrypt(bs, randomPassword);
-      var hash = CalculateHash(bsenc);
+      var bsenc = symmetricEncryption.Encrypt(bs, randomPassword);
+      var hash = bsenc.ComputeSHA256();
 
       Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha256: {hash.ToHEX()})", Color.DarkOliveGreen);
 
