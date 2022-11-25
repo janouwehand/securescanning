@@ -66,6 +66,7 @@
     <Compile Include="Crypto\Symmetric\AESGCM\AESGCMSymmetricEncryption.cs" />
     <Compile Include="Crypto\Symmetric\ISymmetricEncryption.cs" />
     <Compile Include="Extensions\ByteExtensions.cs" />
+    <Compile Include="Extensions\ListExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Extensions\X509Extensions.cs" />

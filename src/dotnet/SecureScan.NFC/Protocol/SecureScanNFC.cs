@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -63,9 +62,13 @@ namespace SecureScan.NFC.Protocol
     private bool PerformChallenge(Transceiver transceiver, X509Certificate2 x509)
     {
       var plainText = CryptoRandom.GetBytes(32);
-      var cipherText = x509.EncryptWithPublicKey(plainText).Take(100).ToArray();
+      var cipherText = x509.EncryptWithPublicKey(plainText);
 
-      var response = transceiver.Transceive(Constants.CMDCHALLENGE, null, cipherText);
+      var str = cipherText.ToHEX();
+      logger.Log($"Sending challenge: {str} (size: {cipherText.Length} bytes)");
+
+      var responses = transceiver.SendMultiApduData(Constants.CMDCHALLENGE, cipherText);
+      var response = responses.Last(); // last contains result
 
       var retCipherText = response.Data;
       var retPlainText = x509.DecryptWithPublicKey(retCipherText);
@@ -73,34 +76,7 @@ namespace SecureScan.NFC.Protocol
       return plainText.TimedEquals(retPlainText);
     }
 
-    private byte[] RetrieveX509(Transceiver transceiver)
-    {
-      var list = new List<byte>();
-
-      bool AddPart(int partnr)
-      {
-        var response = transceiver.Transceive(Constants.CMDGETX509, partnr);
-        if (response.Data != null && response.Data.Any())
-        {
-          list.AddRange(response.Data);
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      }
-
-      var part = 1;
-      bool @continue;
-      do
-      {
-        @continue = AddPart(part++);
-      }
-      while (@continue);
-
-      return list.ToArray();
-    }
+    private byte[] RetrieveX509(Transceiver transceiver) => transceiver.RetrieveMultiApduData(Constants.CMDGETX509, out _);
 
   }
 }

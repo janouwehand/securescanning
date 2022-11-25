@@ -1,13 +1,10 @@
 package nl.ou.securescan
 
-import android.R.string
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
-import java.io.ByteArrayOutputStream
 import java.security.cert.X509Certificate
 import java.util.*
-import java.util.zip.GZIPOutputStream
 
 
 class SecureScanApduService : HostApduService() {
@@ -73,15 +70,35 @@ class SecureScanApduService : HostApduService() {
     private fun process(apdu: ByteArray): ProcessResult {
         var instruction = apdu[1]
         var block = apdu[2]
+        var blockInfo = apdu[3]
+        var data = getDataFromAPDU(apdu)
 
         return when (instruction) {
             0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
-            0x60.toByte() -> ProcessResult(processGetChallengeResult(), instruction, 0x00)
+            0x60.toByte() -> ProcessResult(
+                processGetChallengeResult(data!!, blockInfo),
+                instruction,
+                0x00
+            )
             else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
         }
     }
 
-    private fun processGetChallengeResult(): ByteArray = "jan.ouwehand@mvgs.nl".encodeToByteArray()
+    private fun getDataFromAPDU(apdu: ByteArray): ByteArray? {
+        if (apdu.size <= 9) {
+            return null
+        }
+
+        // 00 50 04 00 00 00 00
+        val data = apdu.copyOfRange(7, apdu.size - 2)
+        Log.i("SecureScan", "Received data: ${data.toHexString()} (size: ${data.size} byes)")
+        return data
+    }
+
+    private fun processGetChallengeResult(data: ByteArray, blockInfo: Byte): ByteArray {
+        Log.i("SecureScan", "Block info: $blockInfo")
+        return arrayOf(0xF0.toByte(), 0xF0.toByte()).toByteArray()
+    }
 
     private fun processGetKey(block: Int): ByteArray {
         val size = 250

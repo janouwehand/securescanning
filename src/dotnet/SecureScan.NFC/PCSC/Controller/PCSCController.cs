@@ -67,7 +67,7 @@ namespace SecureScan.NFC.PCSC.Controller
 
       try
       {
-        var isoReader = new IsoReader(context: context, readerName: readerName, mode: SCardShareMode.Shared, protocol: SCardProtocol.Any, releaseContextOnDispose: false);
+        var isoReader = new IsoReader(context: context, readerName: readerName, mode: SCardShareMode.Shared, protocol: SCardProtocol.Any, releaseContextOnDispose: true);
         return (context, isoReader);
       }
       catch (RemovedCardException)
