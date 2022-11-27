@@ -7,19 +7,12 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
-import com.karumi.dexter.Dexter
-import com.karumi.dexter.PermissionToken
-import com.karumi.dexter.listener.PermissionDeniedResponse
-import com.karumi.dexter.listener.PermissionGrantedResponse
-import com.karumi.dexter.listener.PermissionRequest
-import com.karumi.dexter.listener.single.PermissionListener
 import nl.ou.securescan.abilities.Permissions
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.databinding.ActivityMainBinding
@@ -42,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         button.text = "sdsdgsdg"
         button.setOnClickListener { makeCert(this.baseContext) }*/
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val navController = findNavController(R.id.StartFragment)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
@@ -65,11 +58,11 @@ class MainActivity : AppCompatActivity() {
         return
 
         var cm = CertificateManager()
-        if (!cm.HasCertificate()) {
-            cm.CreateCertificate("J.L.O. Ouwehand", "jan@softable.nl")
+        if (!cm.hasCertificate()) {
+            cm.createCertificate(context, "J.L.O. Ouwehand", "jan@softable.nl")
         }
 
-        var cert = cm.GetCertificate()
+        var cert = cm.getCertificate()
         var enc = cert?.encoded
 
         Log.i("SecureScan", "Sdaizeip: ${enc?.size}")
@@ -100,7 +93,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val navController = findNavController(R.id.StartFragment)
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
     }

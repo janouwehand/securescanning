@@ -78,8 +78,8 @@ class FirstUsageCreateCertificate : Fragment() {
     }
 
     private fun createCertificate(name: String, email: String) {
-        var cm=CertificateManager()
-        cm.CreateCertificate(name, email)
+        var cm = CertificateManager()
+        cm.createCertificate(requireContext(), name, email)
         findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
     }
 

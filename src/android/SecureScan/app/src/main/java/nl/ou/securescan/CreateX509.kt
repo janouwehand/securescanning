@@ -98,7 +98,7 @@ class CreateX509 {
             subPubKeyInfo
         )
 
-        val usage = KeyUsage(KeyUsage.digitalSignature or KeyUsage.keyEncipherment)
+        val usage = KeyUsage(KeyUsage.digitalSignature or KeyUsage.keyEncipherment or KeyUsage.dataEncipherment)
         builder.addExtension(Extension.keyUsage, false, usage)
 
         val signer: ContentSigner =
