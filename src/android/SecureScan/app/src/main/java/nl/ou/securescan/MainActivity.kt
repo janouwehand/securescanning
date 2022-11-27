@@ -1,26 +1,28 @@
 package nl.ou.securescan
 
 import android.Manifest
+import android.content.Context
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
+import com.google.android.material.snackbar.Snackbar
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionDeniedResponse
 import com.karumi.dexter.listener.PermissionGrantedResponse
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.single.PermissionListener
+import nl.ou.securescan.abilities.Permissions
+import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.databinding.ActivityMainBinding
-import java.io.File
-import java.security.KeyPair
 
 
 class MainActivity : AppCompatActivity() {
@@ -38,14 +40,14 @@ class MainActivity : AppCompatActivity() {
 
         var button = findViewById<Button>(R.id.buttonMakeCert)
         button.text = "sdsdgsdg"
-        //button.setOnClickListener {   }
+        button.setOnClickListener { makeCert(this.baseContext) }
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.fab.setOnClickListener { view ->
-            createCert()
+            createCert(view)
             /*Snackbar.make(view, "create cert", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()*/
         }
@@ -55,48 +57,33 @@ class MainActivity : AppCompatActivity() {
         //buttonMakeCert
     }
 
-    fun MakeCert() {
+    private fun makeCert(context: Context) {
 
+        val pm = context.packageManager
+
+        for (f in pm.systemAvailableFeatures) {
+            Log.i("SecureScan", "${f.name}: ${f.flags}")
+        }
+
+        return
+
+        var cm = CertificateManager()
+        if (!cm.HasCertificate()) {
+            cm.CreateCertificate("J.L.O. Ouwehand", "jan@softable.nl")
+        }
+
+        var cert = cm.GetCertificate()
+        var enc = cert?.encoded
+
+        Log.i("SecureScan", "Sdaizeip: ${enc?.size}")
     }
 
-    private fun createCert() {
-
-        Dexter.withActivity(this)
-            .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            .withListener(object : PermissionListener {
-                override fun onPermissionGranted(response: PermissionGrantedResponse) {
-                    // permission is granted, open the camera
-                    Log.i("SecureScan", "JOEPIE SCHRIJFTOEGANG!")
-
-                    var map =
-                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) //.getExternalStorageDirectory()
-                    var bestand = File(map, "SecureScan.pfx")
-                    Log.i("SecureScan", bestand.absolutePath)
-
-                    //var x509 = CreateX509().execute()
-
-                    //bestand.writeBytes(x509.encoded)
-                    //bestand.writeText("TEst")
-                    //Log.i("SecureScan", x509.serialNumber.toString())
-
-                }
-
-                override fun onPermissionDenied(response: PermissionDeniedResponse) {
-                    // check for permanent denial of permission
-                    if (response.isPermanentlyDenied) {
-                        // navigate user to app settings
-                        Log.i("SecureScan", "GEEN SCHRIJFTOEGANG!")
-                    }
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permission: PermissionRequest?,
-                    token: PermissionToken
-                ) {
-                    token.continuePermissionRequest()
-                }
-            }).check()
-
+    private fun createCert(view: View) {
+        Permissions().ensurePermission(this, Manifest.permission.CAMERA)
+        { name, requested, granted ->
+            Snackbar.make(view, "$name req: $requested gran:$granted", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
