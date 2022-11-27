@@ -125,11 +125,6 @@ class SecureScanApduService : HostApduService() {
 
         var slice = sliceData(challengeSignature!!, block)
         return slice
-
-        /*return if (block > 10)
-            byteArrayOf()
-        else
-            arrayOf(0xF0.toByte(), 0xF0.toByte()).toByteArray()*/
     }
 
     private fun sliceData(data: ByteArray, block: Int): ByteArray {
@@ -152,26 +147,7 @@ class SecureScanApduService : HostApduService() {
         return ret
     }
 
-    private fun processGetKey(block: Int): ByteArray {
-        val size = 250
-        val fromIndex = (block - 1) * size
-        val bs = x509.encoded
-
-        var toIndex = fromIndex + size - 1
-
-        if (toIndex > bs.size) {
-            toIndex = bs.size - 1
-        }
-
-        if (toIndex <= fromIndex) {
-            Log.i("SecureScan", "Geen bytes meer over")
-            return arrayOf<Byte>().toByteArray()
-        }
-        Log.i("SecureScan", "Sending bytes $fromIndex to $toIndex (size: ${bs.size})")
-
-        val ret = bs.sliceArray(fromIndex..toIndex)
-        return ret
-    }
+    private fun processGetKey(block: Int): ByteArray = sliceData(x509.encoded, block)
 
     private fun combineResult(data: ByteArray, sw1: Byte = 0x00, sw2: Byte = 0x00): ByteArray =
         data.plus(sw1).plus(sw2)
