@@ -38,23 +38,20 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        var button = findViewById<Button>(R.id.buttonMakeCert)
+        /*var button = findViewById<Button>(R.id.buttonMakeCert)
         button.text = "sdsdgsdg"
-        button.setOnClickListener { makeCert(this.baseContext) }
+        button.setOnClickListener { makeCert(this.baseContext) }*/
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        binding.fab.setOnClickListener { view ->
-            createCert(view)
-            /*Snackbar.make(view, "create cert", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()*/
-        }
+//        binding.fab.setOnClickListener { view ->
+//            createCert(view)
+//            /*Snackbar.make(view, "create cert", Snackbar.LENGTH_LONG)
+//                .setAction("Action", null).show()*/
+//        }
 
-        //binding.
-        //R.id.buttonMakeCert
-        //buttonMakeCert
     }
 
     private fun makeCert(context: Context) {

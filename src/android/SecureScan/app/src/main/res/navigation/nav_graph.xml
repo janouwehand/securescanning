@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/FirstFragment"
-        android:name="nl.ou.securescan.FirstFragment"
+        android:name="nl.ou.securescan.FirstUsageCreateCertificate"
         android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        tools:layout="@layout/first_usage_create_certificate">
 
         <action
             android:id="@+id/action_FirstFragment_to_SecondFragment"

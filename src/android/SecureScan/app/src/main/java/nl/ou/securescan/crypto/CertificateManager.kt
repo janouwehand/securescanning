@@ -44,15 +44,15 @@ class CertificateManager {
             ALIAS,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_VERIFY or KeyProperties.PURPOSE_SIGN
         )
-            //.setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
-            .setDigests(KeyProperties.DIGEST_SHA256)
+            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-            .setCertificateSubject(X500Principal("EMAILADDRESS=$email, CN=$name"))
-            .setKeyValidityStart(startDate)
+            //.setCertificateSubject(X500Principal("EMAILADDRESS=$email, CN=$name"))
+            .setCertificateSubject(X500Principal("CN=$name"))
+            //.setKeyValidityStart(startDate)
             .setCertificateNotBefore(startDate)
             .setCertificateNotAfter(endDate)
-            .setIsStrongBoxBacked(true)
-            .setKeySize(2048)
+            //.setIsStrongBoxBacked(true)
+            //.setKeySize(2048)
             .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
             .build()
 
