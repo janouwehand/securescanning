@@ -2,17 +2,23 @@ package nl.ou.securescan.crypto
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import androidx.annotation.RequiresApi
 import nl.ou.securescan.abilities.Permissions
 import java.security.KeyPairGenerator
 import java.security.KeyStore
-import java.security.cert.Certificate
+import java.security.cert.X509Certificate
 import java.security.spec.RSAKeyGenParameterSpec
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.*
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import javax.security.auth.x500.X500Principal
+
+data class CertificateInfo(val name: String, val email: String, val certificate: X509Certificate)
 
 class CertificateManager {
 
@@ -27,16 +33,59 @@ class CertificateManager {
         return keyStore.containsAlias(ALIAS)
     }
 
-    fun getCertificate(): Certificate? {
+    private fun extractCertificateInfo(cert: X509Certificate): CertificateInfo {
+        val subject = cert.subjectDN.name
+
+        fun getName(): String {
+            val pattern = Pattern.compile("O=(.*?)(?:,|\$)")
+            val matcher: Matcher = pattern.matcher(subject)
+            return if (matcher.find()) {
+                matcher.group(1)!!
+            } else {
+                ""
+            }
+        }
+
+        fun getEmail(): String {
+            val pattern = Pattern.compile("CN=(.*?)(?:,|\$)")
+            val matcher: Matcher = pattern.matcher(subject)
+            return if (matcher.find()) {
+                matcher.group(1)!!
+            } else {
+                ""
+            }
+        }
+
+        var name = getName()
+        var email = getEmail()
+
+        return CertificateInfo(name, email, cert)
+    }
+
+    fun getCertificateInfo(): CertificateInfo? {
         val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
         keyStore.load(null)
         return if (keyStore.containsAlias(ALIAS)) {
-            keyStore.getCertificate(ALIAS)
+            val cert = keyStore.getCertificate(ALIAS)
+            if (cert is X509Certificate) {
+                return extractCertificateInfo(cert)
+            } else {
+                null
+            }
         } else {
             null
         }
     }
 
+    fun removeCertificate() {
+        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
+        keyStore.load(null)
+        if (keyStore.containsAlias(ALIAS)) {
+            keyStore.deleteEntry(ALIAS)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
     fun createCertificate(context: Context, name: String, email: String) {
         val startDate = Date()
         val endDate = Date.from(LocalDate.of(2099, 12, 31).atStartOfDay().toInstant(ZoneOffset.UTC))

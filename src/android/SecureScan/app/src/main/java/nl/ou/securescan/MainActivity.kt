@@ -1,26 +1,27 @@
 package nl.ou.securescan
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import nl.ou.securescan.abilities.Permissions
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.databinding.ActivityMainBinding
+import java.security.cert.X509Certificate
 
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
+    private val certman: CertificateManager = CertificateManager()
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,23 +31,37 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
-
-        /*var button = findViewById<Button>(R.id.buttonMakeCert)
-        button.text = "sdsdgsdg"
-        button.setOnClickListener { makeCert(this.baseContext) }*/
-
-        val navController = findNavController(R.id.StartFragment)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
-//        binding.fab.setOnClickListener { view ->
-//            createCert(view)
-//            /*Snackbar.make(view, "create cert", Snackbar.LENGTH_LONG)
-//                .setAction("Action", null).show()*/
-//        }
-
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        if (certman.hasCertificate()) {
+            var certInfo = certman.getCertificateInfo()!!
+            binding.toolbar.subtitle = certInfo.email
+        } else {
+            handleNoCertificate()
+        }
+    }
+
+    private fun handleNoCertificate() {
+        val builder = AlertDialog.Builder(this@MainActivity)
+        builder.setMessage("Secure Scan needs to create a personal certificate before you can use the application. Do you want to continue?")
+            .setCancelable(false)
+            .setTitle("Personal certificate")
+            .setPositiveButton("Yes") { dialog, id ->
+                var intent = Intent(baseContext, CreateCertificateActivity::class.java)
+                startActivity(intent)
+            }
+            .setNegativeButton("No") { dialog, id ->
+                dialog.dismiss()
+                finish()
+            }
+        val alert = builder.create()
+        alert.show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun makeCert(context: Context) {
 
         val pm = context.packageManager
@@ -62,10 +77,7 @@ class MainActivity : AppCompatActivity() {
             cm.createCertificate(context, "J.L.O. Ouwehand", "jan@softable.nl")
         }
 
-        var cert = cm.getCertificate()
-        var enc = cert?.encoded
 
-        Log.i("SecureScan", "Sdaizeip: ${enc?.size}")
     }
 
     private fun createCert(view: View) {
@@ -93,8 +105,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.StartFragment)
+        /*val navController = findNavController(R.id.StartFragment)
         return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+                || super.onSupportNavigateUp()*/
+        return false
     }
 }

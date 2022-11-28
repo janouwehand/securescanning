@@ -1,15 +1,12 @@
 <resources>
-    <string name="app_name">SecureScan</string>
+    <string name="app_name">Secure Scan</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">Secure Scan app</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-
     <string name="servicedesc">SecureScan HCE Service</string>
     <string name="aiddescription">SecureScan AID</string>
+    <string name="makecert_enter_your_full_name">Please enter your full name</string>
+    <string name="makecert_requestnameandemail">Please provide your name and email address in order to create ye personal certificate.</string>
+    <string name="makecert_explanation">The certificate will be created within the Android KeyStore. As such, private key operations will be performed in a Trusted Execution Environment or in a so called strongbox (separate security chip), when your device supports this.</string>
+    <string name="your_name">Your name</string>
+    <string name="your_email_address">Your email address</string>
+    <string name="create_my_certificate">Create my certificate</string>
 </resources>
