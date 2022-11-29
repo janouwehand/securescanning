@@ -16,7 +16,7 @@ import com.google.android.material.snackbar.Snackbar
 import nl.ou.securescan.abilities.Permissions
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.databinding.ActivityMainBinding
-import java.security.cert.X509Certificate
+import javax.crypto.Cipher
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,6 +31,43 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+
+        binding.buttonEncrypt.setOnClickListener {
+            val ciphertext = tryEncrypt()
+            val str = TryDecrypt(ciphertext)
+            binding.buttonEncrypt.text = str
+        }
+
+        //binding.toolbar.menu.ac
+    }
+
+    private fun tryEncrypt(): ByteArray {
+        val certInfo = certman.getCertificateInfo()!!
+        val cert = certInfo.certificate
+
+        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, cert.publicKey)
+
+        val plaintext = "Dit is een test".toByteArray()
+        Log.i("SecureScan", "PlainText  : ${plaintext.toHexString()}")
+
+        return cipher.doFinal(plaintext)
+    }
+
+    private fun TryDecrypt(ciphertext: ByteArray): String {
+        val privateKey = certman.getPrivateKey()
+        Log.i("SecureScan", "privateKey: ${privateKey.toString()}")
+
+        //val certInfo = certman.getCertificateInfo()!!
+        //val cert = certInfo.certificate
+
+        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        cipher.init(Cipher.DECRYPT_MODE, privateKey)
+        val plaintext = cipher.doFinal(ciphertext)
+
+        Log.i("SecureScan", "PlainText 2: ${plaintext.toHexString()}")
+
+        return String(plaintext)
     }
 
     override fun onResume() {
@@ -74,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         var cm = CertificateManager()
         if (!cm.hasCertificate()) {
-            cm.createCertificate(context, "J.L.O. Ouwehand", "jan@softable.nl")
+            cm.createCertificate("J.L.O. Ouwehand", "jan@softable.nl")
         }
 
 
@@ -100,8 +137,26 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_settings -> true
+            R.id.action_removecert -> removeCertificate()
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun removeCertificate(): Boolean {
+        val builder = AlertDialog.Builder(this@MainActivity)
+        builder.setMessage("Are you sure that you want to delete the certificate?")
+            .setCancelable(false)
+            .setTitle("Delete certificate?")
+            .setPositiveButton("Yes") { dialog, id ->
+                CertificateManager().removeCertificate()
+                finish()
+            }
+            .setNegativeButton("No") { dialog, id ->
+                dialog.dismiss()
+            }
+        val alert = builder.create()
+        alert.show()
+        return true
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -110,4 +165,7 @@ class MainActivity : AppCompatActivity() {
                 || super.onSupportNavigateUp()*/
         return false
     }
+
+    fun ByteArray.toHexString() =
+        asUByteArray().joinToString("") { it.toString(16).padStart(2, '0') }
 }

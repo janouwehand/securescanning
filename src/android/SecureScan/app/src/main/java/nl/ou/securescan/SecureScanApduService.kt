@@ -3,11 +3,11 @@ package nl.ou.securescan
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.Signature
 import java.security.cert.X509Certificate
-import java.util.*
 
 
 class SecureScanApduService : HostApduService() {
@@ -25,7 +25,7 @@ class SecureScanApduService : HostApduService() {
     init {
 
         keyPair = generateKeyPair()
-        x509 = CreateX509().execute(keyPair)
+        x509 = GenerateCertificateBC().execute(keyPair, "Pipoo", "pipoo@sos.nl")
 
         /*val ks: KeyStore = KeyStore.getInstance("PKCS12").apply {
             load(null)

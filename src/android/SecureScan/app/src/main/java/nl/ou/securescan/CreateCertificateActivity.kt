@@ -1,13 +1,12 @@
 package nl.ou.securescan
 
 import android.app.AlertDialog
-import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.databinding.ActivityCreateCertificateBinding
-import nl.ou.securescan.databinding.ActivityMainBinding
 import java.util.regex.Pattern
 
 
@@ -15,6 +14,7 @@ class CreateCertificateActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCreateCertificateBinding
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,9 +66,10 @@ class CreateCertificateActivity : AppCompatActivity() {
         return isValid
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun createCertificate(name: String, email: String) {
         var cm = CertificateManager()
-        cm.createCertificate(baseContext, name, email)
+        cm.createCertificate(name, email)
 
         val builder = AlertDialog.Builder(this)
         builder.setMessage("Your personal certificate has successfully been created.")

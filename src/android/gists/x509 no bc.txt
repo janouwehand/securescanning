@@ -1,0 +1,52 @@
+ @RequiresApi(Build.VERSION_CODES.P)
+    fun createCertificate(context: Context, name: String, email: String) {
+        val startDate = Date()
+        val endDate = Date.from(LocalDate.of(2099, 12, 31).atStartOfDay().toInstant(ZoneOffset.UTC))
+
+        //1.2.840.113549.1.9.1
+
+        var builder = KeyGenParameterSpec.Builder(
+            ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_VERIFY or KeyProperties.PURPOSE_SIGN
+        )
+            .setDigests(KeyProperties.DIGEST_SHA256)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+            .setCertificateSubject(X500Principal("CN=$email, O=$name"))
+            .setKeyValidityStart(startDate)
+            .setCertificateNotBefore(startDate)
+            .setCertificateNotAfter(endDate)
+            .setKeySize(2048)
+            .setAttestationChallenge("hello world".toByteArray())
+            .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
+            .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
+            .setUserConfirmationRequired(true)
+
+        if (Permissions().hasPermission(context, PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+            builder = builder.setIsStrongBoxBacked(true)
+        }
+
+        val spec = builder.build()
+
+        val generator: KeyPairGenerator =
+            KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROIDKEYSTORE)
+        generator.initialize(spec)
+        val keypair = generator.generateKeyPair()
+        val privateKey = keypair.private
+
+        var cert = getCertificateInfo()
+        removeCertificate()
+
+        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
+        keyStore.load(null)
+        keyStore.setKeyEntry(ALIAS, privateKey, null, arrayOf(cert!!.certificate))
+    }
+	
+	/*fun getSecretKey(): SecretKey? {
+        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
+        keyStore.load(null)
+        val existingKey = keyStore.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry
+        //return existingKey?.secretKey ?: createKey()
+        return existingKey?.secretKey
+    }*/
+	
+	// CN=if gugyfvy,1.2.840.113549.1.9.1=#160f6a616e40616e796d617463682e6e6c

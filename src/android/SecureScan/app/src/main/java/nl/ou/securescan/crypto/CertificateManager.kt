@@ -1,22 +1,11 @@
 package nl.ou.securescan.crypto
 
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import androidx.annotation.RequiresApi
-import nl.ou.securescan.abilities.Permissions
-import java.security.KeyPairGenerator
+import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
+import java.security.Key
 import java.security.KeyStore
 import java.security.cert.X509Certificate
-import java.security.spec.RSAKeyGenParameterSpec
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import javax.security.auth.x500.X500Principal
 
 data class CertificateInfo(val name: String, val email: String, val certificate: X509Certificate)
 
@@ -62,9 +51,22 @@ class CertificateManager {
         return CertificateInfo(name, email, cert)
     }
 
+    fun getPrivateKey(): Key? {
+        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
+        keyStore.load(null)
+
+        if (keyStore.containsAlias(ALIAS)) {
+            val key = keyStore.getKey(ALIAS, null)
+            return key
+        } else {
+            return null
+        }
+    }
+
     fun getCertificateInfo(): CertificateInfo? {
         val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
         keyStore.load(null)
+
         return if (keyStore.containsAlias(ALIAS)) {
             val cert = keyStore.getCertificate(ALIAS)
             if (cert is X509Certificate) {
@@ -85,36 +87,23 @@ class CertificateManager {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
-    fun createCertificate(context: Context, name: String, email: String) {
-        val startDate = Date()
-        val endDate = Date.from(LocalDate.of(2099, 12, 31).atStartOfDay().toInstant(ZoneOffset.UTC))
+    fun createCertificate(name: String, email: String) {
+        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
+        keyStore.load(null)
 
-        //1.2.840.113549.1.9.1
+        val cmc = GenerateCertificateBC()
+        val keypair = cmc.generateKeyPair()
+        val cert = GenerateCertificateBC().execute(keypair, name, email)
 
-        var builder = KeyGenParameterSpec.Builder(
-            ALIAS,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_VERIFY or KeyProperties.PURPOSE_SIGN
-        )
-            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-            .setCertificateSubject(X500Principal("CN=$email, O=$name"))
-            .setKeyValidityStart(startDate)
-            .setCertificateNotBefore(startDate)
-            .setCertificateNotAfter(endDate)
-            .setKeySize(2048)
-            .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
-            .setUserConfirmationRequired(true)
-
-        if (Permissions().hasPermission(context, PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
-            builder = builder.setIsStrongBoxBacked(true)
-        }
-
-        val spec = builder.build()
-
-        val generator: KeyPairGenerator =
-            KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROIDKEYSTORE)
-        generator.initialize(spec)
-        generator.generateKeyPair()
+        keyStore.setCertificateEntry(ALIAS, cert)
+        keyStore.setKeyEntry(ALIAS, keypair.private, null, arrayOf(cert))
     }
+
+    /*fun getSecretKey(): SecretKey? {
+        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
+        keyStore.load(null)
+        val existingKey = keyStore.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry
+        //return existingKey?.secretKey ?: createKey()
+        return existingKey?.secretKey
+    }*/
 }
