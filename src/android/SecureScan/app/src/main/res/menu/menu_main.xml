@@ -8,8 +8,8 @@
         android:title="@string/action_settings"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_removecert"
+        android:id="@+id/action_certificateInfo"
         android:orderInCategory="200"
-        android:title="Remove certificate"
+        android:title="@string/show_certificate_info"
         app:showAsAction="never" />
 </menu>

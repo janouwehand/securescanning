@@ -2,13 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/coordinatorLayout3"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".CertificateInfoActivity">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout3"
+        android:id="@+id/appBarLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:theme="@style/Theme.SecureScan.AppBarOverlay"
@@ -24,27 +23,5 @@
             app:popupTheme="@style/Theme.SecureScan.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>
-
-    <Button
-        android:id="@+id/buttonEncrypt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="150dp"
-        android:layout_marginTop="330dp"
-        android:layout_marginEnd="114dp"
-        android:text="Test Encrypt"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_begin="20dp" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

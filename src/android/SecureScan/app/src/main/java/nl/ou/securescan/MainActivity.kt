@@ -96,9 +96,14 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_settings -> true
-            R.id.action_removecert -> removeCertificate()
+            R.id.action_certificateInfo -> showCertificateInfo()
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showCertificateInfo(): Boolean {
+        startActivity(Intent(baseContext, CertificateInfoActivity::class.java))
+        return true
     }
 
     private fun removeCertificate(): Boolean {

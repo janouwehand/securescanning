@@ -9,4 +9,5 @@
     <string name="your_name">Your name</string>
     <string name="your_email_address">Your email address</string>
     <string name="create_my_certificate">Create my certificate</string>
+    <string name="show_certificate_info">Show certificate info</string>
 </resources>
