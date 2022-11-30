@@ -1,13 +1,8 @@
 package nl.ou.securescan.crypto
 
 import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
-import java.security.Key
 import java.security.KeyStore
 import java.security.cert.X509Certificate
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-
-data class CertificateInfo(val name: String, val email: String, val certificate: X509Certificate)
 
 class CertificateManager {
 
@@ -22,55 +17,14 @@ class CertificateManager {
         return keyStore.containsAlias(ALIAS)
     }
 
-    private fun extractCertificateInfo(cert: X509Certificate): CertificateInfo {
-        val subject = cert.subjectDN.name
-
-        fun getName(): String {
-            val pattern = Pattern.compile("O=(.*?)(?:,|\$)")
-            val matcher: Matcher = pattern.matcher(subject)
-            return if (matcher.find()) {
-                matcher.group(1)!!
-            } else {
-                ""
-            }
-        }
-
-        fun getEmail(): String {
-            val pattern = Pattern.compile("CN=(.*?)(?:,|\$)")
-            val matcher: Matcher = pattern.matcher(subject)
-            return if (matcher.find()) {
-                matcher.group(1)!!
-            } else {
-                ""
-            }
-        }
-
-        var name = getName()
-        var email = getEmail()
-
-        return CertificateInfo(name, email, cert)
-    }
-
-    fun getPrivateKey(): Key? {
-        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
-        keyStore.load(null)
-
-        if (keyStore.containsAlias(ALIAS)) {
-            val key = keyStore.getKey(ALIAS, null)
-            return key
-        } else {
-            return null
-        }
-    }
-
-    fun getCertificateInfo(): CertificateInfo? {
+    fun getCertificate(): X509Certificate? {
         val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
         keyStore.load(null)
 
         return if (keyStore.containsAlias(ALIAS)) {
             val cert = keyStore.getCertificate(ALIAS)
             if (cert is X509Certificate) {
-                return extractCertificateInfo(cert)
+                return cert
             } else {
                 null
             }

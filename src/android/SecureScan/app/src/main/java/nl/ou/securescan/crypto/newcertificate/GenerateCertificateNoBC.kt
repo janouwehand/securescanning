@@ -1,13 +1,10 @@
 package nl.ou.securescan.crypto.newcertificate
 
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import androidx.annotation.RequiresApi
 import nl.ou.securescan.crypto.CertificateManager
 import java.security.KeyPair
 import java.security.KeyPairGenerator
-import java.security.KeyStore
 import java.security.cert.X509Certificate
 import java.security.spec.RSAKeyGenParameterSpec
 import java.time.LocalDate
@@ -23,7 +20,7 @@ class GenerateCertificateNoBC {
 
         //1.2.840.113549.1.9.1
 
-        var builder = KeyGenParameterSpec.Builder(
+        val builder = KeyGenParameterSpec.Builder(
             CertificateManager.ALIAS,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_VERIFY or KeyProperties.PURPOSE_SIGN
         )
@@ -54,7 +51,7 @@ class GenerateCertificateNoBC {
         val keypair = generator.generateKeyPair()
         val privateKey = keypair.private
 
-        /* var cert = getCertificateInfo()
+        /* var cert = getCertificate()
          removeCertificate()
 
          val keyStore = KeyStore.getInstance(CertificateManager.ANDROIDKEYSTORE)

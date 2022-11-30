@@ -30,51 +30,22 @@ class GenerateCertificateBC {
         return kpg.genKeyPair()
     }
 
-    // transform to base64 with begin and end line
-    fun publicKeyToPem(publicKey: PublicKey): String {
-        val base64PubKey = Base64.getEncoder().encodeToString(publicKey.encoded)
-
-        return "-----BEGIN PUBLIC KEY-----\n" +
-                base64PubKey.replace("(.{64})".toRegex(), "$1\n") +
-                "\n-----END PUBLIC KEY-----\n"
-    }
-
-    fun privateKeyToPem(privateKey: PrivateKey): String {
-        val base64PubKey = Base64.getEncoder().encodeToString(privateKey.encoded)
-
-        return "-----BEGIN PRIVATE KEY-----\n" +
-                base64PubKey.replace("(.{64})".toRegex(), "$1\n") +
-                "\n-----END PRIVATE KEY-----\n"
-    }
-
-
-    fun certificateToPem(certificate: X509Certificate): String {
-        val base64PubKey = Base64.getEncoder().encodeToString(certificate.encoded)
-
-        return "-----BEGIN CERTIFICATE-----\n" +
-                base64PubKey.replace("(.{64})".toRegex(), "$1\n") +
-                "\n-----END CERTIFICATE-----\n"
-    }
-
     private fun createSelfSignedCertificate(
         keyPair: KeyPair,
         name: String,
         email: String
     ): X509Certificate {
-        val name = X500Name("CN=$email, O=$name")
+        val x500name = X500Name("CN=$email, O=$name")
         val subPubKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.public.encoded)
         val start = Date()
         val until = Date.from(LocalDate.of(2100, 12, 31).atStartOfDay().toInstant(ZoneOffset.UTC))
-        /*val until = Date.from(
-            LocalDate.now().plus(365, ChronoUnit.DAYS).atStartOfDay().toInstant(ZoneOffset.UTC)
-        )*/
 
         val builder = X509v3CertificateBuilder(
-            name,
+            x500name,
             BigInteger(128, SecureRandom()),
             start,
             until,
-            name,
+            x500name,
             subPubKeyInfo
         )
 
@@ -89,8 +60,7 @@ class GenerateCertificateBC {
 
         val converter = JcaX509CertificateConverter()
         converter.setProvider(BouncyCastleProvider())
-        val cert = converter.getCertificate(holder)
-        return cert
+        return converter.getCertificate(holder)
     }
 
 }

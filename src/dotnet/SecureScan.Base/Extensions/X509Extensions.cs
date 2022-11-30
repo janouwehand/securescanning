@@ -11,7 +11,7 @@ namespace SecureScan.Base.Extensions
     {
       public string CN { get; set; }
 
-      public string E { get; set; }
+      public string O { get; set; }
 
       public static X509Parts FromString(string s)
       {
@@ -23,7 +23,7 @@ namespace SecureScan.Base.Extensions
         var model = new X509Parts
         {
           CN = rs.FirstOrDefault(x => x.StartsWith("CN="))?.Substring(3),
-          E = rs.FirstOrDefault(x => x.StartsWith("E="))?.Substring(2)
+          O = rs.FirstOrDefault(x => x.StartsWith("O="))?.Substring(2)
         };
         return model;
       }

@@ -1,27 +1,24 @@
 package nl.ou.securescan
 
-import android.Manifest
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.snackbar.Snackbar
-import nl.ou.securescan.abilities.Permissions
 import nl.ou.securescan.crypto.CertificateManager
+import nl.ou.securescan.crypto.extensions.decryptData
+import nl.ou.securescan.crypto.extensions.encryptData
+import nl.ou.securescan.crypto.extensions.getNameAndEmail
+import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.databinding.ActivityMainBinding
-import javax.crypto.Cipher
+import kotlin.random.Random
 
 
 class MainActivity : AppCompatActivity() {
 
-    private val certman: CertificateManager = CertificateManager()
+    private val certificateManager: CertificateManager = CertificateManager()
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,47 +31,36 @@ class MainActivity : AppCompatActivity() {
 
         binding.buttonEncrypt.setOnClickListener {
             val ciphertext = tryEncrypt()
-            val str = TryDecrypt(ciphertext)
+            val str = tryDecrypt(ciphertext)
             binding.buttonEncrypt.text = str
         }
-
-        //binding.toolbar.menu.ac
     }
+
+    private val rand = Random(5000)
 
     private fun tryEncrypt(): ByteArray {
-        val certInfo = certman.getCertificateInfo()!!
-        val cert = certInfo.certificate
+        val cert = certificateManager.getCertificate()!!
 
-        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
-        cipher.init(Cipher.ENCRYPT_MODE, cert.publicKey)
+        val plaintext = "${rand.nextDouble()}".toByteArray()
 
-        val plaintext = "Dit is een test".toByteArray()
         Log.i("SecureScan", "PlainText  : ${plaintext.toHexString()}")
 
-        return cipher.doFinal(plaintext)
+        return cert.encryptData(plaintext)
     }
 
-    private fun TryDecrypt(ciphertext: ByteArray): String {
-        val privateKey = certman.getPrivateKey()
-        Log.i("SecureScan", "privateKey: ${privateKey.toString()}")
-
-        //val certInfo = certman.getCertificateInfo()!!
-        //val cert = certInfo.certificate
-
-        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
-        cipher.init(Cipher.DECRYPT_MODE, privateKey)
-        val plaintext = cipher.doFinal(ciphertext)
-
+    private fun tryDecrypt(ciphertext: ByteArray): String {
+        val cert = certificateManager.getCertificate()!!
+        val plaintext = cert.decryptData(ciphertext)
         Log.i("SecureScan", "PlainText 2: ${plaintext.toHexString()}")
-
         return String(plaintext)
     }
 
     override fun onResume() {
         super.onResume()
 
-        if (certman.hasCertificate()) {
-            var certInfo = certman.getCertificateInfo()!!
+        if (certificateManager.hasCertificate()) {
+            val cert = certificateManager.getCertificate()!!
+            val certInfo = cert.getNameAndEmail()
             binding.toolbar.subtitle = certInfo.email
         } else {
             handleNoCertificate()
@@ -86,43 +72,16 @@ class MainActivity : AppCompatActivity() {
         builder.setMessage("Secure Scan needs to create a personal certificate before you can use the application. Do you want to continue?")
             .setCancelable(false)
             .setTitle("Personal certificate")
-            .setPositiveButton("Yes") { dialog, id ->
-                var intent = Intent(baseContext, CreateCertificateActivity::class.java)
+            .setPositiveButton("Yes") { _, _ ->
+                val intent = Intent(baseContext, CreateCertificateActivity::class.java)
                 startActivity(intent)
             }
-            .setNegativeButton("No") { dialog, id ->
+            .setNegativeButton("No") { dialog, _ ->
                 dialog.dismiss()
                 finish()
             }
         val alert = builder.create()
         alert.show()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.P)
-    private fun makeCert(context: Context) {
-
-        val pm = context.packageManager
-
-        for (f in pm.systemAvailableFeatures) {
-            Log.i("SecureScan", "${f.name}: ${f.flags}")
-        }
-
-        return
-
-        var cm = CertificateManager()
-        if (!cm.hasCertificate()) {
-            cm.createCertificate("J.L.O. Ouwehand", "jan@softable.nl")
-        }
-
-
-    }
-
-    private fun createCert(view: View) {
-        Permissions().ensurePermission(this, Manifest.permission.CAMERA)
-        { name, requested, granted ->
-            Snackbar.make(view, "$name req: $requested gran:$granted", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -147,11 +106,11 @@ class MainActivity : AppCompatActivity() {
         builder.setMessage("Are you sure that you want to delete the certificate?")
             .setCancelable(false)
             .setTitle("Delete certificate?")
-            .setPositiveButton("Yes") { dialog, id ->
+            .setPositiveButton("Yes") { _, _ ->
                 CertificateManager().removeCertificate()
                 finish()
             }
-            .setNegativeButton("No") { dialog, id ->
+            .setNegativeButton("No") { dialog, _ ->
                 dialog.dismiss()
             }
         val alert = builder.create()
@@ -165,7 +124,5 @@ class MainActivity : AppCompatActivity() {
                 || super.onSupportNavigateUp()*/
         return false
     }
-
-    fun ByteArray.toHexString() =
-        asUByteArray().joinToString("") { it.toString(16).padStart(2, '0') }
 }
+

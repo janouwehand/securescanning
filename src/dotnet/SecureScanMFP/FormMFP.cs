@@ -213,8 +213,8 @@ namespace SecureScanMFP
       var cer = ownerInfo.X509Certificate().Value;
       var partsSubject = cer.GetSubjectParts();
 
-      Log($"Issued to name  : {partsSubject.CN}");
-      Log($"Issued to email : {partsSubject.E}");
+      Log($"Issued to name  : {partsSubject.O}");
+      Log($"Issued to email : {partsSubject.CN}");
       Log($"Serial          : {cer.GetSerialNumberString()}");
       Log($"Hash            : {cer.GetCertHash().ToHEX()}");
       Log($"Key algorithm   : {cer.GetKeyAlgorithm()} {cer.GetKeyAlgorithmParametersString()}");

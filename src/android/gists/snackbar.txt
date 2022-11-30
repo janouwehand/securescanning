@@ -1,0 +1,2 @@
+Snackbar.make(view, "$name req: $requested gran:$granted", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show()

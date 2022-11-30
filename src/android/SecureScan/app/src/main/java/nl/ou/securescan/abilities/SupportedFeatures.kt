@@ -18,7 +18,7 @@ class SupportedFeatures {
         var missing = arrayOf<String>()
         val pm = context.packageManager
         for (req in requiredFeatures) {
-            var has = pm.hasSystemFeature(req.feature)
+            val has = pm.hasSystemFeature(req.feature)
             if (!has) {
                 missing = missing.plus(req.name)
             }

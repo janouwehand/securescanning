@@ -1,9 +1,7 @@
 package nl.ou.securescan
 
 import android.app.AlertDialog
-import android.os.Build
 import android.os.Bundle
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.databinding.ActivityCreateCertificateBinding
@@ -14,7 +12,6 @@ class CreateCertificateActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCreateCertificateBinding
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -27,8 +24,8 @@ class CreateCertificateActivity : AppCompatActivity() {
         binding.toolbar.subtitle = "Create your personal certificate"
 
         binding.buttonCreateCertificate.setOnClickListener {
-            var name = binding.edtYourName.text
-            var email = binding.edtEmail.text
+            val name = binding.edtYourName.text
+            val email = binding.edtEmail.text
 
             var errors = false
 
@@ -66,16 +63,15 @@ class CreateCertificateActivity : AppCompatActivity() {
         return isValid
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     private fun createCertificate(name: String, email: String) {
-        var cm = CertificateManager()
+        val cm = CertificateManager()
         cm.createCertificate(name, email)
 
         val builder = AlertDialog.Builder(this)
         builder.setMessage("Your personal certificate has successfully been created.")
             .setCancelable(false)
             .setTitle("Success!")
-            .setNeutralButton("Continue") { dialog, id ->
+            .setNeutralButton("Continue") { _, _ ->
                 finish()
             }
         val alert = builder.create()
