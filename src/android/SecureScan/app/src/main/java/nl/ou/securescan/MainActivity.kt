@@ -102,7 +102,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCertificateInfo(): Boolean {
-        startActivity(Intent(baseContext, CertificateInfoActivity::class.java))
+        if (CertificateManager().hasCertificate()) {
+            startActivity(Intent(baseContext, CertificateInfoActivity::class.java))
+        }
         return true
     }
 

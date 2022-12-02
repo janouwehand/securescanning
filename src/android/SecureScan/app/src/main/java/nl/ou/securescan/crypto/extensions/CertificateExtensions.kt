@@ -1,8 +1,8 @@
 package nl.ou.securescan.crypto.extensions
 
 import nl.ou.securescan.crypto.CertificateManager
-import java.security.Key
 import java.security.KeyStore
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.*
@@ -76,7 +76,8 @@ fun X509Certificate.publicKeyToPem(): String {
 }
 
 fun X509Certificate.privateKeyToPem(): String {
-    val base64PubKey = Base64.getEncoder().encodeToString(getPrivateKey()!!.encoded)
+    val pk = getPrivateKey()
+    val base64PubKey = Base64.getEncoder().encodeToString(pk!!.encoded)
     return "-----BEGIN PRIVATE KEY-----\n" +
             base64PubKey.replace("(.{64})".toRegex(), "$1\n") +
             "\n-----END PRIVATE KEY-----\n"
@@ -87,4 +88,10 @@ fun X509Certificate.certificateToPem(): String {
     return "-----BEGIN CERTIFICATE-----\n" +
             base64PubKey.replace("(.{64})".toRegex(), "$1\n") +
             "\n-----END CERTIFICATE-----\n"
+}
+
+fun X509Certificate.getSHA1(): ByteArray {
+    val messageDigest = MessageDigest.getInstance("SHA-1")
+    messageDigest.update(encoded)
+    return messageDigest.digest()
 }

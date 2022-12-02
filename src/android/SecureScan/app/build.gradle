@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "nl.ou.securescan"
-        minSdk 33
+        minSdk 32
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -46,6 +46,7 @@ dependencies {
     implementation 'org.bouncycastle:bcpkix-jdk15to18:1.72'
     implementation 'org.bouncycastle:bcprov-jdk15to18:1.72'
     implementation 'com.karumi:dexter:4.2.0'
+    implementation 'com.github.arnab-kundu:Storage:1.0.2'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
