@@ -1,15 +1,22 @@
 package nl.ou.securescan
 
+import android.content.Context
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.decryptData
 import nl.ou.securescan.crypto.extensions.getPrivateKey
 import nl.ou.securescan.crypto.extensions.toHexString
+import nl.ou.securescan.data.Document
+import nl.ou.securescan.data.DocumentDatabase
 import java.security.PrivateKey
 import java.security.Signature
 import java.security.cert.X509Certificate
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.Date
 
 
 class SecureScanApduService : HostApduService() {
@@ -177,6 +184,21 @@ class SecureScanApduService : HostApduService() {
         var pwd = x509!!.decryptData(securecontainerpassword!!)
 
         Log.i("SecureScan", "Storing license, password: ${pwd.toHexString()}")
+
+        var db = DocumentDatabase.getDatabase(this.baseContext)
+        var dao = db.documentDao()
+
+        runBlocking {
+            dao.insert(
+                Document(
+                    null,
+                    "Test",
+                    LocalDateTime.now().toString(),
+                    securecontainerhash,
+                    securecontainerpassword
+                )
+            )
+        }
 
         this.securecontainerhash = null
         this.securecontainerpassword = null

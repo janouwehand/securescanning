@@ -7,11 +7,13 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.decryptData
 import nl.ou.securescan.crypto.extensions.encryptData
 import nl.ou.securescan.crypto.extensions.getNameAndEmail
 import nl.ou.securescan.crypto.extensions.toHexString
+import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityMainBinding
 import kotlin.random.Random
 
@@ -33,6 +35,14 @@ class MainActivity : AppCompatActivity() {
             val ciphertext = tryEncrypt()
             val str = tryDecrypt(ciphertext)
             binding.buttonEncrypt.text = str
+        }
+
+        var db = DocumentDatabase.getDatabase(baseContext)
+        var dao = db.documentDao()
+
+        runBlocking {
+            var all = dao.getAll()
+            binding.buttonEncrypt.text = "${all.size}"
         }
     }
 

@@ -174,6 +174,8 @@ namespace SecureScanMFP
     {
       Log("Abort requested.");
       cancellationTokenSource?.Cancel();
+      cancellationTokenSource?.Dispose();
+      cancellationTokenSource = null;
       SetState(MFPStates.Idle);
     }
 
@@ -258,6 +260,13 @@ namespace SecureScanMFP
 
     private void ExecuteSecureContainerCreatedWaitForNFC(byte[] hash, byte[] encryptedPassword)
     {
+      if (ownerInfo == null)
+      {
+        // Aborted
+        SetState(MFPStates.Idle);
+        return;
+      }
+
       SetState(MFPStates.SecureContainerCreated);
 
       Log("Please hold your smartphone again to the NFC tag to receive the license.");

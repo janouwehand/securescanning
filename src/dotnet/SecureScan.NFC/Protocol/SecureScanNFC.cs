@@ -56,17 +56,17 @@ namespace SecureScan.NFC.Protocol
     {
       var randomData = CryptoRandom.GetBytes(32).ToArray();
 
-      logger.Log($"Sending challenge: {randomData.ToHEX()} (size: {randomData.Length} bytes)", Color.DarkOrange);
+      logger.Log($"Sending challenge: {randomData.ToHEX()} (size: {randomData.Length} bytes)", Color.DarkOliveGreen);
 
       var signature = transceiver.RetrieveMultiApduData(Constants.CMDCHALLENGE, randomData, out _);
 
-      logger.Log($"Signature for challenge received (size: {signature.Length}). Now verifying...", Color.DarkOrange);
+      logger.Log($"Signature for challenge received (size: {signature.Length}). Now verifying...", Color.DarkOliveGreen);
 
       var valid = x509.VerifySignature(randomData, signature);
 
       if (valid)
       {
-        logger.Log($"Signature sucessfully verified!", Color.DarkOrange);
+        logger.Log($"Signature sucessfully verified!", Color.DarkOliveGreen);
       }
 
       return valid;
