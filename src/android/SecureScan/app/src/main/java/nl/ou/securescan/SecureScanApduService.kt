@@ -4,6 +4,7 @@ import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
 import nl.ou.securescan.crypto.CertificateManager
+import nl.ou.securescan.crypto.extensions.decryptData
 import nl.ou.securescan.crypto.extensions.getPrivateKey
 import nl.ou.securescan.crypto.extensions.toHexString
 import java.security.PrivateKey
@@ -16,7 +17,6 @@ class SecureScanApduService : HostApduService() {
     private var challengeSignature: ByteArray? = null
     private val hasCertificate: Boolean
     private val x509: X509Certificate?
-    private val privateKey: PrivateKey?
 
     private var securecontainerhash: ByteArray? = null
     private var securecontainerpassword: ByteArray? = null
@@ -25,7 +25,6 @@ class SecureScanApduService : HostApduService() {
         val cm = CertificateManager()
         hasCertificate = cm.hasCertificate()
         x509 = if (hasCertificate) cm.getCertificate()!! else null
-        privateKey = if (hasCertificate) x509!!.getPrivateKey() else null
     }
 
     private fun isSelectApdu(apdu: ByteArray?): Boolean =
@@ -54,7 +53,7 @@ class SecureScanApduService : HostApduService() {
     private fun process(apdu: ByteArray): ProcessResult {
         val instruction = apdu[1]
         val block = apdu[2]
-        var blockInfo = apdu[3]
+        val blockInfo = apdu[3]
         val data = getDataFromAPDU(apdu)
 
         return when (instruction) {
@@ -95,7 +94,8 @@ class SecureScanApduService : HostApduService() {
         )
 
         if (block == 1) {
-            val privateKey = privateKey
+            val privateKey = x509!!.getPrivateKey()
+
             val privateSignature: Signature = Signature.getInstance("SHA256withRSA")
             privateSignature.initSign(privateKey)
             privateSignature.update(data)
@@ -174,6 +174,10 @@ class SecureScanApduService : HostApduService() {
     }
 
     private fun storeLicense() {
+        var pwd = x509!!.decryptData(securecontainerpassword!!)
+
+        Log.i("SecureScan", "Storing license, password: ${pwd.toHexString()}")
+
         this.securecontainerhash = null
         this.securecontainerpassword = null
     }

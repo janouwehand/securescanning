@@ -46,7 +46,7 @@ namespace SecureScan.Base.Extensions
     {
       using (var rsa = x509.GetRSAPublicKey())
       {
-        return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA256);
+        return rsa.Encrypt(plainText, RSAEncryptionPadding.Pkcs1);
       }
     }
 
@@ -54,7 +54,7 @@ namespace SecureScan.Base.Extensions
     {
       using (var rsa = x509.GetRSAPublicKey())
       {
-        return rsa.Decrypt(ciptherText, RSAEncryptionPadding.OaepSHA256);
+        return rsa.Decrypt(ciptherText, RSAEncryptionPadding.Pkcs1);
       }
     }
 

@@ -108,23 +108,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    private fun removeCertificate(): Boolean {
-        val builder = AlertDialog.Builder(this@MainActivity)
-        builder.setMessage("Are you sure that you want to delete the certificate?")
-            .setCancelable(false)
-            .setTitle("Delete certificate?")
-            .setPositiveButton("Yes") { _, _ ->
-                CertificateManager().removeCertificate()
-                finish()
-            }
-            .setNegativeButton("No") { dialog, _ ->
-                dialog.dismiss()
-            }
-        val alert = builder.create()
-        alert.show()
-        return true
-    }
-
     override fun onSupportNavigateUp(): Boolean {
         /*val navController = findNavController(R.id.StartFragment)
         return navController.navigateUp(appBarConfiguration)

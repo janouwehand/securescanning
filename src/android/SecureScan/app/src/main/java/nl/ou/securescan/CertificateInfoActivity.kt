@@ -35,24 +35,38 @@ class CertificateInfoActivity : AppCompatActivity() {
         binding.textViewSHA1.text = cert.getSHA1().toHexString()
 
         binding.buttonCer.setOnClickListener { storeCertificate() }
+        binding.buttonDeleteCer.setOnClickListener { deleteCertificate() }
+    }
+
+    private fun deleteCertificate() {
+        confirm("Are you sure that you want to delete your certificate and private key?") { ok ->
+            if (ok){
+                CertificateManager().removeCertificate()
+                finish()
+            }
+        }
     }
 
     private fun storeCertificate() {
         val cert = CertificateManager().getCertificate()!!
 
-        val appFileManager = AppFileManager(BuildConfig.APPLICATION_ID)
+        confirm("Note: this will only export the certificate with the public key. The private key cannot be exported due to the limitations of the Android Keystore. Continue?") { ok ->
+            if (ok) {
+                val appFileManager = AppFileManager(BuildConfig.APPLICATION_ID)
 
-        val file = appFileManager.createFile(
-            context = this,
-            fileLocationCategory = FileLocationCategory.MEDIA_DIRECTORY,
-            fileName = "SecureScan-public-cert",
-            fileExtension = "txt"
-        )
+                val file = appFileManager.createFile(
+                    context = this,
+                    fileLocationCategory = FileLocationCategory.MEDIA_DIRECTORY,
+                    fileName = "SecureScan-public-cert",
+                    fileExtension = "txt"
+                )
 
-        val pem = cert.certificateToPem()
-        file.writeBytes(pem.toByteArray())
+                val pem = cert.certificateToPem()
+                file.writeBytes(pem.toByteArray())
 
-        alert("Success: your x.509 public key certificate has been stored as ${file.name} in android/media folder. Note that Android does not allow to export private keys. Hence, the private key was not included in this export.")
+                alert("Success: your x.509 public key certificate has been successfully stored as ${file.name} in android/media folder.")
+            }
+        }
     }
 
 }

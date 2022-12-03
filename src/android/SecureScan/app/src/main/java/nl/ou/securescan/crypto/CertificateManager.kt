@@ -1,6 +1,7 @@
 package nl.ou.securescan.crypto
 
 import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
+import nl.ou.securescan.crypto.newcertificate.GenerateCertificateNoBC
 import java.security.KeyStore
 import java.security.cert.X509Certificate
 
@@ -45,12 +46,12 @@ class CertificateManager {
         val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
         keyStore.load(null)
 
-        val cmc = GenerateCertificateBC()
-        val keypair = cmc.generateKeyPair()
-        val cert = GenerateCertificateBC().execute(keypair, name, email)
+        //val cmc = GenerateCertificateBC()
+        //val keypair = cmc.generateKeyPair()
+        GenerateCertificateNoBC().execute(name, email)
 
-        keyStore.setCertificateEntry(ALIAS, cert)
-        keyStore.setKeyEntry(ALIAS, keypair.private, null, arrayOf(cert))
+        //keyStore.setCertificateEntry(ALIAS, cert)
+        //keyStore.setKeyEntry(ALIAS, keypair.private, null, arrayOf(cert))
     }
 
     /*fun getSecretKey(): SecretKey? {

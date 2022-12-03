@@ -234,9 +234,9 @@ namespace SecureScanMFP
       Log("Busy creating protected container...");
 
       var randomPassword = CryptoRandom.GetBytes(32);
-      var randomPasswordStr = Convert.ToBase64String(randomPassword, Base64FormattingOptions.InsertLineBreaks);
+      var randomPasswordStr = randomPassword.ToHEX();
 
-      Log($"Pseudo-random (PRNG) 32 byte symmetric key (Base64): {randomPasswordStr}", Color.DarkOliveGreen);
+      Log($"Pseudo-random (PRNG) 32 byte symmetric key (hex): {randomPasswordStr}", Color.DarkOliveGreen);
 
       var encryptedPassword = ownerInfo.X509Certificate().Value.EncryptWithPublicKey(randomPassword);
       var encryptedPasswordStr = Convert.ToBase64String(encryptedPassword, Base64FormattingOptions.InsertLineBreaks);

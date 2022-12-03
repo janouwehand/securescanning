@@ -25,7 +25,7 @@ class GenerateCertificateBC {
     }
 
     fun generateKeyPair(): KeyPair {
-        val kpg = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA)
+        val kpg = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
         kpg.initialize(2048)
         return kpg.genKeyPair()
     }
