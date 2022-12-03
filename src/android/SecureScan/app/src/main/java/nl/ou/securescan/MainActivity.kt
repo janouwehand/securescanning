@@ -7,6 +7,8 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.decryptData
@@ -15,6 +17,7 @@ import nl.ou.securescan.crypto.extensions.getNameAndEmail
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityMainBinding
+import nl.ou.securescan.helpers.alert
 import kotlin.random.Random
 
 
@@ -37,12 +40,34 @@ class MainActivity : AppCompatActivity() {
             binding.buttonEncrypt.text = str
         }
 
+        //DocumentDatabase.deleteDatabaseFile(baseContext)
+
+        binding.swipe.setOnRefreshListener {
+            refreshItems()
+            binding.swipe.isRefreshing = false
+        }
+
+        binding.itemsList.addItemDecoration(DividerItemDecoration(this, LinearLayoutManager.VERTICAL))
+
+        refreshItems()
+    }
+
+    private fun refreshItems() {
         var db = DocumentDatabase.getDatabase(baseContext)
         var dao = db.documentDao()
 
         runBlocking {
-            var all = dao.getAll()
-            binding.buttonEncrypt.text = "${all.size}"
+            val all = dao.getAll()
+            val documentsAdapter = DocumentItemsAdapter(all.toTypedArray())
+
+            binding.itemsList.apply {
+                // vertical layout
+                layoutManager = LinearLayoutManager(applicationContext)
+
+                // set adapter
+                adapter = documentsAdapter
+            }
+
         }
     }
 

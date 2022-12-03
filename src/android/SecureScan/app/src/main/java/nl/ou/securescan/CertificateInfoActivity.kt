@@ -4,8 +4,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.arnab.storage.AppFileManager
 import com.arnab.storage.FileLocationCategory
+import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.*
+import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityCertificateInfoBinding
 import nl.ou.securescan.helpers.alert
 import nl.ou.securescan.helpers.confirm
@@ -41,6 +43,9 @@ class CertificateInfoActivity : AppCompatActivity() {
     private fun deleteCertificate() {
         confirm("Are you sure that you want to delete your certificate and private key?") { ok ->
             if (ok){
+                runBlocking {
+                    DocumentDatabase.getDatabase(baseContext).documentDao().deleteAll()
+                }
                 CertificateManager().removeCertificate()
                 finish()
             }
@@ -50,7 +55,7 @@ class CertificateInfoActivity : AppCompatActivity() {
     private fun storeCertificate() {
         val cert = CertificateManager().getCertificate()!!
 
-        confirm("Note: this will only export the certificate with the public key. The private key cannot be exported due to the limitations of the Android Keystore. Continue?") { ok ->
+        confirm("Note: this will only export the certificate with the public key. The private key cannot be exported due to limitations of the Android Keystore. Continue?") { ok ->
             if (ok) {
                 val appFileManager = AppFileManager(BuildConfig.APPLICATION_ID)
 

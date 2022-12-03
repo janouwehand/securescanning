@@ -192,7 +192,7 @@ class SecureScanApduService : HostApduService() {
             dao.insert(
                 Document(
                     null,
-                    "Test",
+                    "Scanned document",
                     LocalDateTime.now().toString(),
                     securecontainerhash,
                     securecontainerpassword

@@ -1,3 +1,9 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="ic_clear_margin">56dp</dimen>
+
+    <dimen name="list_item_height">42dp</dimen>
+    <dimen name="margin_medium">8dp</dimen>
 </resources>
