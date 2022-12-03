@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using PCSC;
 using PCSC.Exceptions;
@@ -13,7 +14,7 @@ namespace SecureScan.NFC.PCSC.Controller
 
     public AID Aid { get; }
 
-    public async Task<PCSCConnection> WaitForConnectionAsync(int timeoutSeconds = 10)
+    public async Task<PCSCConnection> WaitForConnectionAsync(int timeoutSeconds, CancellationToken cancellationToken)
     {
       ISCardContext context = null;
       IsoReader isoReader = null;
@@ -29,12 +30,17 @@ namespace SecureScan.NFC.PCSC.Controller
         if (isoReader == null)
         {
           await Task.Delay(100);
+
+          if (cancellationToken.IsCancellationRequested)
+          {
+            break;
+          }
         }
       }
 
       if (isoReader == null)
       {
-        throw new Exception("Time-out waiting for NFC.");
+        throw new TimeoutException("Time-out waiting for NFC.");
       }
 
       var apdu = new CommandApdu(IsoCase.Case4Short, isoReader.ActiveProtocol)

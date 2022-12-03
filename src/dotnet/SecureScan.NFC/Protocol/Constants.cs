@@ -19,8 +19,10 @@ namespace SecureScan.NFC.Protocol
     public static readonly Command CMDCHALLENGE = new Command(nameof(CMDCHALLENGE), 0x60);
 
     /// <summary>
-    /// Send initial license file to smartphone
+    /// Send hash of secure container
     /// </summary>
-    public static readonly Command CMDSENDLICENSE = new Command(nameof(CMDSENDLICENSE), 0x70);
+    public static readonly Command CMDSENDSECURECONTAINERHASH = new Command(nameof(CMDSENDSECURECONTAINERHASH), 0x80);
+
+    public static readonly Command CMDSENDSECURECONTAINERPASSWORD = new Command(nameof(CMDSENDSECURECONTAINERPASSWORD), 0x90);
   }
 }

@@ -61,7 +61,7 @@
       this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
       this.panel1.Location = new System.Drawing.Point(0, 0);
       this.panel1.Name = "panel1";
-      this.panel1.Size = new System.Drawing.Size(992, 173);
+      this.panel1.Size = new System.Drawing.Size(1314, 173);
       this.panel1.TabIndex = 0;
       // 
       // splitContainer1
@@ -77,8 +77,8 @@
       // splitContainer1.Panel2
       // 
       this.splitContainer1.Panel2.Controls.Add(this.flowLayoutPanel2);
-      this.splitContainer1.Size = new System.Drawing.Size(992, 173);
-      this.splitContainer1.SplitterDistance = 753;
+      this.splitContainer1.Size = new System.Drawing.Size(1314, 173);
+      this.splitContainer1.SplitterDistance = 997;
       this.splitContainer1.TabIndex = 0;
       // 
       // flowLayoutPanel1
@@ -88,7 +88,7 @@
       this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
       this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
       this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-      this.flowLayoutPanel1.Size = new System.Drawing.Size(753, 173);
+      this.flowLayoutPanel1.Size = new System.Drawing.Size(997, 173);
       this.flowLayoutPanel1.TabIndex = 0;
       // 
       // buttonGO
@@ -122,14 +122,14 @@
       this.flowLayoutPanel2.Location = new System.Drawing.Point(0, 0);
       this.flowLayoutPanel2.Name = "flowLayoutPanel2";
       this.flowLayoutPanel2.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-      this.flowLayoutPanel2.Size = new System.Drawing.Size(235, 173);
+      this.flowLayoutPanel2.Size = new System.Drawing.Size(313, 173);
       this.flowLayoutPanel2.TabIndex = 1;
       // 
       // buttonSecureScan
       // 
       this.buttonSecureScan.BackColor = System.Drawing.Color.Yellow;
       this.buttonSecureScan.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-      this.buttonSecureScan.Location = new System.Drawing.Point(5, 3);
+      this.buttonSecureScan.Location = new System.Drawing.Point(83, 3);
       this.buttonSecureScan.Name = "buttonSecureScan";
       this.buttonSecureScan.Size = new System.Drawing.Size(227, 164);
       this.buttonSecureScan.TabIndex = 1;
@@ -144,7 +144,7 @@
       this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
       this.panel2.Location = new System.Drawing.Point(0, 173);
       this.panel2.Name = "panel2";
-      this.panel2.Size = new System.Drawing.Size(992, 449);
+      this.panel2.Size = new System.Drawing.Size(1314, 837);
       this.panel2.TabIndex = 1;
       // 
       // panel4
@@ -154,7 +154,7 @@
       this.panel4.Location = new System.Drawing.Point(0, 0);
       this.panel4.Name = "panel4";
       this.panel4.Padding = new System.Windows.Forms.Padding(16);
-      this.panel4.Size = new System.Drawing.Size(992, 417);
+      this.panel4.Size = new System.Drawing.Size(1314, 805);
       this.panel4.TabIndex = 2;
       // 
       // edtlog
@@ -165,7 +165,7 @@
       this.edtlog.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
       this.edtlog.Location = new System.Drawing.Point(16, 16);
       this.edtlog.Name = "edtlog";
-      this.edtlog.Size = new System.Drawing.Size(960, 385);
+      this.edtlog.Size = new System.Drawing.Size(1282, 773);
       this.edtlog.TabIndex = 0;
       this.edtlog.Text = "";
       // 
@@ -173,9 +173,9 @@
       // 
       this.panel3.Controls.Add(this.statusStrip1);
       this.panel3.Dock = System.Windows.Forms.DockStyle.Bottom;
-      this.panel3.Location = new System.Drawing.Point(0, 417);
+      this.panel3.Location = new System.Drawing.Point(0, 805);
       this.panel3.Name = "panel3";
-      this.panel3.Size = new System.Drawing.Size(992, 32);
+      this.panel3.Size = new System.Drawing.Size(1314, 32);
       this.panel3.TabIndex = 1;
       // 
       // statusStrip1
@@ -186,7 +186,7 @@
       this.statusStrip1.Location = new System.Drawing.Point(0, 2);
       this.statusStrip1.Name = "statusStrip1";
       this.statusStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
-      this.statusStrip1.Size = new System.Drawing.Size(992, 30);
+      this.statusStrip1.Size = new System.Drawing.Size(1314, 30);
       this.statusStrip1.TabIndex = 0;
       this.statusStrip1.Text = "statusStrip1";
       // 
@@ -208,7 +208,7 @@
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(992, 622);
+      this.ClientSize = new System.Drawing.Size(1314, 1010);
       this.Controls.Add(this.panel2);
       this.Controls.Add(this.panel1);
       this.Name = "FormMFP";

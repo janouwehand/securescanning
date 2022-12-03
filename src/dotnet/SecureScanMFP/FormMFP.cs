@@ -3,8 +3,8 @@ using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using SecureScan.Base.Crypto;
 using SecureScan.Base.Crypto.Symmetric;
@@ -233,8 +233,6 @@ namespace SecureScanMFP
 
       Log("Busy creating protected container...");
 
-      //Thread.Sleep(2000);
-
       var randomPassword = CryptoRandom.GetBytes(32);
       var randomPasswordStr = Convert.ToBase64String(randomPassword, Base64FormattingOptions.InsertLineBreaks);
 
@@ -255,10 +253,72 @@ namespace SecureScanMFP
 
       Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha256: {hash.ToHEX()})", Color.DarkOliveGreen);
 
+      ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
+    }
+
+    private void ExecuteSecureContainerCreatedWaitForNFC(byte[] hash, byte[] encryptedPassword)
+    {
       SetState(MFPStates.SecureContainerCreated);
 
       Log("Please hold your smartphone again to the NFC tag to receive the license.");
+
+      cancellationTokenSource = new CancellationTokenSource();
+
+      var task = secureScanNFC.SendSymmetricPasswordAndHash(hash, encryptedPassword, ownerInfo.X509Certificate().Value, TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
+      task.ResponsiveWait();
+
+      var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);
+      if (isTimeOut)
+      {
+        Log("NFC time-out. Try again.", true);
+        BeepError();
+        ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
+      }
+      else if (task.IsFaulted)
+      {
+        foreach (var ex in task.Exception.InnerExceptions)
+        {
+          Log(ex.Message, true);
+        }
+
+        Log("Please try again or abort.");
+        ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
+      }
+      else
+      {
+        if (!task.IsCanceled)
+        {
+          // Success!
+          Log("Succes!");
+          //SendMail();
+          ExecuteClearCacheAndSetIdle();
+        }
+        else
+        {
+          Log("Aborted!");
+          ExecuteClearCacheAndSetIdle();
+        }
+      }
     }
 
+    private void ExecuteClearCacheAndSetIdle()
+    {
+      BeepOK();
+      SetState(MFPStates.Idle);
+      Log("Cache cleared and MFP set to idle!");
+    }
+
+    private void BeepError() => Task.Run(() =>
+    {
+      for (var i = 1; i <= 3; i++)
+      {
+        Console.Beep(2000, 250);
+      }
+    });
+
+    private void BeepOK() => Task.Run(() =>
+    {
+      Console.Beep(1000, 500);
+    });
   }
 }

@@ -18,6 +18,9 @@ class SecureScanApduService : HostApduService() {
     private val x509: X509Certificate?
     private val privateKey: PrivateKey?
 
+    private var securecontainerhash: ByteArray? = null
+    private var securecontainerpassword: ByteArray? = null
+
     init {
         val cm = CertificateManager()
         hasCertificate = cm.hasCertificate()
@@ -51,13 +54,23 @@ class SecureScanApduService : HostApduService() {
     private fun process(apdu: ByteArray): ProcessResult {
         val instruction = apdu[1]
         val block = apdu[2]
-        //var blockInfo = apdu[3]
+        var blockInfo = apdu[3]
         val data = getDataFromAPDU(apdu)
 
         return when (instruction) {
             0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
             0x60.toByte() -> ProcessResult(
                 processGetChallengeResult(data!!, block.toInt()), instruction, block
+            )
+            0x80.toByte() -> ProcessResult(
+                processRetrieveSecureContainerHash(data!!),
+                instruction,
+                block
+            )
+            0x90.toByte() -> ProcessResult(
+                processRetrieveSecureContainerPassword(data!!, blockInfo),
+                instruction,
+                block
             )
             else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
         }
@@ -123,5 +136,45 @@ class SecureScanApduService : HostApduService() {
 
     override fun onDeactivated(p0: Int) {
         Log.i("SecureScan", "deactivated!")
+
+        this.securecontainerhash = null
+        this.securecontainerpassword = null
+    }
+
+    private fun processRetrieveSecureContainerHash(hash: ByteArray): ByteArray {
+        this.securecontainerhash = hash
+
+        Log.i("SecureScan", "Hash of secure container received: ${hash.toHexString()}")
+
+        if (this.securecontainerpassword != null) {
+            storeLicense()
+        }
+
+        return arrayOf<Byte>().toByteArray()
+    }
+
+    private fun processRetrieveSecureContainerPassword(
+        keyPart: ByteArray,
+        blockInfo: Byte
+    ): ByteArray {
+
+        Log.i("SecureScan", "Receive password block ${keyPart.toHexString()}")
+
+        if (this.securecontainerpassword == null) {
+            this.securecontainerpassword = keyPart
+        } else {
+            this.securecontainerpassword = this.securecontainerpassword!!.plus(keyPart)
+        }
+
+        if (blockInfo == 0xFF.toByte() && this.securecontainerpassword != null) {
+            storeLicense()
+        }
+
+        return arrayOf<Byte>().toByteArray()
+    }
+
+    private fun storeLicense() {
+        this.securecontainerhash = null
+        this.securecontainerpassword = null
     }
 }
