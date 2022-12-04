@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import nl.ou.securescan.data.Document
+import nl.ou.securescan.helpers.toNeatDateString
+import nl.ou.securescan.helpers.toZonedDateTime
 
 class DocumentItemsAdapter(private val dataSet: Array<Document>) :
     RecyclerView.Adapter<DocumentItemsAdapter.ViewHolder>() {
@@ -43,7 +45,10 @@ class DocumentItemsAdapter(private val dataSet: Array<Document>) :
         // contents of the view with that element
         viewHolder.textViewId.text = dataSet[position].id.toString()
         viewHolder.textViewName.text = dataSet[position].name
-        viewHolder.textViewDateTime.text = dataSet[position].scannedOn
+
+        val scannedOn = dataSet[position].scannedOn!!
+        var scannedOnDateTime = scannedOn.toZonedDateTime()
+        viewHolder.textViewDateTime.text = scannedOnDateTime.toNeatDateString()
 
         viewHolder.itemView.setOnClickListener { view ->
             Log.i("SecureScan", "sdfsdgfsdgsgsdggsdgsdgsd ${dataSet[position].id}")
@@ -52,4 +57,8 @@ class DocumentItemsAdapter(private val dataSet: Array<Document>) :
 
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount() = dataSet.size
+
+    override fun getItemId(position: Int): Long {
+        return dataSet[position].id!!.toLong()
+    }
 }

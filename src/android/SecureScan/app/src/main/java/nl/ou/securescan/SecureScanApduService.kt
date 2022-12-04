@@ -16,6 +16,7 @@ import java.security.Signature
 import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.util.Date
 
 
@@ -193,7 +194,7 @@ class SecureScanApduService : HostApduService() {
                 Document(
                     null,
                     "Scanned document",
-                    LocalDateTime.now().toString(),
+                    ZonedDateTime.now().toString(),
                     securecontainerhash,
                     securecontainerpassword
                 )
