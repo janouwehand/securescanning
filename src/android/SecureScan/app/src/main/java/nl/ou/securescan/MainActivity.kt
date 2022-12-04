@@ -47,14 +47,19 @@ class MainActivity : AppCompatActivity() {
             binding.swipe.isRefreshing = false
         }
 
-        binding.itemsList.addItemDecoration(DividerItemDecoration(this, LinearLayoutManager.VERTICAL))
+        binding.itemsList.addItemDecoration(
+            DividerItemDecoration(
+                this,
+                LinearLayoutManager.VERTICAL
+            )
+        )
 
         refreshItems()
     }
 
     private fun refreshItems() {
-        var db = DocumentDatabase.getDatabase(baseContext)
-        var dao = db.documentDao()
+        val db = DocumentDatabase.getDatabase(baseContext)
+        val dao = db.documentDao()
 
         runBlocking {
             val all = dao.getAll()
@@ -97,6 +102,9 @@ class MainActivity : AppCompatActivity() {
             val cert = certificateManager.getCertificate()!!
             val certInfo = cert.getNameAndEmail()
             binding.toolbar.subtitle = certInfo.email
+
+            refreshItems()
+
         } else {
             handleNoCertificate()
         }

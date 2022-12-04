@@ -11,6 +11,12 @@ interface DocumentDao {
     @Query("select * from document")
     suspend fun getAll(): List<Document>
 
+    @Query("select * from document where id = :id")
+    suspend fun getById(id: Int): Document
+
+    @Query("update document set name = :name where id = :id")
+    suspend fun updateName(id: Int, name: String)
+
     @Query("select * from document where name like :name limit 1")
     suspend fun getByName(name: String): Document
 

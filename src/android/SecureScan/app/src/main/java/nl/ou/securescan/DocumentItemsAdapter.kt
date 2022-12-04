@@ -1,5 +1,6 @@
 package nl.ou.securescan
 
+import android.content.Intent
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -50,8 +51,12 @@ class DocumentItemsAdapter(private val dataSet: Array<Document>) :
         var scannedOnDateTime = scannedOn.toZonedDateTime()
         viewHolder.textViewDateTime.text = scannedOnDateTime.toNeatDateString()
 
+        val documentId = dataSet[position].id!!
+
         viewHolder.itemView.setOnClickListener { view ->
-            Log.i("SecureScan", "sdfsdgfsdgsgsdggsdgsdgsd ${dataSet[position].id}")
+            val intent = Intent(view.context, DocumentInfoActivity::class.java)
+            intent.putExtra("DocumentId", documentId)
+            view.context.startActivity(intent)
         }
     }
 

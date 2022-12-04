@@ -18,7 +18,6 @@ class CertificateInfoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_certificate_info)
 
         binding = ActivityCertificateInfoBinding.inflate(layoutInflater)
         setContentView(binding.root)
