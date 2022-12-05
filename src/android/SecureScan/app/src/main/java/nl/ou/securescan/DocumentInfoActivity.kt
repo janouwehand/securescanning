@@ -1,6 +1,8 @@
 package nl.ou.securescan
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.set
 import kotlinx.coroutines.runBlocking
@@ -8,10 +10,7 @@ import nl.ou.securescan.data.Document
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityCertificateInfoBinding
 import nl.ou.securescan.databinding.ActivityDocumentInfoBinding
-import nl.ou.securescan.helpers.alert
-import nl.ou.securescan.helpers.showKeyboard
-import nl.ou.securescan.helpers.toNeatDateString
-import nl.ou.securescan.helpers.toZonedDateTime
+import nl.ou.securescan.helpers.*
 import kotlin.properties.Delegates
 
 class DocumentInfoActivity : AppCompatActivity() {
@@ -25,6 +24,8 @@ class DocumentInfoActivity : AppCompatActivity() {
 
         binding = ActivityDocumentInfoBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        setSupportActionBar(binding.toolbar)
 
         val extras = intent.extras
         documentId = extras!!.getInt("DocumentId")
@@ -74,5 +75,39 @@ class DocumentInfoActivity : AppCompatActivity() {
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
         binding.editTextDocumentName.showKeyboard()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.menu_documentinfo, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        return when (item.itemId) {
+            R.id.action_deletedocument -> deleteDocument()
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun deleteDocument(): Boolean {
+        confirm("Are you sure that you want to delete this document?") { ok ->
+            if (ok) {
+                confirm("This action cannot be undone. Still delete?") { ok2 ->
+                    if (ok2) {
+                        val dao = db.documentDao()
+                        runBlocking {
+                            val document = dao.getById(documentId)
+                            dao.delete(document)
+                            finish()
+                        }
+                    }
+                }
+            }
+        }
+        return true
     }
 }

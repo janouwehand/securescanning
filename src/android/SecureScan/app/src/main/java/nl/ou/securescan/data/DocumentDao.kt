@@ -23,7 +23,7 @@ interface DocumentDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(document: Document)
 
-    @Delete
+    @Delete()
     suspend fun delete(document: Document)
 
     @Query("delete from document")
