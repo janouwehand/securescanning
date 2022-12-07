@@ -108,6 +108,10 @@
       <Project>{e84831e5-fdbb-48e7-b30d-e1e9d6bdf294}</Project>
       <Name>SecureScan.Base</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SecureScan.Email\SecureScan.Email.csproj">
+      <Project>{dd584921-0d79-4444-98dd-fa9a9edc264f}</Project>
+      <Name>SecureScan.Email</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SecureScan.NFC\SecureScan.NFC.csproj">
       <Project>{B42CDCDF-F397-4AF9-9500-BD9C30410EE5}</Project>
       <Name>SecureScan.NFC</Name>

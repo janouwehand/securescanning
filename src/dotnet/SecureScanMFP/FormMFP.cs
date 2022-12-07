@@ -21,6 +21,7 @@ namespace SecureScanMFP
     private readonly ISymmetricEncryption symmetricEncryption;
     private OwnerInfo ownerInfo;
     private CancellationTokenSource cancellationTokenSource;
+    private byte[] bsenc;
 
     public FormMFP(ILogger logger, ISecureScanNFC secureScanNFC, ISymmetricEncryption symmetricEncryption)
     {
@@ -250,7 +251,7 @@ namespace SecureScanMFP
       Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using AES-GCM (size: {testfile.Length:N0} bytes)", Color.DarkOliveGreen);
 
       var bs = File.ReadAllBytes(testfile.FullName);
-      var bsenc = symmetricEncryption.Encrypt(bs, randomPassword);
+      bsenc = symmetricEncryption.Encrypt(bs, randomPassword);
       var hash = bsenc.ComputeSHA256();
 
       Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha256: {hash.ToHEX()})", Color.DarkOliveGreen);
@@ -299,7 +300,7 @@ namespace SecureScanMFP
         {
           // Success!
           Log("Succes!");
-          //SendMail();
+          SendMail();
           ExecuteClearCacheAndSetIdle();
         }
         else
@@ -308,6 +309,39 @@ namespace SecureScanMFP
           ExecuteClearCacheAndSetIdle();
         }
       }
+    }
+
+    private void SendMail()
+    {
+      var subject=ownerInfo.X509Certificate().Value.GetSubjectParts();
+      ownerInfo.Email = subject.CN;
+      ownerInfo.Name = subject.O;
+
+      var message = new SecureScan.Email.MailInput
+      {
+        EmailTo = new SecureScan.Email.MailInput.EmailAddress { Email = ownerInfo.Email, Name = ownerInfo.Name },
+        EmailFrom = new SecureScan.Email.MailInput.EmailAddress { Email = "mfp@company.nl", Name = "MFP" },
+        Subject = $"Your secure scanned document",
+        BodyPlain = $@"Dear {ownerInfo.Name},
+
+Your securely scanned document is added as an attachment to this email.
+The document can only be decrypted using the private key that resides on your smartphone.
+Please allow bluetooth to communicatie with your smartphone in order to retrieve the symmetric key for this secure document.
+
+Kind regards,
+
+Secure MFP"
+      };
+
+      message.Attachments.Add(new SecureScan.Email.MailInput.Attachment
+      {
+        ContentType = "application/ou-secure-document",
+        FileName = "secure-document.enc",
+        Content = bsenc
+      });
+
+      var sender = new SecureScan.Email.MailSender("127.0.0.1", 25);
+      sender.SendMail(message);
     }
 
     private void ExecuteClearCacheAndSetIdle()
@@ -325,9 +359,6 @@ namespace SecureScanMFP
       }
     });
 
-    private void BeepOK() => Task.Run(() =>
-    {
-      Console.Beep(1000, 500);
-    });
+    private void BeepOK() => Task.Run(() => Console.Beep(1000, 500));
   }
 }
