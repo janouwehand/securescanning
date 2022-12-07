@@ -79,6 +79,11 @@ class SecureScanApduService : HostApduService() {
                 instruction,
                 block
             )
+            0x91.toByte() -> ProcessResult(
+                processStoreDocument(),
+                instruction,
+                block
+            )
             else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
         }
     }
@@ -124,7 +129,7 @@ class SecureScanApduService : HostApduService() {
 
         var toIndex = fromIndex + size - 1
 
-        if (toIndex > data.size) {
+        if (toIndex >= data.size) {
             toIndex = data.size - 1
         }
 
@@ -154,9 +159,14 @@ class SecureScanApduService : HostApduService() {
 
         Log.i("SecureScan", "Hash of secure container received: ${hash.toHexString()}")
 
-        if (this.securecontainerpassword != null) {
-            storeLicense()
-        }
+        /*if (this.securecontainerpassword != null) {
+            val documentId = storeLicense()
+            val bs = documentId.toString().toByteArray()
+            Log.i("SecureScan", "BS: ${bs.toHexString()}")
+            return bs
+        } else {
+            return arrayOf<Byte>().toByteArray()
+        }*/
 
         return arrayOf<Byte>().toByteArray()
     }
@@ -174,20 +184,29 @@ class SecureScanApduService : HostApduService() {
             this.securecontainerpassword = this.securecontainerpassword!!.plus(keyPart)
         }
 
-        if (blockInfo == 0xFF.toByte() && this.securecontainerpassword != null) {
-            storeLicense()
-        }
+        /*if (blockInfo == 0xFF.toByte() && this.securecontainerpassword != null) {
+            val documentId = storeLicense()
+            return documentId.toString().toByteArray()
+        } else
+            return arrayOf<Byte>().toByteArray()*/
 
         return arrayOf<Byte>().toByteArray()
     }
 
-    private fun storeLicense() {
-        var pwd = x509!!.decryptData(securecontainerpassword!!)
+    private fun processStoreDocument(): ByteArray {
+        val documentId = storeLicense()
+        return documentId.toString().toByteArray()
+    }
+
+    private fun storeLicense(): Int {
+        val pwd = x509!!.decryptData(securecontainerpassword!!)
 
         Log.i("SecureScan", "Storing license, password: ${pwd.toHexString()}")
 
-        var db = DocumentDatabase.getDatabase(this.baseContext)
-        var dao = db.documentDao()
+        val db = DocumentDatabase.getDatabase(this.baseContext)
+        val dao = db.documentDao()
+
+        var documentId = 0
 
         runBlocking {
             dao.insert(
@@ -199,9 +218,13 @@ class SecureScanApduService : HostApduService() {
                     securecontainerpassword
                 )
             )
+
+            documentId = dao.getLastDocumentId()
         }
 
         this.securecontainerhash = null
         this.securecontainerpassword = null
+
+        return documentId
     }
 }

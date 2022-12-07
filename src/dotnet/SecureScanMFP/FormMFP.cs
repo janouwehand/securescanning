@@ -299,8 +299,9 @@ namespace SecureScanMFP
         if (!task.IsCanceled)
         {
           // Success!
-          Log("Succes!");
-          SendMail();
+          var docInfo = task.Result;
+          Log($"Succes! Document-Id: {docInfo.DocumentNumber}");
+          SendMail(docInfo);
           ExecuteClearCacheAndSetIdle();
         }
         else
@@ -311,9 +312,9 @@ namespace SecureScanMFP
       }
     }
 
-    private void SendMail()
+    private void SendMail(DocumentInfo docInfo)
     {
-      var subject=ownerInfo.X509Certificate().Value.GetSubjectParts();
+      var subject = ownerInfo.X509Certificate().Value.GetSubjectParts();
       ownerInfo.Email = subject.CN;
       ownerInfo.Name = subject.O;
 
@@ -321,10 +322,10 @@ namespace SecureScanMFP
       {
         EmailTo = new SecureScan.Email.MailInput.EmailAddress { Email = ownerInfo.Email, Name = ownerInfo.Name },
         EmailFrom = new SecureScan.Email.MailInput.EmailAddress { Email = "mfp@company.nl", Name = "MFP" },
-        Subject = $"Your secure scanned document",
+        Subject = $"Your securely scanned document. Document number: {docInfo.DocumentNumber}",
         BodyPlain = $@"Dear {ownerInfo.Name},
 
-Your securely scanned document is added as an attachment to this email.
+Your securely scanned document (number: {docInfo.DocumentNumber}) is added as an attachment to this email.
 The document can only be decrypted using the private key that resides on your smartphone.
 Please allow bluetooth to communicatie with your smartphone in order to retrieve the symmetric key for this secure document.
 
@@ -336,7 +337,7 @@ Secure MFP"
       message.Attachments.Add(new SecureScan.Email.MailInput.Attachment
       {
         ContentType = "application/ou-secure-document",
-        FileName = "secure-document.enc",
+        FileName = $"secure-document-{docInfo.DocumentNumber}.enc",
         Content = bsenc
       });
 

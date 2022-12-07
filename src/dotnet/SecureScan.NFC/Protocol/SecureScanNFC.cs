@@ -74,16 +74,20 @@ namespace SecureScan.NFC.Protocol
 
     private byte[] RetrieveX509(Transceiver transceiver) => transceiver.RetrieveMultiApduData(Constants.CMDGETX509, null, out _);
 
-    public async Task SendSymmetricPasswordAndHash(byte[] secureContainerSHA1, byte[] password, X509Certificate2 certificate, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
+    public async Task<DocumentInfo> SendSymmetricPasswordAndHash(byte[] secureContainerSHA1, byte[] password, X509Certificate2 certificate, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
     {
+      var docInfo = new DocumentInfo();
+
       var controller = new PCSCController(Constants.APPLICATIONID);
       using (var connection = await controller.WaitForConnectionAsync(waitForNFCTimeout.Seconds, cancellationToken))
       {
-        PerformSendPasswordAndHash(connection, certificate, secureContainerSHA1, password);
+        PerformSendPasswordAndHash(connection, certificate, secureContainerSHA1, password, docInfo);
       }
+
+      return docInfo;
     }
 
-    private void PerformSendPasswordAndHash(PCSCConnection connection, X509Certificate2 certificate, byte[] secureContainerSHA1, byte[] password)
+    private void PerformSendPasswordAndHash(PCSCConnection connection, X509Certificate2 certificate, byte[] secureContainerSHA1, byte[] password, DocumentInfo docInfo)
     {
       var applicationVersion = Encoding.UTF8.GetString(connection.ReturnData);
       if (!applicationVersion.StartsWith(Constants.APPVERSIONPREFIX))
@@ -96,11 +100,17 @@ namespace SecureScan.NFC.Protocol
         throw new Exception("Challenge failed: smartphone did not prove to own private key.");
       }
 
+      logger.Log($"Sending encrypted symmetric password of secure container (size: {password.Length}).");
+      connection.Transceiver.SendMultiApduData(Constants.CMDSENDSECURECONTAINERPASSWORD, password);
+
       logger.Log($"Sending SHA1 of secure container: {secureContainerSHA1.ToHEX()}");
       connection.Transceiver.Transceive(0x00, Constants.CMDSENDSECURECONTAINERHASH.Instruction, 0x00, 0x00, secureContainerSHA1);
 
-      logger.Log($"Sending encrypted symmetric password of secure container (size: {password.Length}).");
-      connection.Transceiver.SendMultiApduData(Constants.CMDSENDSECURECONTAINERPASSWORD, password);
+      logger.Log($"Sending store/get document-id instruction");
+      var response = connection.Transceiver.Transceive(0x00, Constants.CMDSTOREGETDOCUMENTID.Instruction, 0x00, 0x00, secureContainerSHA1);
+
+      var str = Encoding.UTF8.GetString(response.Data);
+      docInfo.DocumentNumber = int.Parse(str);
     }
 
   }

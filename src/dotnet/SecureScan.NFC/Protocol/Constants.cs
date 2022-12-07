@@ -24,5 +24,7 @@ namespace SecureScan.NFC.Protocol
     public static readonly Command CMDSENDSECURECONTAINERHASH = new Command(nameof(CMDSENDSECURECONTAINERHASH), 0x80);
 
     public static readonly Command CMDSENDSECURECONTAINERPASSWORD = new Command(nameof(CMDSENDSECURECONTAINERPASSWORD), 0x90);
+
+    public static readonly Command CMDSTOREGETDOCUMENTID = new Command(nameof(CMDSTOREGETDOCUMENTID), 0x91);
   }
 }

@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DocumentInfo.cs" />
     <Compile Include="PCSC\Command.cs" />
     <Compile Include="PCSC\AID.cs" />
     <Compile Include="PCSC\Controller\PCSCConnection.cs" />
