@@ -252,9 +252,9 @@ namespace SecureScanMFP
 
       var bs = File.ReadAllBytes(testfile.FullName);
       bsenc = symmetricEncryption.Encrypt(bs, randomPassword);
-      var hash = bsenc.ComputeSHA256();
+      var hash = bsenc.ComputeSHA1();
 
-      Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha256: {hash.ToHEX()})", Color.DarkOliveGreen);
+      Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha1: {hash.ToHEX()})", Color.DarkOliveGreen);
 
       ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
     }

@@ -70,6 +70,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Extensions\X509Extensions.cs" />
+    <Compile Include="Interfaces\IBluetoothUIFunctions.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\LogEventArgs.cs" />
     <Compile Include="Logger\LoggerImpl.cs" />

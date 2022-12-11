@@ -31,5 +31,14 @@ namespace SecureScan.Base.Extensions
         return sha.ComputeHash(bs);
       }
     }
+
+    public static byte[] ComputeSHA1(this byte[] bs)
+    {
+      using (var sha = SHA1.Create())
+      {
+        return sha.ComputeHash(bs);
+      }
+    }
+
   }
 }

@@ -1,12 +1,26 @@
 package nl.ou.securescan
 
+import android.Manifest
 import android.app.AlertDialog
+import android.app.PendingIntent
+import android.app.TaskStackBuilder
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.le.AdvertiseData
+import android.bluetooth.le.AdvertisingSet
+import android.bluetooth.le.AdvertisingSetCallback
+import android.bluetooth.le.AdvertisingSetParameters
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.ParcelUuid
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.runBlocking
@@ -17,7 +31,8 @@ import nl.ou.securescan.crypto.extensions.getNameAndEmail
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityMainBinding
-import nl.ou.securescan.helpers.alert
+import nl.ou.securescan.helpers.NotificationUtils
+import java.util.*
 import kotlin.random.Random
 
 
@@ -35,9 +50,39 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         binding.buttonEncrypt.setOnClickListener {
-            val ciphertext = tryEncrypt()
+            /*val ciphertext = tryEncrypt()
             val str = tryDecrypt(ciphertext)
-            binding.buttonEncrypt.text = str
+            binding.buttonEncrypt.text = str*/
+            //StartBLE()
+
+
+            // Create an Intent for the activity you want to start
+            val resultIntent = Intent(this, DocumentAccessRequest::class.java)
+
+            resultIntent.putExtra("DocumentId", 3445)
+
+            // Create the TaskStackBuilder
+            val resultPendingIntent: PendingIntent? = TaskStackBuilder.create(this).run {
+                // Add the intent, which inflates the back stack
+                addNextIntentWithParentStack(resultIntent)
+
+                // Get the PendingIntent containing the entire back stack
+                getPendingIntent(
+                    0,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            }
+
+            var utils = NotificationUtils(this)
+            val not = utils.getNotificationbuilder(
+                "Test eerste",
+                "Bla die bla",
+                NotificationUtils.CHANNEL_REQUESTACCESS
+            )
+                .setTicker("sdfsdgsgsdgsdg")
+                .setContentIntent(resultPendingIntent)
+                .build()
+            utils.manager.notify(1001, not)
         }
 
         //DocumentDatabase.deleteDatabaseFile(baseContext)
@@ -55,6 +100,112 @@ class MainActivity : AppCompatActivity() {
         )
 
         refreshItems()
+
+        val ext = BluetoothAdapter.getDefaultAdapter().isLeExtendedAdvertisingSupported
+        binding.textView10.text = "isLeExtendedAdvertisingSupported: $ext"
+
+        val intent = Intent(
+            this, SecureScanBluetoothService::class.java
+        )
+        startForegroundService(intent)
+    }
+
+    var currentAdvertisingSet: AdvertisingSet? = null
+
+    private fun StartBLE() {
+        val adapter = BluetoothAdapter.getDefaultAdapter()
+        // Check if all features are supported
+        if (!adapter.isLe2MPhySupported) {
+            Log.e("SecureScan", "2M PHY not supported!");
+            return
+        }
+
+        if (!adapter.isLeExtendedAdvertisingSupported) {
+            Log.e("SecureScan", "LE Extended Advertising not supported!");
+            return
+        }
+
+        val advertiser = adapter.bluetoothLeAdvertiser
+        val maxDataLength = adapter.leMaximumAdvertisingDataLength
+
+        val parameters = AdvertisingSetParameters.Builder()
+            .setLegacyMode(false)
+            .setInterval(AdvertisingSetParameters.INTERVAL_HIGH)
+            .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
+            .setPrimaryPhy(BluetoothDevice.PHY_LE_1M)
+            .setSecondaryPhy(BluetoothDevice.PHY_LE_2M)
+
+        val data = AdvertiseData.Builder().addServiceData(
+            ParcelUuid(UUID.randomUUID()),
+            "You should be able to fit large amounts of data up to maxDataLength. This goes up to 1650 bytes. For legacy advertising this would not work".toByteArray()
+        ).build()
+
+        val callback: AdvertisingSetCallback = object : AdvertisingSetCallback() {
+            override fun onAdvertisingSetStarted(
+                advertisingSet: AdvertisingSet,
+                txPower: Int,
+                status: Int
+            ) {
+                Log.i(
+                    "SecureScan", "onAdvertisingSetStarted(): txPower:" + txPower + " , status: "
+                            + status
+                )
+                currentAdvertisingSet = advertisingSet
+            }
+
+            override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet) {
+                Log.i("SecureScan", "onAdvertisingSetStopped():")
+            }
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_ADVERTISE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE),
+                1
+            )
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+
+        advertiser.startAdvertisingSet(parameters.build(), data, null, null, null, callback)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            1 -> {
+                if (grantResults.isNotEmpty() && grantResults[0] ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
+                    if ((ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) ==
+                                PackageManager.PERMISSION_GRANTED)
+                    ) {
+                        Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
+        }
     }
 
     private fun refreshItems() {

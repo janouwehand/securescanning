@@ -6,6 +6,7 @@ import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.set
 import kotlinx.coroutines.runBlocking
+import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.Document
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityCertificateInfoBinding
@@ -41,7 +42,7 @@ class DocumentInfoActivity : AppCompatActivity() {
             val document = db.documentDao().getById(documentId)
             binding.toolbar.subtitle = document.scannedOn!!.toZonedDateTime().toNeatDateString()
             binding.editTextDocumentName.setText(document.name)
-
+            binding.textViewShaValue.text = document.documentHash!!.toHexString()
         }
 
         binding.editTextDocumentName.selectAll()

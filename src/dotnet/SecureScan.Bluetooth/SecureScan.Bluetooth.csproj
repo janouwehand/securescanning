@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="CharacteristicReceiveValueEventArgs.cs" />
     <Compile Include="CharacteristicRequestValueEventArgs.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="GattService.cs" />
     <Compile Include="GattCharacteristicDefinition.cs" />
     <Compile Include="GattCharacteristicModes.cs" />
