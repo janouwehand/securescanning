@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Resources;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
@@ -27,7 +28,7 @@ namespace SecureScan.Bluetooth
 
     public GattService(Guid serviceUUID) => ServiceUUID = serviceUUID;
 
-    public async Task ScanAsync()
+    public async Task ScanAsync(System.Threading.CancellationToken token)
     {
       var localAdapter = await BluetoothAdapter.GetDefaultAsync();
       if (localAdapter.IsCentralRoleSupported)
@@ -64,16 +65,16 @@ namespace SecureScan.Bluetooth
           {
             Console.WriteLine(string.Concat(e.Advertisement.LocalName, ", ", string.Join(" | ", e.Advertisement.ServiceUuids)));
             watcher.Stop();
-            await ConnectAsync(e);
+            await ConnectAsync(e, token);
           }
         };
         watcher.Start();
       }
     }
 
-    bool inConnect = false;
+    private bool inConnect = false;
 
-    private async Task ConnectAsync(BluetoothLEAdvertisementReceivedEventArgs e)
+    private async Task ConnectAsync(BluetoothLEAdvertisementReceivedEventArgs e, System.Threading.CancellationToken token)
     {
       if (inConnect)
       {
@@ -82,15 +83,17 @@ namespace SecureScan.Bluetooth
 
       inConnect = true;
 
+      var list = new List<GattCharacteristic>();
+
       using (var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress, e.BluetoothAddressType))
-      {        
+      {
         var result = await device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
 
         if (result.Status == GattCommunicationStatus.Success)
         {
           GattDeviceService service = null;
 
-          foreach(var _service in result.Services)
+          foreach (var _service in result.Services)
           {
             if (_service.Uuid == Constants.SecureScanApplication)
             {
@@ -102,21 +105,70 @@ namespace SecureScan.Bluetooth
 
           if (characteristics.Status == GattCommunicationStatus.Success)
           {
-            foreach(var ch in characteristics.Characteristics)
+            foreach (var ch in characteristics.Characteristics)
             {
-              var value = await ch.ReadValueAsync(BluetoothCacheMode.Uncached);
-              if (value.Status== GattCommunicationStatus.Success)
+              list.Add(ch);
+
+              if (list.Count <= 1)
               {
-                var val = value.Value;
+                ch.ValueChanged += (s, e2) =>
+                {
+                  var time = GetTime(e2.CharacteristicValue);
+                  Debug.WriteLine(time);
+                  Console.WriteLine(time);
+                };
               }
-              break;
+
+              var all = await ch.GetDescriptorsAsync(BluetoothCacheMode.Uncached);
+              var len = all.Descriptors.Count;
+              foreach (var al in all.Descriptors)
+              {
+                var bs = new byte[] { 0x01, 0x00 };
+                var buff = bs.AsBuffer();
+                await al.WriteValueAsync(buff);
+              }
+
+              var value = await ch.ReadValueAsync(BluetoothCacheMode.Uncached);
+              if (value.Status == GattCommunicationStatus.Success)
+              {
+                var time = GetTime(value.Value);
+                Debug.WriteLine(time);
+                Console.WriteLine(time);
+              }
+
+              //break;
             }
+          }
+
+          while (!token.IsCancellationRequested)
+          {
+            await Task.Delay(100);
           }
         }
       }
 
-      //      var localAdapter = await BluetoothAdapter.GetDefaultAsync();
+      //      var localAdapter = await BluetoothAdapter.GetDefaultAsync();     
 
+    }
+
+    private string GetTime(IBuffer buffer)
+    {
+      if (buffer.Length < 10)
+      {
+        return "";
+      }
+
+      var dataReader = DataReader.FromBuffer(buffer);
+      var bs = new byte[buffer.Length];
+      dataReader.ReadBytes(bs);
+
+      var uur = (int)bs[4];
+      var minuten = (int)bs[5];
+      var seconden = (int)bs[6];
+
+      var str = $"{uur:00}:{minuten:00}:{seconden:00}";
+
+      return str;
     }
 
     public void RegisterCharacteristic(GattCharacteristicDefinition definition) => characteristicContainers.Add(definition.UUID, new CharacteristicContainer { Definition = definition });
