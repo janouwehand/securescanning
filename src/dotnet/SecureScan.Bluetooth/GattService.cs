@@ -29,6 +29,8 @@ namespace SecureScan.Bluetooth
 
     public GattService(Guid serviceUUID) => ServiceUUID = serviceUUID;
 
+    public GattService() => ServiceUUID = Constants.SECURESCANSERVICE;
+
     public async Task ScanAsync(System.Threading.CancellationToken token)
     {
       var localAdapter = await BluetoothAdapter.GetDefaultAsync();

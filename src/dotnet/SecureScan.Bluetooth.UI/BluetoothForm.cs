@@ -23,7 +23,7 @@ namespace SecureScan.Bluetooth.UI
 
     private void Start()
     {
-      gattService = new GattService(Constants.SECURESCANSERVICE);
+      gattService = new GattService();
       gattService.StartAdvertisingAsync();
     }
 

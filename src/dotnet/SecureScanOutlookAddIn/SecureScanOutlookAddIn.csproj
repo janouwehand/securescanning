@@ -163,18 +163,18 @@
     can be found.
   -->
   <ItemGroup>
-    <Compile Include="CreateX509.cs" />
-    <Compile Include="FormCertificate.cs">
+    <Compile Include="X509Manager.cs" />
+    <Compile Include="FormSettings.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FormCertificate.Designer.cs">
-      <DependentUpon>FormCertificate.cs</DependentUpon>
+    <Compile Include="FormSettings.Designer.cs">
+      <DependentUpon>FormSettings.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <EmbeddedResource Include="FormCertificate.resx">
-      <DependentUpon>FormCertificate.cs</DependentUpon>
+    <EmbeddedResource Include="FormSettings.resx">
+      <DependentUpon>FormSettings.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
