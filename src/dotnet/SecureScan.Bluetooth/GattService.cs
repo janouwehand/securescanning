@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Resources;
 using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Storage.Streams;
 
@@ -24,6 +26,98 @@ namespace SecureScan.Bluetooth
     public Guid ServiceUUID { get; }
 
     public GattService(Guid serviceUUID) => ServiceUUID = serviceUUID;
+
+    public async Task ScanAsync()
+    {
+      var localAdapter = await BluetoothAdapter.GetDefaultAsync();
+      if (localAdapter.IsCentralRoleSupported)
+      {
+        //var filter = new BluetoothLEAdvertisementFilter();
+        //filter.Advertisement = new BluetoothLEAdvertisement();
+        //filter.Advertisement.ServiceUuids.Add(Constants.SecureScanApplication);
+
+        var watcher = new BluetoothLEAdvertisementWatcher();
+
+        //Set the in-range threshold to -70dBm. This means advertisements with RSSI >= -70dBm 
+        //will start to be considered "in-range"
+        watcher.SignalStrengthFilter.InRangeThresholdInDBm = -70;
+
+        // Set the out-of-range threshold to -75dBm (give some buffer). Used in conjunction with OutOfRangeTimeout
+        // to determine when an advertisement is no longer considered "in-range"
+        watcher.SignalStrengthFilter.OutOfRangeThresholdInDBm = -75;
+
+        // Set the out-of-range timeout to be 2 seconds. Used in conjunction with OutOfRangeThresholdInDBm
+        // to determine when an advertisement is no longer considered "in-range"
+        watcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(2000);
+
+        watcher.AllowExtendedAdvertisements = true;
+        watcher.Received += async (s, e) =>
+        {
+          var localname = e.Advertisement.LocalName;
+
+          foreach (var sid in e.Advertisement.ServiceUuids)
+          {
+            var localname2 = e.Advertisement.LocalName;
+          }
+
+          if (e.Advertisement.ServiceUuids.Contains(Constants.SecureScanApplication))
+          {
+            Console.WriteLine(string.Concat(e.Advertisement.LocalName, ", ", string.Join(" | ", e.Advertisement.ServiceUuids)));
+            watcher.Stop();
+            await ConnectAsync(e);
+          }
+        };
+        watcher.Start();
+      }
+    }
+
+    bool inConnect = false;
+
+    private async Task ConnectAsync(BluetoothLEAdvertisementReceivedEventArgs e)
+    {
+      if (inConnect)
+      {
+        return;
+      }
+
+      inConnect = true;
+
+      using (var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress, e.BluetoothAddressType))
+      {        
+        var result = await device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
+
+        if (result.Status == GattCommunicationStatus.Success)
+        {
+          GattDeviceService service = null;
+
+          foreach(var _service in result.Services)
+          {
+            if (_service.Uuid == Constants.SecureScanApplication)
+            {
+              service = _service;
+            }
+          }
+
+          var characteristics = await service.GetCharacteristicsAsync();
+
+          if (characteristics.Status == GattCommunicationStatus.Success)
+          {
+            foreach(var ch in characteristics.Characteristics)
+            {
+              var value = await ch.ReadValueAsync(BluetoothCacheMode.Uncached);
+              if (value.Status== GattCommunicationStatus.Success)
+              {
+                var val = value.Value;
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      //      var localAdapter = await BluetoothAdapter.GetDefaultAsync();
+
+    }
 
     public void RegisterCharacteristic(GattCharacteristicDefinition definition) => characteristicContainers.Add(definition.UUID, new CharacteristicContainer { Definition = definition });
 
@@ -148,7 +242,7 @@ namespace SecureScan.Bluetooth
           var reader = DataReader.FromBuffer(request.Value);
           reader.ByteOrder = ByteOrder.LittleEndian;
           var bytes = new byte[request.Value.Length];
-          reader.ReadBytes(bytes);          
+          reader.ReadBytes(bytes);
 
           var error = HandleWriteReceiveEvent(characteristicContainer, bytes);
 

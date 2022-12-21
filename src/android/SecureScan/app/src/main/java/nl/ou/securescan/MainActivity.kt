@@ -49,6 +49,8 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
+        checkPermissions()
+
         binding.buttonEncrypt.setOnClickListener {
             /*val ciphertext = tryEncrypt()
             val str = tryDecrypt(ciphertext)
@@ -107,57 +109,13 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(
             this, SecureScanBluetoothService::class.java
         )
+
         startForegroundService(intent)
     }
 
     var currentAdvertisingSet: AdvertisingSet? = null
 
-    private fun StartBLE() {
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        // Check if all features are supported
-        if (!adapter.isLe2MPhySupported) {
-            Log.e("SecureScan", "2M PHY not supported!");
-            return
-        }
-
-        if (!adapter.isLeExtendedAdvertisingSupported) {
-            Log.e("SecureScan", "LE Extended Advertising not supported!");
-            return
-        }
-
-        val advertiser = adapter.bluetoothLeAdvertiser
-        val maxDataLength = adapter.leMaximumAdvertisingDataLength
-
-        val parameters = AdvertisingSetParameters.Builder()
-            .setLegacyMode(false)
-            .setInterval(AdvertisingSetParameters.INTERVAL_HIGH)
-            .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
-            .setPrimaryPhy(BluetoothDevice.PHY_LE_1M)
-            .setSecondaryPhy(BluetoothDevice.PHY_LE_2M)
-
-        val data = AdvertiseData.Builder().addServiceData(
-            ParcelUuid(UUID.randomUUID()),
-            "You should be able to fit large amounts of data up to maxDataLength. This goes up to 1650 bytes. For legacy advertising this would not work".toByteArray()
-        ).build()
-
-        val callback: AdvertisingSetCallback = object : AdvertisingSetCallback() {
-            override fun onAdvertisingSetStarted(
-                advertisingSet: AdvertisingSet,
-                txPower: Int,
-                status: Int
-            ) {
-                Log.i(
-                    "SecureScan", "onAdvertisingSetStarted(): txPower:" + txPower + " , status: "
-                            + status
-                )
-                currentAdvertisingSet = advertisingSet
-            }
-
-            override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet) {
-                Log.i("SecureScan", "onAdvertisingSetStopped():")
-            }
-        }
-
+    private fun checkPermissions() {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.BLUETOOTH_ADVERTISE
@@ -168,8 +126,6 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE),
                 1
             )
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
@@ -178,7 +134,41 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        advertiser.startAdvertisingSet(parameters.build(), data, null, null, null, callback)
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                1
+            )
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_ADMIN
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.BLUETOOTH_ADMIN),
+                1
+            )
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
     }
 
     override fun onRequestPermissionsResult(

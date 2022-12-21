@@ -4,6 +4,6 @@ namespace SecureScan.Bluetooth
 {
   public static class Constants
   {
-    public static readonly Guid SecureScanApplication = Guid.Parse("33199819-4D75-4437-A051-F8367CD52B8E");
+    public static readonly Guid SecureScanApplication = Guid.Parse("00000999-1999-1999-8999-009999999999");
   }
 }
