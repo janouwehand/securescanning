@@ -101,6 +101,9 @@
   -->
   <ItemGroup>
     <Reference Include="Accessibility" />
+    <Reference Include="BouncyCastle.Crypto, Version=1.9.0.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
+      <HintPath>..\packages\Portable.BouncyCastle.1.9.0\lib\net40\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -160,9 +163,19 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="CreateX509.cs" />
+    <Compile Include="FormCertificate.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCertificate.Designer.cs">
+      <DependentUpon>FormCertificate.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <EmbeddedResource Include="FormCertificate.resx">
+      <DependentUpon>FormCertificate.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -176,6 +189,8 @@
     <EmbeddedResource Include="SecureScanRibbon.resx">
       <DependentUpon>SecureScanRibbon.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

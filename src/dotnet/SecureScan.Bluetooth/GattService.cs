@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
@@ -61,7 +62,7 @@ namespace SecureScan.Bluetooth
             var localname2 = e.Advertisement.LocalName;
           }
 
-          if (e.Advertisement.ServiceUuids.Contains(Constants.SecureScanApplication))
+          if (e.Advertisement.ServiceUuids.Contains(Constants.SECURESCANSERVICE))
           {
             Console.WriteLine(string.Concat(e.Advertisement.LocalName, ", ", string.Join(" | ", e.Advertisement.ServiceUuids)));
             watcher.Stop();
@@ -95,7 +96,7 @@ namespace SecureScan.Bluetooth
 
           foreach (var _service in result.Services)
           {
-            if (_service.Uuid == Constants.SecureScanApplication)
+            if (_service.Uuid == Constants.SECURESCANSERVICE)
             {
               service = _service;
             }
@@ -107,26 +108,25 @@ namespace SecureScan.Bluetooth
           {
             foreach (var ch in characteristics.Characteristics)
             {
-              list.Add(ch);
 
-              if (list.Count <= 1)
+              if (ch.Uuid == Guid.Parse("00000999-1999-1999-7999-009999999999"))
               {
-                ch.ValueChanged += (s, e2) =>
-                {
-                  var time = GetTime(e2.CharacteristicValue);
-                  Debug.WriteLine(time);
-                  Console.WriteLine(time);
-                };
+                var bs = Enumerable.Range(0, 255).Select(x => (byte)(x % 255)).ToArray();  //new byte[] { 0x01, 0x00 };
+                var buff = bs.AsBuffer();
+                await ch.WriteValueAsync(buff);
+                continue;
               }
 
-              var all = await ch.GetDescriptorsAsync(BluetoothCacheMode.Uncached);
+
+              /*var all = await ch.GetDescriptorsAsync(BluetoothCacheMode.Uncached);
               var len = all.Descriptors.Count;
               foreach (var al in all.Descriptors)
               {
-                var bs = new byte[] { 0x01, 0x00 };
+                var bs = Enumerable.Range(0, 255).Select(x => (byte)(x % 255)).ToArray();  //new byte[] { 0x01, 0x00 };
                 var buff = bs.AsBuffer();
                 await al.WriteValueAsync(buff);
-              }
+                await al.WriteValueAsync(buff);
+              }*/
 
               var value = await ch.ReadValueAsync(BluetoothCacheMode.Uncached);
               if (value.Status == GattCommunicationStatus.Success)
@@ -161,6 +161,8 @@ namespace SecureScan.Bluetooth
       var dataReader = DataReader.FromBuffer(buffer);
       var bs = new byte[buffer.Length];
       dataReader.ReadBytes(bs);
+
+      return Encoding.UTF8.GetString(bs);
 
       var uur = (int)bs[4];
       var minuten = (int)bs[5];

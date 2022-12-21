@@ -57,6 +57,7 @@
       this.groupSecureScan.Items.Add(this.buttonReadSecureDocument);
       this.groupSecureScan.Label = "Secure Scan";
       this.groupSecureScan.Name = "groupSecureScan";
+      this.groupSecureScan.DialogLauncherClick += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.groupSecureScan_DialogLauncherClick);
       // 
       // buttonReadSecureDocument
       // 

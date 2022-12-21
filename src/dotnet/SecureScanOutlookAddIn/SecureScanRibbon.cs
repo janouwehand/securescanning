@@ -78,5 +78,13 @@ namespace SecureScanOutlookAddIn
       MessageBox.Show(result.error);
     }
 
+    private void groupSecureScan_DialogLauncherClick(object sender, RibbonControlEventArgs e)
+    {
+      using (var formCertificate = new FormCertificate())
+      {
+        formCertificate.ShowDialog();
+      } 
+    }
+
   }
 }
