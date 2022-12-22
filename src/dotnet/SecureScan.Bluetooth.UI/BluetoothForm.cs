@@ -23,14 +23,14 @@ namespace SecureScan.Bluetooth.UI
 
     private void Start()
     {
-      gattService = new GattService();
-      gattService.StartAdvertisingAsync();
+      //gattService = new GattService();
+      //gattService.StartAdvertisingAsync();
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
-      gattService?.Dispose();
-      gattService = null;
+      //gattService?.Dispose();
+      //gattService = null;
       base.OnFormClosed(e);
     }
   }

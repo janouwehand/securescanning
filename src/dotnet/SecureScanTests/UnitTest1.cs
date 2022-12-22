@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SecureScan.Bluetooth;
+using SecureScan.Bluetooth.Server;
 
 namespace SecureScanTests
 {
@@ -14,13 +15,9 @@ namespace SecureScanTests
     {
       var c = new CancellationTokenSource();
 
-      using (var gatt = new GattService(Constants.SECURESCANSERVICE))
+      using (var gatt = new GattServer(Constants.SECURESCANSERVICE))
       {
-        var task = gatt.ScanAsync(c.Token);
-
-        await Task.Delay(TimeSpan.FromMinutes(20));
-
-        c.Cancel();
+        var task = await gatt.ScanAsync(TimeSpan.FromMinutes(20), c.Token);
       }
     }
   }
