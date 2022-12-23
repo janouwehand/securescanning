@@ -12,22 +12,28 @@ namespace SecureScan.Bluetooth.Server
   public class GattServer : IDisposable
   {
     private bool advertisementIsFound;
-    private readonly List<BluetoothLEDevice> listOfDevices = new List<BluetoothLEDevice>();
+    private readonly List<IDisposable> listOfDisposables = new List<IDisposable>();
 
     public GattServer(Guid serviceUUID) => ServiceUUID = serviceUUID;
 
     public Guid ServiceUUID { get; }
 
+    public event EventHandler<string> OnLog;
+
+    private void Log(string s) => OnLog?.Invoke(this, s);
+
     private async Task<GattConnection> OnFoundAdvertisementCreateObjectAsync(BluetoothLEAdvertisementReceivedEventArgs bluetoothLEAdvertisementReceivedEventArgs)
     {
       var device = await BluetoothLEDevice.FromBluetoothAddressAsync(bluetoothLEAdvertisementReceivedEventArgs.BluetoothAddress, bluetoothLEAdvertisementReceivedEventArgs.BluetoothAddressType);
-      listOfDevices.Add(device);
+      listOfDisposables.Add(device);
 
       var gattServices = await device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
       if (gattServices.Status != GattCommunicationStatus.Success)
       {
         throw new Exception($"Could not get GattServices ({gattServices.ProtocolError})");
       }
+
+      listOfDisposables.AddRange(gattServices.Services);
 
       var gattService = gattServices.Services.FirstOrDefault(x => x.Uuid == ServiceUUID) ?? throw new Exception("Service UUID not found!");
 
@@ -74,11 +80,13 @@ namespace SecureScan.Bluetooth.Server
             if (!advertisementIsFound)
             {
               advertisementIsFound = true;
+              Log("Result found!");
               result = await OnFoundAdvertisementCreateObjectAsync(e);
             }
           }
         };
         watcher.Start();
+        Log("Advertisement watcher started.");
 
         while (DateTime.Now - startedOn < timeOut && !cancellationToken.IsCancellationRequested && result == null)
         {
@@ -88,12 +96,13 @@ namespace SecureScan.Bluetooth.Server
         return result;
       }
 
+      Log("Error: central role not supported");
       return null;
     }
 
     public void Dispose()
     {
-      foreach (var device in listOfDevices)
+      foreach (var device in listOfDisposables)
       {
         device.Dispose();
       }

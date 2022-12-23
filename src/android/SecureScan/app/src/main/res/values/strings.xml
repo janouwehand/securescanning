@@ -11,4 +11,6 @@
     <string name="create_my_certificate">Create my certificate</string>
     <string name="show_certificate_info">Show certificate info</string>
     <string name="delete_document">Delete document</string>
+    <string name="approve">Approve</string>
+    <string name="deny">Deny</string>
 </resources>

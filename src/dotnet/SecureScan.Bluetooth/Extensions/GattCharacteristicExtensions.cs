@@ -9,7 +9,7 @@ namespace SecureScan.Bluetooth.Extensions
 {
   public static class GattCharacteristicExtensions
   {
-    public static async Task<byte[]> ReadValueAsync(this GattCharacteristic characteristic)
+    public static async Task<byte[]> ReadAsync(this GattCharacteristic characteristic)
     {
       var result = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached);
       if (result.Status == GattCommunicationStatus.Success)
@@ -22,7 +22,7 @@ namespace SecureScan.Bluetooth.Extensions
       }
     }
 
-    public static async Task WriteValueAsync(this GattCharacteristic characteristic, byte[] value)
+    public static async Task WriteAsync(this GattCharacteristic characteristic, byte[] value)
     {
       var result = await characteristic.WriteValueAsync(value.AsBuffer());
       if (result != GattCommunicationStatus.Success)

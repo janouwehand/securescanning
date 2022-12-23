@@ -1,11 +1,10 @@
-﻿using System;
-using Windows.Devices.Bluetooth;
+﻿using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace SecureScan.Bluetooth.Server
 {
-  public class GattConnection : EventArgs
+  public class GattConnection
   {
     public GattConnection(BluetoothLEAdvertisementReceivedEventArgs bluetoothLEAdvertisementReceivedEventArgs, BluetoothLEDevice Device, GattDeviceService gattService, GattCharacteristic[] characteristics)
     {

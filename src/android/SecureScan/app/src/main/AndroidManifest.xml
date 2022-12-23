@@ -20,7 +20,8 @@
         android:theme="@style/Theme.SecureScan">
         <activity
             android:name=".DocumentAccessRequest"
-            android:exported="false">
+            android:exported="false"
+            android:theme="@style/Theme.SecureScan.NoActionBar">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />

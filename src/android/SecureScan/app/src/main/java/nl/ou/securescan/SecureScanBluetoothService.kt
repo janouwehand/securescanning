@@ -2,7 +2,9 @@ package nl.ou.securescan
 
 import android.Manifest.permission.BLUETOOTH_ADVERTISE
 import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.app.PendingIntent
 import android.app.Service
+import android.app.TaskStackBuilder
 import android.bluetooth.*
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -13,6 +15,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Binder
 import android.os.IBinder
 import android.os.ParcelUuid
 import android.util.Log
@@ -25,6 +28,8 @@ class SecureScanBluetoothService : Service() {
 
     private lateinit var bluetoothManager: BluetoothManager
     private var bluetoothGattServer: BluetoothGattServer? = null
+
+    var status: Byte = SecureScanGattProfile.STATUS_IDLE
 
     /* Collection of notification subscribers */
     private val registeredDevices = mutableSetOf<BluetoothDevice>()
@@ -90,6 +95,10 @@ class SecureScanBluetoothService : Service() {
                 )
             }
         }
+
+        status = SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER
+
+        notifyUserForRequestedDocument()
     }
 
     fun getKey(
@@ -110,6 +119,26 @@ class SecureScanBluetoothService : Service() {
         }
 
         accessRequest = null
+        status = SecureScanGattProfile.STATUS_IDLE
+    }
+
+    fun getStatus(
+        device: BluetoothDevice,
+        requestId: Int
+    ) {
+        Log.i(TAG, "GetStatus ... ")
+
+        val returnValue = arrayOf(status).toByteArray()
+
+        if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            bluetoothGattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0,
+                returnValue
+            )
+        }
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
@@ -134,6 +163,8 @@ class SecureScanBluetoothService : Service() {
         ) {
             if (SecureScanGattProfile.GETKEY == characteristic.uuid) {
                 getKey(device, requestId)
+            } else if (SecureScanGattProfile.GETSTATUS == characteristic.uuid) {
+                getStatus(device, requestId)
             }
         }
 
@@ -209,9 +240,14 @@ class SecureScanBluetoothService : Service() {
         } ?: Log.w(TAG, "Failed to create advertiser")
     }
 
+    class MyBinder(private val service: SecureScanBluetoothService) : Binder() {
+        fun getService(): SecureScanBluetoothService = service
+    }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
+    val binder = MyBinder(this)
+
+    override fun onBind(intent: Intent): IBinder {
+        return binder
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -257,5 +293,42 @@ class SecureScanBluetoothService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i("SecureScan", "SERVICE DESTROYED ********************************")
+    }
+
+    private fun notifyUserForRequestedDocument() {
+        val resultIntent = Intent(this, DocumentAccessRequest::class.java)
+
+        resultIntent.putExtra("DocumentId", 3445)
+
+        // Create the TaskStackBuilder
+        val resultPendingIntent: PendingIntent? = TaskStackBuilder.create(this).run {
+            // Add the intent, which inflates the back stack
+            addNextIntentWithParentStack(resultIntent)
+
+            // Get the PendingIntent containing the entire back stack
+            getPendingIntent(
+                0,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        var utils = NotificationUtils(this)
+        val not = utils.getNotificationbuilder(
+            "Test eerste",
+            "Bla die bla",
+            NotificationUtils.CHANNEL_REQUESTACCESS
+        )
+            .setContentIntent(resultPendingIntent)
+            .build()
+        utils.manager.notify(1001, not)
+    }
+
+    fun setApproval(approved: Boolean) {
+        Log.i(TAG, "Approved: $approved")
+        status = if (approved) {
+            SecureScanGattProfile.STATUS_REQUEST_ACCEPTED
+        } else {
+            SecureScanGattProfile.STATUS_REQUEST_DENIED
+        }
     }
 }

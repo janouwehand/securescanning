@@ -28,20 +28,69 @@
     /// </summary>
     private void InitializeComponent()
     {
+      this.pictureBox1 = new System.Windows.Forms.PictureBox();
+      this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+      this.buttonAbort = new System.Windows.Forms.Button();
+      ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
       this.SuspendLayout();
+      // 
+      // pictureBox1
+      // 
+      this.pictureBox1.Image = global::SecureScan.Bluetooth.UI.Properties.Resources.wait;
+      this.pictureBox1.Location = new System.Drawing.Point(12, 12);
+      this.pictureBox1.Name = "pictureBox1";
+      this.pictureBox1.Size = new System.Drawing.Size(133, 128);
+      this.pictureBox1.TabIndex = 0;
+      this.pictureBox1.TabStop = false;
+      // 
+      // richTextBox1
+      // 
+      this.richTextBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+      this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.richTextBox1.Font = new System.Drawing.Font("Consolas", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.richTextBox1.Location = new System.Drawing.Point(177, 12);
+      this.richTextBox1.Name = "richTextBox1";
+      this.richTextBox1.Size = new System.Drawing.Size(465, 316);
+      this.richTextBox1.TabIndex = 1;
+      this.richTextBox1.Text = "";
+      // 
+      // buttonAbort
+      // 
+      this.buttonAbort.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+      this.buttonAbort.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+      this.buttonAbort.Location = new System.Drawing.Point(547, 343);
+      this.buttonAbort.Name = "buttonAbort";
+      this.buttonAbort.Size = new System.Drawing.Size(95, 35);
+      this.buttonAbort.TabIndex = 2;
+      this.buttonAbort.Text = "Abort";
+      this.buttonAbort.UseVisualStyleBackColor = true;
       // 
       // BluetoothForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(698, 377);
+      this.BackColor = System.Drawing.Color.White;
+      this.CancelButton = this.buttonAbort;
+      this.ClientSize = new System.Drawing.Size(673, 393);
+      this.ControlBox = false;
+      this.Controls.Add(this.buttonAbort);
+      this.Controls.Add(this.richTextBox1);
+      this.Controls.Add(this.pictureBox1);
       this.Name = "BluetoothForm";
+      this.ShowIcon = false;
       this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
       this.Text = "Retrieve key from smartphone via bluetooth";
+      ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
       this.ResumeLayout(false);
 
     }
 
-    #endregion
-  }
+        #endregion
+
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.Button buttonAbort;
+    }
 }

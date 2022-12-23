@@ -1,37 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SecureScan.Bluetooth.UI
 {
   public partial class BluetoothForm : Form
   {
-    GattService gattService;
+    public BluetoothForm() => InitializeComponent();
 
-    public BluetoothForm()
+    public void AddLog(string str)
     {
-      InitializeComponent();
-    }
-
-    protected override void OnShown(EventArgs e) => Start();
-
-    private void Start()
-    {
-      //gattService = new GattService();
-      //gattService.StartAdvertisingAsync();
-    }
-
-    protected override void OnFormClosed(FormClosedEventArgs e)
-    {
-      //gattService?.Dispose();
-      //gattService = null;
-      base.OnFormClosed(e);
+      if (InvokeRequired)
+      {
+        this.Invoke(new Action(() => AddLog(str))); 
+      }
+      else
+      {
+        richTextBox1.AppendText(str + Environment.NewLine);
+        richTextBox1.ScrollToCaret();
+        Application.DoEvents();
+      }
     }
   }
 }
