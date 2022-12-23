@@ -80,5 +80,8 @@
   <ItemGroup>
     <None Include="Resources\wait.gif" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\wait3.gif" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

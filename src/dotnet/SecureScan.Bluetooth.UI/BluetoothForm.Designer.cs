@@ -28,20 +28,11 @@
     /// </summary>
     private void InitializeComponent()
     {
-      this.pictureBox1 = new System.Windows.Forms.PictureBox();
       this.richTextBox1 = new System.Windows.Forms.RichTextBox();
       this.buttonAbort = new System.Windows.Forms.Button();
+      this.pictureBox1 = new System.Windows.Forms.PictureBox();
       ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
       this.SuspendLayout();
-      // 
-      // pictureBox1
-      // 
-      this.pictureBox1.Image = global::SecureScan.Bluetooth.UI.Properties.Resources.wait;
-      this.pictureBox1.Location = new System.Drawing.Point(12, 12);
-      this.pictureBox1.Name = "pictureBox1";
-      this.pictureBox1.Size = new System.Drawing.Size(133, 128);
-      this.pictureBox1.TabIndex = 0;
-      this.pictureBox1.TabStop = false;
       // 
       // richTextBox1
       // 
@@ -66,6 +57,15 @@
       this.buttonAbort.TabIndex = 2;
       this.buttonAbort.Text = "Abort";
       this.buttonAbort.UseVisualStyleBackColor = true;
+      // 
+      // pictureBox1
+      // 
+      this.pictureBox1.Image = global::SecureScan.Bluetooth.UI.Properties.Resources.wait3;
+      this.pictureBox1.Location = new System.Drawing.Point(24, 22);
+      this.pictureBox1.Name = "pictureBox1";
+      this.pictureBox1.Size = new System.Drawing.Size(74, 62);
+      this.pictureBox1.TabIndex = 0;
+      this.pictureBox1.TabStop = false;
       // 
       // BluetoothForm
       // 

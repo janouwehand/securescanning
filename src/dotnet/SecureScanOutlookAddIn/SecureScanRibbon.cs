@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Outlook;
 using Microsoft.Office.Tools.Ribbon;
+using SecureScan.Base.Crypto.Symmetric.AESGCM;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Interfaces;
 
@@ -97,7 +98,7 @@ namespace SecureScanOutlookAddIn
       buttonReadSecureDocument.Enabled = contentType == "application/ou-secure-document";
     }
 
-    const string PR_ATTACH_DATA_BIN = "http://schemas.microsoft.com/mapi/proptag/0x37010102";
+    private const string PR_ATTACH_DATA_BIN = "http://schemas.microsoft.com/mapi/proptag/0x37010102";
 
     private void button1_Click(object sender, RibbonControlEventArgs e)
     {
@@ -140,6 +141,16 @@ namespace SecureScanOutlookAddIn
       else
       {
         var symmetricPassword = certificate.DecryptWithPrivateKey(result.key);
+        var symmetricEncryption = new AESGCMSymmetricEncryption();
+        var decryptedDocument = symmetricEncryption.Decrypt(bs, symmetricPassword);
+        symmetricPassword = null;
+
+        using (var formRenderPDF = new FormRenderPDF())
+        {
+          formRenderPDF.DocumentStream = new MemoryStream(decryptedDocument);
+          decryptedDocument = null;
+          formRenderPDF.ShowDialog();
+        }
       }
     }
 

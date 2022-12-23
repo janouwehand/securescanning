@@ -25,6 +25,8 @@ import nl.ou.securescan.crypto.extensions.getNameAndEmail
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.helpers.NotificationUtils
+import java.io.File
+import java.io.FileOutputStream
 
 
 class SecureScanBluetoothService : Service() {
@@ -91,22 +93,32 @@ class SecureScanBluetoothService : Service() {
         responseNeeded: Boolean,
         value: ByteArray
     ) {
-        certBytes = listOf()
-        accessRequest = AccessRequest()
-        accessRequest!!.setSecureContainerSha1Hash(value)
-        documentAccessRequest?.let { documentAccessRequest!!.finishAndRemoveTask() }
+        try {
+            // code that may throw an exception
 
-        val db = DocumentDatabase.getDatabase(baseContext)
-        val dao = db.documentDao()
-        runBlocking {
-            Log.i(TAG, "Received secure document hash: ${value.toHexString()}")
-            val doc = dao.getByHash(value)
-            status = if (doc != null) {
-                accessRequest!!.setDocument(doc)
-                SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE
-            } else {
-                SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE
+            certBytes = listOf()
+            accessRequest = AccessRequest()
+            accessRequest!!.setSecureContainerSha1Hash(value)
+            documentAccessRequest?.let { documentAccessRequest!!.finishAndRemoveTask() }
+
+            val db = DocumentDatabase.getDatabase(baseContext)
+            val dao = db.documentDao()
+            runBlocking {
+                Log.i(TAG, "Received secure document hash: ${value.toHexString()}")
+                val doc = dao.getByHash(value)
+                status = if (doc != null) {
+                    accessRequest!!.setDocument(doc)
+                    SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE
+                } else {
+                    SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE
+                }
             }
+
+        } catch (e: Exception) {
+            val logFile = File(getExternalFilesDir(null), "foutjeslog.txt")
+            val fos = FileOutputStream(logFile, true)
+            fos.write("Error: $e\n".toByteArray())
+            fos.close()
         }
 
         if (responseNeeded) {

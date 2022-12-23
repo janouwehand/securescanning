@@ -250,7 +250,9 @@ namespace SecureScanMFP
 
       Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using AES-GCM (size: {testfile.Length:N0} bytes)", Color.DarkOliveGreen);
 
-      var bs = File.ReadAllBytes(testfile.FullName);
+      var pdfFileName = File.Exists(labelPDF.Text) ? labelPDF.Text : testfile.FullName;
+
+      var bs = File.ReadAllBytes(pdfFileName);
       bsenc = symmetricEncryption.Encrypt(bs, randomPassword);
       var hash = bsenc.ComputeSHA1();
 
@@ -361,5 +363,22 @@ Secure MFP"
     });
 
     private void BeepOK() => Task.Run(() => Console.Beep(1000, 500));
+
+    private void panel2_Paint(object sender, PaintEventArgs e)
+    {
+
+    }
+
+    private void buttonChoosePDF_Click(object sender, EventArgs e)
+    {
+      using (var od = new OpenFileDialog())
+      {
+        od.Filter = "PDF files (*.pdf)|*.pdf";
+        if (od.ShowDialog() == DialogResult.OK)
+        {
+          labelPDF.Text = od.FileName;
+        }
+      }
+    }
   }
 }

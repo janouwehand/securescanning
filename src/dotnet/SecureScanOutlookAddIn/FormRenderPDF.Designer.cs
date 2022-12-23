@@ -34,9 +34,12 @@
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(1385, 919);
+      this.ClientSize = new System.Drawing.Size(1463, 988);
       this.Name = "FormRenderPDF";
-      this.Text = "FormRenderPDF";
+      this.Padding = new System.Windows.Forms.Padding(8);
+      this.ShowIcon = false;
+      this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+      this.Text = "Secure Document Viewer";
       this.ResumeLayout(false);
 
     }

@@ -42,6 +42,10 @@
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
       this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
       this.labelState = new System.Windows.Forms.ToolStripStatusLabel();
+      this.panel5 = new System.Windows.Forms.Panel();
+      this.panel6 = new System.Windows.Forms.Panel();
+      this.buttonChoosePDF = new System.Windows.Forms.Button();
+      this.labelPDF = new System.Windows.Forms.Label();
       this.panel1.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
@@ -53,6 +57,8 @@
       this.panel4.SuspendLayout();
       this.panel3.SuspendLayout();
       this.statusStrip1.SuspendLayout();
+      this.panel5.SuspendLayout();
+      this.panel6.SuspendLayout();
       this.SuspendLayout();
       // 
       // panel1
@@ -78,7 +84,7 @@
       // 
       this.splitContainer1.Panel2.Controls.Add(this.flowLayoutPanel2);
       this.splitContainer1.Size = new System.Drawing.Size(1314, 173);
-      this.splitContainer1.SplitterDistance = 997;
+      this.splitContainer1.SplitterDistance = 996;
       this.splitContainer1.TabIndex = 0;
       // 
       // flowLayoutPanel1
@@ -88,7 +94,7 @@
       this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
       this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
       this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-      this.flowLayoutPanel1.Size = new System.Drawing.Size(997, 173);
+      this.flowLayoutPanel1.Size = new System.Drawing.Size(996, 173);
       this.flowLayoutPanel1.TabIndex = 0;
       // 
       // buttonGO
@@ -99,7 +105,7 @@
       this.buttonGO.Name = "buttonGO";
       this.buttonGO.Size = new System.Drawing.Size(227, 164);
       this.buttonGO.TabIndex = 0;
-      this.buttonGO.Text = "GO";
+      this.buttonGO.Text = "Start";
       this.buttonGO.UseVisualStyleBackColor = false;
       this.buttonGO.Click += new System.EventHandler(this.buttonGO_Click);
       // 
@@ -122,14 +128,14 @@
       this.flowLayoutPanel2.Location = new System.Drawing.Point(0, 0);
       this.flowLayoutPanel2.Name = "flowLayoutPanel2";
       this.flowLayoutPanel2.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-      this.flowLayoutPanel2.Size = new System.Drawing.Size(313, 173);
+      this.flowLayoutPanel2.Size = new System.Drawing.Size(314, 173);
       this.flowLayoutPanel2.TabIndex = 1;
       // 
       // buttonSecureScan
       // 
       this.buttonSecureScan.BackColor = System.Drawing.Color.Yellow;
       this.buttonSecureScan.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-      this.buttonSecureScan.Location = new System.Drawing.Point(83, 3);
+      this.buttonSecureScan.Location = new System.Drawing.Point(84, 3);
       this.buttonSecureScan.Name = "buttonSecureScan";
       this.buttonSecureScan.Size = new System.Drawing.Size(227, 164);
       this.buttonSecureScan.TabIndex = 1;
@@ -139,13 +145,15 @@
       // 
       // panel2
       // 
-      this.panel2.Controls.Add(this.panel4);
+      this.panel2.Controls.Add(this.panel6);
+      this.panel2.Controls.Add(this.panel5);
       this.panel2.Controls.Add(this.panel3);
       this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
       this.panel2.Location = new System.Drawing.Point(0, 173);
       this.panel2.Name = "panel2";
       this.panel2.Size = new System.Drawing.Size(1314, 837);
       this.panel2.TabIndex = 1;
+      this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
       // 
       // panel4
       // 
@@ -154,7 +162,7 @@
       this.panel4.Location = new System.Drawing.Point(0, 0);
       this.panel4.Name = "panel4";
       this.panel4.Padding = new System.Windows.Forms.Padding(16);
-      this.panel4.Size = new System.Drawing.Size(1314, 805);
+      this.panel4.Size = new System.Drawing.Size(1314, 757);
       this.panel4.TabIndex = 2;
       // 
       // edtlog
@@ -165,7 +173,7 @@
       this.edtlog.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
       this.edtlog.Location = new System.Drawing.Point(16, 16);
       this.edtlog.Name = "edtlog";
-      this.edtlog.Size = new System.Drawing.Size(1282, 773);
+      this.edtlog.Size = new System.Drawing.Size(1282, 725);
       this.edtlog.TabIndex = 0;
       this.edtlog.Text = "";
       // 
@@ -204,6 +212,46 @@
       this.labelState.Size = new System.Drawing.Size(43, 25);
       this.labelState.Text = "Idle";
       // 
+      // panel5
+      // 
+      this.panel5.Controls.Add(this.labelPDF);
+      this.panel5.Controls.Add(this.buttonChoosePDF);
+      this.panel5.Dock = System.Windows.Forms.DockStyle.Top;
+      this.panel5.Location = new System.Drawing.Point(0, 0);
+      this.panel5.Name = "panel5";
+      this.panel5.Size = new System.Drawing.Size(1314, 48);
+      this.panel5.TabIndex = 3;
+      // 
+      // panel6
+      // 
+      this.panel6.Controls.Add(this.panel4);
+      this.panel6.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.panel6.Location = new System.Drawing.Point(0, 48);
+      this.panel6.Name = "panel6";
+      this.panel6.Size = new System.Drawing.Size(1314, 757);
+      this.panel6.TabIndex = 4;
+      // 
+      // buttonChoosePDF
+      // 
+      this.buttonChoosePDF.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.buttonChoosePDF.Location = new System.Drawing.Point(3, 6);
+      this.buttonChoosePDF.Name = "buttonChoosePDF";
+      this.buttonChoosePDF.Size = new System.Drawing.Size(227, 36);
+      this.buttonChoosePDF.TabIndex = 0;
+      this.buttonChoosePDF.Text = "Choose PDF";
+      this.buttonChoosePDF.UseVisualStyleBackColor = true;
+      this.buttonChoosePDF.Click += new System.EventHandler(this.buttonChoosePDF_Click);
+      // 
+      // labelPDF
+      // 
+      this.labelPDF.AutoSize = true;
+      this.labelPDF.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.labelPDF.Location = new System.Drawing.Point(236, 14);
+      this.labelPDF.Name = "labelPDF";
+      this.labelPDF.Size = new System.Drawing.Size(186, 20);
+      this.labelPDF.TabIndex = 1;
+      this.labelPDF.Text = "Standaard testdocument";
+      // 
       // FormMFP
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -227,6 +275,9 @@
       this.panel3.PerformLayout();
       this.statusStrip1.ResumeLayout(false);
       this.statusStrip1.PerformLayout();
+      this.panel5.ResumeLayout(false);
+      this.panel5.PerformLayout();
+      this.panel6.ResumeLayout(false);
       this.ResumeLayout(false);
 
     }
@@ -247,5 +298,9 @@
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripStatusLabel labelState;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.Panel panel6;
+        private System.Windows.Forms.Button buttonChoosePDF;
+        private System.Windows.Forms.Label labelPDF;
     }
 }

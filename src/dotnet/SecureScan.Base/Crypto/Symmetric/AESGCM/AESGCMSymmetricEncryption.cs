@@ -9,7 +9,7 @@ using SecureScan.Base.Extensions;
 
 namespace SecureScan.Base.Crypto.Symmetric.AESGCM
 {
-  internal class AESGCMSymmetricEncryption : ISymmetricEncryption
+  public class AESGCMSymmetricEncryption : ISymmetricEncryption
   {
     private const int KEYBYTESIZE = 32;
     private const int NONCEBYTESIZE = 12;
