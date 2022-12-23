@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Outlook;
 using Microsoft.Office.Tools.Ribbon;
+using SecureScan.Base.Extensions;
 using SecureScan.Base.Interfaces;
 
 namespace SecureScanOutlookAddIn
@@ -112,6 +113,8 @@ namespace SecureScanOutlookAddIn
         return;
       }
 
+      var certificate = GetCertificate();
+
       var contentType = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001E");
       var isOK = contentType == "application/ou-secure-document";
 
@@ -128,8 +131,16 @@ namespace SecureScanOutlookAddIn
       var types = ass.GetTypes();
       var type = types.FirstOrDefault(x => x.Name == "BluetoothUIFunctions");
       var bt = (IBluetoothUIFunctions)Activator.CreateInstance(type);
-      var result = bt.RetrieveKeyForSecureDocument(bs, GetCertificate());
-      MessageBox.Show(result.error);
+      var result = bt.RetrieveKeyForSecureDocument(bs, certificate);
+
+      if (!string.IsNullOrEmpty(result.error) || result.key == null || !result.key.Any())
+      {
+        MessageBox.Show(result.error ?? "no key received");
+      }
+      else
+      {
+        var symmetricPassword = certificate.DecryptWithPrivateKey(result.key);
+      }
     }
 
     private X509Certificate2 GetCertificate()

@@ -59,13 +59,25 @@ namespace SecureScan.Bluetooth.UI
           gatt.OnLog += (s, e) => log(e);
           var gattConnection = await gatt.ScanAsync(TimeSpan.FromMinutes(2), cancellationTokenSource.Token);
 
-          await SendInitRequestAsync(gattConnection, secureContainerSHA1, log);
+          var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
+          if (!documentAvailable)
+          {
+            return (null, "Document not available");
+          }
 
           await SendCertificateAsync(gattConnection, certificate, log);
 
-          var key = await ReceiveKeyAsync(gattConnection, log);
+          var approved = await WaitForApprovalAsync(gattConnection, log);
 
-          return (key, null);
+          if (!approved)
+          {
+            return (null, "Request denied by user!");
+          }
+          else
+          {
+            var key = await ReceiveKeyAsync(gattConnection, log);
+            return (key, null);
+          }
         }
       }
       catch (ObjectDisposedException)
@@ -78,18 +90,96 @@ namespace SecureScan.Bluetooth.UI
       }
     }
 
-    private async Task<bool> SendInitRequestAsync(GattConnection gattConnection, byte[] secureContainerSHA1, Action<string> log)
+    private async Task<bool> SendSecureContainerHashGetDocumentAvailableAsync(GattConnection gattConnection, byte[] secureContainerSHA1, Action<string> log)
     {
-      var characteristic = gattConnection.Characteristics.FirstOrDefault(x => x.Uuid == Constants.INITREQUEST) ?? throw new Exception("Cannot find InitRequest characteristic");
+      var characteristic = gattConnection.Characteristics.FirstOrDefault(x => x.Uuid == Constants.SENDSECURECONTAINERHASH) ?? throw new Exception("Cannot find InitRequest characteristic");
 
       log("Sending InitRequest");
 
       await characteristic.WriteAsync(secureContainerSHA1);
 
-      log("Access request sent. Waiting for user's approval (max. 30 seconds)...");
+      log("Querying whether the document is available");
+      var status = await GetStatusAsync(gattConnection);
+
+      if (status.status == Constants.STATUS_DOCUMENT_NOT_AVAILABLE)
+      {
+        throw new Exception("Document not available");
+      }
+      else if (status.status == Constants.STATUS_DOCUMENT_AVAILABLE)
+      {
+        log("Document available");
+        return true;
+      }
+      else
+      {
+        throw new Exception("Unknown status");
+      }
+    }
+
+    private async Task SendCertificateAsync(GattConnection gattConnection, X509Certificate2 certificate, Action<string> log)
+    {
+      log("Sending public certificate");
+
+      var characteristic = gattConnection.Characteristics.FirstOrDefault(x => x.Uuid == Constants.PUBLICCERT) ?? throw new Exception("Cannot find PublicCert characteristic");
+
+      var bs = certificate.GetRawCertData();
+      var lists = bs.SplitList(255);
+      foreach (var list in lists)
+      {
+        await characteristic.WriteAsync(list.ToArray());
+      }
+
+      await characteristic.WriteAsync(new byte[0]);
+    }
+
+    private async Task<byte[]> ReceiveKeyAsync(GattConnection gattConnection, Action<string> log)
+    {
+      log("Retrieving key");
+
+      var characteristic = gattConnection.Characteristics.FirstOrDefault(x => x.Uuid == Constants.GETKEY) ?? throw new Exception("Cannot find Key characteristic");
+
+      var key = await characteristic.ReadAsync();
+
+      return key;
+    }
+
+    private async Task<(byte status, string statusDescription)> GetStatusAsync(GattConnection gattConnection)
+    {
+      var characteristic = gattConnection.Characteristics.FirstOrDefault(x => x.Uuid == Constants.GETSTATUS) ?? throw new Exception("Cannot find Status characteristic");
+
+      var status = (await characteristic.ReadAsync()).FirstOrDefault();
+
+      switch (status)
+      {
+        case Constants.STATUS_IDLE:
+          return (status, "Idle");
+
+        case Constants.STATUS_DOCUMENT_AVAILABLE:
+          return (status, "Document available");
+
+        case Constants.STATUS_DOCUMENT_NOT_AVAILABLE:
+          return (status, "Document not available");
+
+        case Constants.STATUS_REQUEST_WAITFORUSER:
+          return (status, "Waiting for user's approval");
+
+        case Constants.STATUS_REQUEST_ACCEPTED:
+          return (status, "Access request accepted");
+
+        case Constants.STATUS_REQUEST_DENIED:
+          return (status, "Access request denied");
+
+        default:
+          throw new Exception("Unknown status!");
+      }
+    }
+
+    private async Task<bool> WaitForApprovalAsync(GattConnection gattConnection, Action<string> log)
+    {
+      log("Waiting for user's approval (max. 30 seconds)...");
 
       var startedOn = DateTime.Now;
-      byte status = Constants.STATUS_REQUEST_WAITFORUSER;
+      var status = Constants.STATUS_REQUEST_WAITFORUSER;
 
       while (status == Constants.STATUS_REQUEST_WAITFORUSER && DateTime.Now - startedOn < TimeSpan.FromSeconds(30))
       {
@@ -119,47 +209,6 @@ namespace SecureScan.Bluetooth.UI
       else
       {
         throw new Exception($"Invalid status: {status}");
-      }
-    }
-
-    private async Task SendCertificateAsync(GattConnection gattConnection, X509Certificate2 certificate, Action<string> log) => log("Sending public certificate");
-
-    private async Task<byte[]> ReceiveKeyAsync(GattConnection gattConnection, Action<string> log)
-    {
-      log("Retrieving key");
-
-      byte[] key = null;
-      if (key == null || !key.Any())
-      {
-        var err = await GetStatusAsync(gattConnection);
-        throw new Exception(err.statusDescription);
-      }
-
-      return null;
-    }
-
-    private async Task<(byte status, string statusDescription)> GetStatusAsync(GattConnection gattConnection)
-    {
-      var characteristic = gattConnection.Characteristics.FirstOrDefault(x => x.Uuid == Constants.GETSTATUS) ?? throw new Exception("Cannot find Status characteristic");
-
-      var status = (await characteristic.ReadAsync()).FirstOrDefault();
-
-      switch (status)
-      {
-        case Constants.STATUS_IDLE:
-          return (status, "Idle");
-
-        case Constants.STATUS_REQUEST_WAITFORUSER:
-          return (status, "Waiting for user's approval");
-
-        case Constants.STATUS_REQUEST_ACCEPTED:
-          return (status, "Access request accepted");
-
-        case Constants.STATUS_REQUEST_DENIED:
-          return (status, "Access request denied");
-
-        default:
-          throw new Exception("Unknown status!");
       }
     }
 

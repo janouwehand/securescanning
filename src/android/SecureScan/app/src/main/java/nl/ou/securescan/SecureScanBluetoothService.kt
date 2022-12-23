@@ -19,10 +19,19 @@ import android.os.Binder
 import android.os.IBinder
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.runBlocking
+import nl.ou.securescan.crypto.extensions.getNameAndEmail
+import nl.ou.securescan.crypto.extensions.toHexString
+import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.helpers.NotificationUtils
 
 
 class SecureScanBluetoothService : Service() {
+
+    companion object {
+        var documentAccessRequest: AppCompatActivity? = null
+    }
 
     private val TAG: String = "SecureScanBT"
 
@@ -76,14 +85,29 @@ class SecureScanBluetoothService : Service() {
 
     private var accessRequest: AccessRequest? = null
 
-    fun initAccessRequest(
+    fun sendSecurecontainerHash(
         device: BluetoothDevice,
         requestId: Int,
         responseNeeded: Boolean,
         value: ByteArray
     ) {
+        certBytes = listOf()
         accessRequest = AccessRequest()
         accessRequest!!.setSecureContainerSha1Hash(value)
+        documentAccessRequest?.let { documentAccessRequest!!.finishAndRemoveTask() }
+
+        val db = DocumentDatabase.getDatabase(baseContext)
+        val dao = db.documentDao()
+        runBlocking {
+            Log.i(TAG, "Received secure document hash: ${value.toHexString()}")
+            val doc = dao.getByHash(value)
+            status = if (doc != null) {
+                accessRequest!!.setDocument(doc)
+                SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE
+            } else {
+                SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE
+            }
+        }
 
         if (responseNeeded) {
             if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
@@ -95,18 +119,47 @@ class SecureScanBluetoothService : Service() {
                 )
             }
         }
+    }
 
-        status = SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER
+    private var certBytes: List<Byte> = listOf()
 
-        notifyUserForRequestedDocument()
+    fun sendPublicCertPart(
+        device: BluetoothDevice,
+        requestId: Int,
+        responseNeeded: Boolean,
+        value: ByteArray
+    ) {
+        if (value.isNotEmpty()) {
+            certBytes = certBytes.plus(value.asList())
+        } else {
+            accessRequest!!.setPublicCertificate(certBytes.toByteArray())
+            status = SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER
+            runBlocking {
+                notifyUserForRequestedDocument()
+            }
+        }
+
+        if (responseNeeded) {
+            if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_SUCCESS,
+                    0, null
+                )
+            }
+        }
     }
 
     fun getKey(
         device: BluetoothDevice,
         requestId: Int
     ) {
+        var returnValue = "".toByteArray()
 
-        val returnValue = "".toByteArray()
+        if (status == SecureScanGattProfile.STATUS_REQUEST_ACCEPTED && accessRequest != null) {
+            returnValue = accessRequest!!.getKey()
+        }
 
         if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
             bluetoothGattServer?.sendResponse(
@@ -177,8 +230,10 @@ class SecureScanBluetoothService : Service() {
             offset: Int,
             value: ByteArray?
         ) {
-            if (SecureScanGattProfile.INITREQUEST == characteristic!!.uuid) {
-                initAccessRequest(device!!, requestId, responseNeeded, value!!)
+            if (SecureScanGattProfile.SENDSECURECONTAINERHASH == characteristic!!.uuid) {
+                sendSecurecontainerHash(device!!, requestId, responseNeeded, value!!)
+            } else if (SecureScanGattProfile.PUBLICCERT == characteristic!!.uuid) {
+                sendPublicCertPart(device!!, requestId, responseNeeded, value!!)
             }
         }
     }
@@ -298,7 +353,15 @@ class SecureScanBluetoothService : Service() {
     private fun notifyUserForRequestedDocument() {
         val resultIntent = Intent(this, DocumentAccessRequest::class.java)
 
-        resultIntent.putExtra("DocumentId", 3445)
+        var certInfo = accessRequest!!.certificate!!.getNameAndEmail()
+        var doc = accessRequest!!.document!!
+
+        resultIntent.putExtra("email", certInfo.email)
+        resultIntent.putExtra("name", certInfo.name)
+        resultIntent.putExtra("hostName", certInfo.hostName)
+        resultIntent.putExtra("documentName", doc.name)
+        resultIntent.putExtra("documentId", doc.id)
+        resultIntent.putExtra("documentHash", doc.documentHash)
 
         // Create the TaskStackBuilder
         val resultPendingIntent: PendingIntent? = TaskStackBuilder.create(this).run {
@@ -314,8 +377,8 @@ class SecureScanBluetoothService : Service() {
 
         var utils = NotificationUtils(this)
         val not = utils.getNotificationbuilder(
-            "Test eerste",
-            "Bla die bla",
+            "Secure Scan document access request",
+            "${certInfo.name} (${certInfo.email}) from host '${certInfo.hostName}' is requesting access to document '$doc'. Click this notification to allow or deny the request.",
             NotificationUtils.CHANNEL_REQUESTACCESS
         )
             .setContentIntent(resultPendingIntent)

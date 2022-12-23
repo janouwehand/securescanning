@@ -58,6 +58,14 @@ namespace SecureScan.Base.Extensions
       }
     }
 
+    public static byte[] DecryptWithPrivateKey(this X509Certificate2 x509, byte[] ciptherText)
+    {
+      using (var rsa = x509.GetRSAPrivateKey())
+      {
+        return rsa.Decrypt(ciptherText, RSAEncryptionPadding.Pkcs1);
+      }
+    }
+
     public static bool VerifySignature(this X509Certificate2 x509, byte[] data, byte[] signature)
     {
       using (var rsa = x509.GetRSAPublicKey())

@@ -10,7 +10,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import javax.crypto.Cipher
 
-data class NameAndEmail(val name: String, val email: String)
+data class NameAndEmail(val name: String, val email: String, val hostName: String)
 
 fun X509Certificate.getNameAndEmail(): NameAndEmail {
     val subject = this.subjectDN.name
@@ -35,10 +35,21 @@ fun X509Certificate.getNameAndEmail(): NameAndEmail {
         }
     }
 
+    fun getHostName(): String {
+        val pattern = Pattern.compile("L=(.*?)(?:,|\$)")
+        val matcher: Matcher = pattern.matcher(subject)
+        return if (matcher.find()) {
+            matcher.group(1)!!
+        } else {
+            ""
+        }
+    }
+
     val name = getName()
     val email = getEmail()
+    val hostName = getHostName()
 
-    return NameAndEmail(name, email)
+    return NameAndEmail(name, email, hostName)
 }
 
 @Suppress("unused")

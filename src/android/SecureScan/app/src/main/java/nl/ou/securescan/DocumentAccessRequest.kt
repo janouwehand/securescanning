@@ -22,7 +22,16 @@ class DocumentAccessRequest : AppCompatActivity() {
 
         binding = ActivityDocumentAccessRequestBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        //setContentView(R.layout.activity_document_access_request)
+
+        val email = intent.getStringExtra("email")!!
+        val name = intent.getStringExtra("name")!!
+        val hostName = intent.getStringExtra("hostName")!!
+
+        val documentName = intent.getStringExtra("documentName")!!
+        val documentId = intent.getIntExtra("documentId", 0)
+
+        binding.textViewRequest.text =
+            "User $name of mailbox '$email' from host $hostName is requesting access to document $documentId ($documentName)"
 
         // Hide notification
         val manager = NotificationManagerCompat.from(this)
@@ -35,9 +44,11 @@ class DocumentAccessRequest : AppCompatActivity() {
 
         binding.buttonApprove.setOnClickListener { setApproval(true) }
         binding.buttonDeny.setOnClickListener { setApproval(false) }
+        
+        SecureScanBluetoothService.documentAccessRequest = this
     }
 
-    fun setApproval(approved: Boolean) {
+    private fun setApproval(approved: Boolean) {
         val serviceIntent = Intent(this, SecureScanBluetoothService::class.java)
         serviceIntent.putExtra("LeDot", ".")
 
@@ -53,7 +64,7 @@ class DocumentAccessRequest : AppCompatActivity() {
                     myService.setApproval(approved)
 
                     unbindService(this)
-                    finish()
+                    finishAndRemoveTask()
                 }
 
                 override fun onServiceDisconnected(name: ComponentName?) {

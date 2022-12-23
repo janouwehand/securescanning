@@ -10,13 +10,13 @@
         android:id="@+id/buttonDeny"
         android:layout_width="158dp"
         android:layout_height="49dp"
-        android:layout_marginTop="152dp"
-        android:text="@string/deny"
+        android:layout_marginTop="120dp"
         android:backgroundTint="#FA3434"
+        android:text="@string/deny"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/buttonApprove"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/textViewRequest" />
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -40,11 +40,23 @@
         android:id="@+id/buttonApprove"
         android:layout_width="158dp"
         android:layout_height="49dp"
-        android:layout_marginTop="152dp"
-        android:text="@string/approve"
+        android:layout_marginTop="120dp"
         android:backgroundTint="#1F9F1F"
+        android:text="@string/approve"
         app:layout_constraintEnd_toStartOf="@+id/buttonDeny"
         app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewRequest" />
+
+    <TextView
+        android:id="@+id/textViewRequest"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="...."
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 

@@ -20,6 +20,9 @@ interface DocumentDao {
     @Query("select * from document where name like :name limit 1")
     suspend fun getByName(name: String): Document
 
+    @Query("select * from document where document_hash = :hash limit 1")
+    suspend fun getByHash(hash: ByteArray): Document?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(document: Document)
 

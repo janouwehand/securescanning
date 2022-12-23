@@ -24,7 +24,7 @@ namespace SecureScan.Bluetooth.Extensions
 
     public static async Task WriteAsync(this GattCharacteristic characteristic, byte[] value)
     {
-      var result = await characteristic.WriteValueAsync(value.AsBuffer());
+      var result = await characteristic.WriteValueAsync(value.AsBuffer(), GattWriteOption.WriteWithResponse);
       if (result != GattCommunicationStatus.Success)
       {
         throw new Exception("Cannot write attribute value for " + characteristic.Uuid);
