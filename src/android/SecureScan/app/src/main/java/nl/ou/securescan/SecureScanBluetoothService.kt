@@ -1,7 +1,6 @@
 package nl.ou.securescan
 
-import android.Manifest.permission.BLUETOOTH_ADVERTISE
-import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.Service
 import android.app.TaskStackBuilder
@@ -14,7 +13,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
 import android.os.ParcelUuid
@@ -28,7 +26,7 @@ import nl.ou.securescan.helpers.NotificationUtils
 import java.io.File
 import java.io.FileOutputStream
 
-
+@SuppressLint("MissingPermission")
 class SecureScanBluetoothService : Service() {
 
     companion object {
@@ -115,21 +113,19 @@ class SecureScanBluetoothService : Service() {
             }
 
         } catch (e: Exception) {
-            val logFile = File(getExternalFilesDir(null), "foutjeslog.txt")
+            val logFile = File(getExternalFilesDir(null), "error-log.txt")
             val fos = FileOutputStream(logFile, true)
             fos.write("Error: $e\n".toByteArray())
             fos.close()
         }
 
         if (responseNeeded) {
-            if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                bluetoothGattServer?.sendResponse(
-                    device,
-                    requestId,
-                    BluetoothGatt.GATT_SUCCESS,
-                    0, null
-                )
-            }
+            bluetoothGattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0, null
+            )
         }
     }
 
@@ -152,14 +148,12 @@ class SecureScanBluetoothService : Service() {
         }
 
         if (responseNeeded) {
-            if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                bluetoothGattServer?.sendResponse(
-                    device,
-                    requestId,
-                    BluetoothGatt.GATT_SUCCESS,
-                    0, null
-                )
-            }
+            bluetoothGattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0, null
+            )
         }
     }
 
@@ -173,15 +167,14 @@ class SecureScanBluetoothService : Service() {
             returnValue = accessRequest!!.getKey()
         }
 
-        if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            bluetoothGattServer?.sendResponse(
-                device,
-                requestId,
-                BluetoothGatt.GATT_SUCCESS,
-                0,
-                returnValue
-            )
-        }
+        bluetoothGattServer?.sendResponse(
+            device,
+            requestId,
+            BluetoothGatt.GATT_SUCCESS,
+            0,
+            returnValue
+        )
+
 
         accessRequest = null
         status = SecureScanGattProfile.STATUS_IDLE
@@ -195,15 +188,13 @@ class SecureScanBluetoothService : Service() {
 
         val returnValue = arrayOf(status).toByteArray()
 
-        if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            bluetoothGattServer?.sendResponse(
-                device,
-                requestId,
-                BluetoothGatt.GATT_SUCCESS,
-                0,
-                returnValue
-            )
-        }
+        bluetoothGattServer?.sendResponse(
+            device,
+            requestId,
+            BluetoothGatt.GATT_SUCCESS,
+            0,
+            returnValue
+        )
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
@@ -251,10 +242,6 @@ class SecureScanBluetoothService : Service() {
     }
 
     private fun startServer() {
-        if (checkSelfPermission(BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "** NO PERMISSION! BLUETOOTH_CONNECT")
-            return
-        }
         bluetoothGattServer = bluetoothManager.openGattServer(this, gattServerCallback)
 
         bluetoothGattServer?.addService(SecureScanGattProfile.createSecureScanService())
@@ -262,10 +249,6 @@ class SecureScanBluetoothService : Service() {
     }
 
     private fun stopServer() {
-        if (checkSelfPermission(BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "** NO PERMISSION! BLUETOOTH_CONNECT")
-            return
-        }
         bluetoothGattServer?.close()
     }
 
@@ -273,10 +256,6 @@ class SecureScanBluetoothService : Service() {
         val bluetoothLeAdvertiser: BluetoothLeAdvertiser? =
             bluetoothManager.adapter.bluetoothLeAdvertiser
         bluetoothLeAdvertiser?.let {
-            if (checkSelfPermission(BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "** NO PERMISSION! BLUETOOTH_ADVERTISE")
-                return
-            }
             it.stopAdvertising(advertiseCallback)
         } ?: Log.w(TAG, "Failed to create advertiser")
     }
@@ -299,10 +278,6 @@ class SecureScanBluetoothService : Service() {
                 .addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
                 .build()
 
-            if (checkSelfPermission(BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "** NO PERMISSION! BLUETOOTH_ADVERTISE")
-                return
-            }
             it.startAdvertising(settings, data, advertiseCallback)
         } ?: Log.w(TAG, "Failed to create advertiser")
     }
@@ -329,10 +304,7 @@ class SecureScanBluetoothService : Service() {
         registerReceiver(bluetoothReceiver, filter)
         if (!bluetoothAdapter.isEnabled) {
             Log.d(TAG, "Bluetooth is currently disabled...enabling")
-            if (checkSelfPermission(BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "** NO PERMISSION! BLUETOOTH_CONNECT")
-            } else
-                bluetoothAdapter.enable()
+            bluetoothAdapter.enable()
         } else {
             Log.d(TAG, "Bluetooth enabled...starting services")
             startAdvertising()

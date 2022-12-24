@@ -4,11 +4,12 @@ import android.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatCallback
 
-fun AppCompatActivity.alert(message: String, title: String? = null) {
+fun AppCompatActivity.alert(message: String, title: String? = null, callback: (() -> Unit)? = null) {
     var builder = AlertDialog.Builder(this)
     builder.setMessage(message)
         .setCancelable(true)
         .setNeutralButton("OK") { dialog, _ ->
+            callback?.invoke()
             dialog.dismiss()
         }
 
