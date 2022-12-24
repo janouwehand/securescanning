@@ -22,7 +22,7 @@ namespace SecureScan.NFC.Protocol
     {
       var controller = new PCSCController(Constants.APPLICATIONID);
       using (var connection = await controller.WaitForConnectionAsync(waitForNFCTimeout.Seconds, cancellationToken))
-      {
+      {        
         var ownerInfo = RetrieveInfo(connection);
         return ownerInfo;
       }
@@ -42,6 +42,12 @@ namespace SecureScan.NFC.Protocol
       logger.Log($"NFC: remote application version = {info.ApplicationVersion}", Color.DarkGoldenrod);
 
       info.X509 = RetrieveX509(nfc.Transceiver);
+
+      if (info.X509 == null || !info.X509.Any())
+      {
+        throw new Exception($"NFC: did not receive X509 certificate!");
+      }
+
       logger.Log($"NFC: X.509 received successfully (size: {info.X509.Length} bytes)", Color.DarkGoldenrod);
 
       if (!PerformChallenge(nfc.Transceiver, info.X509Certificate().Value))
@@ -59,6 +65,12 @@ namespace SecureScan.NFC.Protocol
       logger.Log($"Sending challenge: {randomData.ToHEX()} (size: {randomData.Length} bytes)", Color.DarkOliveGreen);
 
       var signature = transceiver.RetrieveMultiApduData(Constants.CMDCHALLENGE, randomData, out _);
+
+      if (signature == null || !signature.Any())
+      {
+        logger.Log("Challenge failed: no signature received.", Color.Red);
+        return false;
+      }
 
       logger.Log($"Signature for challenge received (size: {signature.Length}). Now verifying...", Color.DarkOliveGreen);
 
