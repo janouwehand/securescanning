@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "nl.ou.securescan"
-        minSdk 32
+        minSdk 30
         targetSdk 33
         versionCode 1
         versionName "1.0"
