@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -44,6 +45,59 @@ namespace SecureScan.Bluetooth.Server
       }
 
       return new GattConnection(bluetoothLEAdvertisementReceivedEventArgs, device, gattService, characteristics.Characteristics.ToArray());
+    }
+
+    public async Task<(ulong address, BluetoothLEAdvertisement advertisement)[]> ScanAdvertisementsAsync(TimeSpan timeOut, CancellationToken cancellationToken)
+    {
+      advertisementIsFound = false;
+      var startedOn = DateTime.Now;
+      GattConnection result = null;
+
+      var list = new ConcurrentDictionary<ulong, BluetoothLEAdvertisement>();
+
+      var localAdapter = await BluetoothAdapter.GetDefaultAsync();
+      if (localAdapter.IsCentralRoleSupported)
+      {
+        var watcher = new BluetoothLEAdvertisementWatcher();
+
+        //Set the in-range threshold to -70dBm. This means advertisements with RSSI >= -70dBm 
+        //will start to be considered "in-range"
+        watcher.SignalStrengthFilter.InRangeThresholdInDBm = -70;
+
+        // Set the out-of-range threshold to -75dBm (give some buffer). Used in conjunction with OutOfRangeTimeout
+        // to determine when an advertisement is no longer considered "in-range"
+        watcher.SignalStrengthFilter.OutOfRangeThresholdInDBm = -75;
+
+        // Set the out-of-range timeout to be 2 seconds. Used in conjunction with OutOfRangeThresholdInDBm
+        // to determine when an advertisement is no longer considered "in-range"
+        watcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(2000);
+
+        watcher.AllowExtendedAdvertisements = true;
+        watcher.Received += (s, e) =>
+        {
+          if (e.IsScanResponse)
+          {
+
+          }
+
+          if (e.Advertisement.ServiceUuids.Contains(Constants.SECURESCANSERVICE))
+          {
+            list.TryAdd(e.BluetoothAddress, e.Advertisement);
+          }
+        };
+        watcher.Start();
+        Log("Advertisement watcher started.");
+
+        while (DateTime.Now - startedOn < timeOut && !cancellationToken.IsCancellationRequested && result == null)
+        {
+          await Task.Delay(200, cancellationToken);
+        }
+
+        return list.Select(x=>(x.Key, x.Value)).ToArray();
+      }
+
+      Log("Error: central role not supported");
+      return null;
     }
 
     public async Task<GattConnection> ScanAsync(TimeSpan timeOut, CancellationToken cancellationToken)

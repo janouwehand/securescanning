@@ -25,6 +25,7 @@ class PermissionHandler(private val activity: AppCompatActivity) {
 
         ok = ok && ensurePermission_ACCESS_COARSE_LOCATION(requestMissingPermissions)
         ok = ok && ensurePermission_ACCESS_FINE_LOCATION(requestMissingPermissions)
+        ok = ok && ensurePermission_RECEIVE_BOOT_COMPLETED(requestMissingPermissions)
 
         return ok
     }
@@ -126,6 +127,23 @@ class PermissionHandler(private val activity: AppCompatActivity) {
                 ActivityCompat.requestPermissions(
                     activity,
                     arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                    1
+                )
+            return false
+        }
+        return true
+    }
+
+    private fun ensurePermission_RECEIVE_BOOT_COMPLETED(requestMissingPermissions: Boolean): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.RECEIVE_BOOT_COMPLETED
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (requestMissingPermissions)
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.RECEIVE_BOOT_COMPLETED),
                     1
                 )
             return false

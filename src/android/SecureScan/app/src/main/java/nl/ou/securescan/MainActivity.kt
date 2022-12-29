@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
 //        meuk()
     }
 
-    fun meuk(){
+    fun meuk() {
         val cardEmulation = CardEmulation.getInstance(NfcAdapter.getDefaultAdapter(this))
         val isDefaultCategorySelected = cardEmulation.isDefaultServiceForAid(
             ComponentName(
@@ -72,6 +72,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startBluetoothService() {
+
+        Log.i("SecureScan", "Starting BT Service")
+
+        if (SecureScanBluetoothService.isAlive()) {
+            Log.i("SecureScan", "No worries, service was already running.")
+            return
+        }
+
         val intent = Intent(
             this, SecureScanBluetoothService::class.java
         )
@@ -104,7 +112,10 @@ class MainActivity : AppCompatActivity() {
 
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED
         ) {
-            alert("No permission for ${permissions[0]}. This screen closes after 5 seconds.", "Permission") {
+            alert(
+                "No permission for ${permissions[0]}. This screen closes after 5 seconds.",
+                "Permission"
+            ) {
                 finish()
             }
             return

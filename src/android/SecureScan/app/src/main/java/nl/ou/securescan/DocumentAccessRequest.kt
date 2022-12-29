@@ -64,7 +64,13 @@ class DocumentAccessRequest : AppCompatActivity() {
                     myService.setApproval(approved)
 
                     unbindService(this)
-                    finishAndRemoveTask()
+
+                    try {
+                        finishAndRemoveTask()
+                    }
+                    catch (e: Exception) {
+                        finish()
+                    }
                 }
 
                 override fun onServiceDisconnected(name: ComponentName?) {

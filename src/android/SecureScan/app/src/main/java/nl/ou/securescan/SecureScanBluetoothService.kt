@@ -31,6 +31,12 @@ class SecureScanBluetoothService : Service() {
 
     companion object {
         var documentAccessRequest: AppCompatActivity? = null
+        var instance: SecureScanBluetoothService? = null
+        fun isAlive(): Boolean = instance != null
+    }
+
+    init {
+        instance = this
     }
 
     private val TAG: String = "SecureScanBT"
@@ -110,9 +116,16 @@ class SecureScanBluetoothService : Service() {
                 } else {
                     SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE
                 }
+
+                Log.i(
+                    TAG,
+                    "Status prepared successfully for secure document hash: ${value.toHexString()}"
+                )
             }
 
         } catch (e: Exception) {
+            Log.e(TAG, "Error: ${e.message}")
+            Log.e(TAG, "Error: $e")
             val logFile = File(getExternalFilesDir(null), "error-log.txt")
             val fos = FileOutputStream(logFile, true)
             fos.write("Error: $e\n".toByteArray())
@@ -188,13 +201,15 @@ class SecureScanBluetoothService : Service() {
 
         val returnValue = arrayOf(status).toByteArray()
 
-        bluetoothGattServer?.sendResponse(
+        bluetoothGattServer!!.sendResponse(
             device,
             requestId,
             BluetoothGatt.GATT_SUCCESS,
             0,
             returnValue
         )
+
+        Log.i(TAG, "Status returned ")
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
@@ -217,10 +232,28 @@ class SecureScanBluetoothService : Service() {
             device: BluetoothDevice, requestId: Int, offset: Int,
             characteristic: BluetoothGattCharacteristic
         ) {
-            if (SecureScanGattProfile.GETKEY == characteristic.uuid) {
-                getKey(device, requestId)
-            } else if (SecureScanGattProfile.GETSTATUS == characteristic.uuid) {
-                getStatus(device, requestId)
+            try {
+                if (SecureScanGattProfile.GETKEY == characteristic.uuid) {
+                    getKey(device, requestId)
+                } else if (SecureScanGattProfile.GETSTATUS == characteristic.uuid) {
+                    getStatus(device, requestId)
+                } else {
+                    bluetoothGattServer?.sendResponse(
+                        device,
+                        requestId,
+                        BluetoothGatt.GATT_FAILURE,
+                        0,
+                        arrayOf(0x00.toByte()).toByteArray()
+                    )
+                }
+            } catch (e: Exception) {
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_FAILURE,
+                    0,
+                    arrayOf(0x00.toByte()).toByteArray()
+                )
             }
         }
 
@@ -278,7 +311,13 @@ class SecureScanBluetoothService : Service() {
                 .addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
                 .build()
 
-            it.startAdvertising(settings, data, advertiseCallback)
+            val rdata = AdvertiseData.Builder()
+                .setIncludeDeviceName(true)
+                //.setIncludeTxPowerLevel(true)
+                //.addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
+                .build()
+
+            it.startAdvertising(settings, data, rdata, advertiseCallback)
         } ?: Log.w(TAG, "Failed to create advertiser")
     }
 

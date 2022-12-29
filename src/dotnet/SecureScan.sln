@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureScan.Bluetooth.UI", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureScanTests", "SecureScanTests\SecureScanTests.csproj", "{44BEA398-0813-49FA-A014-475E27503D4E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureScanTool", "SecureScanTool\SecureScanTool.csproj", "{17FE0A18-018E-4EDA-B3FC-4A6C2522F4F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{44BEA398-0813-49FA-A014-475E27503D4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44BEA398-0813-49FA-A014-475E27503D4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44BEA398-0813-49FA-A014-475E27503D4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17FE0A18-018E-4EDA-B3FC-4A6C2522F4F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17FE0A18-018E-4EDA-B3FC-4A6C2522F4F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17FE0A18-018E-4EDA-B3FC-4A6C2522F4F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17FE0A18-018E-4EDA-B3FC-4A6C2522F4F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
