@@ -29,7 +29,7 @@ namespace SecureScan.Bluetooth.UI
       try
       {
         form.AddLog($"Secure container SHA1: {sha1str}");
-
+        form.CancellationTokenSource = cancellationTokenSource;
         form.FormClosing += (s, e) => cancellationTokenSource.Cancel();
 
         form.Show();

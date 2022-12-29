@@ -132,4 +132,5 @@ class PermissionHandler(private val activity: AppCompatActivity) {
         }
         return true
     }
+
 }

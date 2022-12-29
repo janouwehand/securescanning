@@ -1,6 +1,5 @@
 package nl.ou.securescan
 
-import android.content.Context
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
@@ -11,13 +10,9 @@ import nl.ou.securescan.crypto.extensions.getPrivateKey
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.Document
 import nl.ou.securescan.data.DocumentDatabase
-import java.security.PrivateKey
 import java.security.Signature
 import java.security.cert.X509Certificate
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZonedDateTime
-import java.util.Date
 
 
 class SecureScanApduService : HostApduService() {
@@ -36,7 +31,7 @@ class SecureScanApduService : HostApduService() {
     }
 
     private fun isSelectApdu(apdu: ByteArray?): Boolean =
-        apdu!!.size >= 2 && apdu[0] === 0.toByte() && apdu[1] === 0xa4.toByte()
+        apdu!!.size >= 2 && apdu[0] == 0.toByte() && apdu[1] == 0xa4.toByte()
 
     override fun processCommandApdu(apdu: ByteArray?, extra: Bundle?): ByteArray {
 

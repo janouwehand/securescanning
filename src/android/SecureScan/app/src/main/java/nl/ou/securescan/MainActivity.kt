@@ -1,10 +1,14 @@
 package nl.ou.securescan
 
 import android.app.AlertDialog
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.nfc.NfcAdapter
+import android.nfc.cardemulation.CardEmulation
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -32,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
-        
+
         //DocumentDatabase.deleteDatabaseFile(baseContext)
 
         binding.swipe.setOnRefreshListener {
@@ -52,6 +56,19 @@ class MainActivity : AppCompatActivity() {
         if (permissionHandler.ensurePermissions(false)) {
             startBluetoothService()
         }
+
+//        meuk()
+    }
+
+    fun meuk(){
+        val cardEmulation = CardEmulation.getInstance(NfcAdapter.getDefaultAdapter(this))
+        val isDefaultCategorySelected = cardEmulation.isDefaultServiceForAid(
+            ComponentName(
+                this,
+                SecureScanApduService::class.java
+            ), "F4078D5A92B5B8"
+        )
+        Log.i("SecureScan", "** isDefaultCategorySelected: $isDefaultCategorySelected")
     }
 
     private fun startBluetoothService() {
@@ -66,16 +83,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var showingPermissionError: Boolean = false
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        if (showingPermissionError) {
+            runBlocking {
+                Thread.sleep(5000)
+                finish()
+            }
+            return
+        }
+
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        showingPermissionError = true
 
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED
         ) {
-            alert("No permission for ${permissions[0]}", "Permission") {
+            alert("No permission for ${permissions[0]}. This screen closes after 5 seconds.", "Permission") {
                 finish()
             }
             return
