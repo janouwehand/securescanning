@@ -8,6 +8,8 @@ using SecureScan.Base.Extensions;
 using SecureScan.Base.Interfaces;
 using SecureScan.Bluetooth.Extensions;
 using SecureScan.Bluetooth.Server;
+using Windows.Devices.Bluetooth;
+using Windows.Devices.Enumeration;
 
 namespace SecureScan.Bluetooth.UI
 {
@@ -209,6 +211,26 @@ namespace SecureScan.Bluetooth.UI
       else
       {
         throw new Exception($"Invalid status: {status}");
+      }
+    }
+
+    public async Task<PairedDevice[]> GetPairedDevicesAsync()
+    {
+      var selector = BluetoothDevice.GetDeviceSelector();
+      var devices = await DeviceInformation.FindAllAsync(selector);
+      return devices.Select(x => new PairedDevice
+      {
+        ID = x.Id,
+        Name = x.Name
+      })
+      .ToArray();
+    }
+
+    public void PairNewDevice()
+    {
+      using (var form=new FormPairNewDevice())
+      {
+        form.ShowDialog();
       }
     }
 

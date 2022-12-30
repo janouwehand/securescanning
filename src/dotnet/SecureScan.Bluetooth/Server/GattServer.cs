@@ -47,7 +47,10 @@ namespace SecureScan.Bluetooth.Server
       return new GattConnection(bluetoothLEAdvertisementReceivedEventArgs, device, gattService, characteristics.Characteristics.ToArray());
     }
 
-    public async Task<(ulong address, BluetoothLEAdvertisement advertisement)[]> ScanAdvertisementsAsync(TimeSpan timeOut, CancellationToken cancellationToken)
+    /// <summary>
+    /// Scan advertisements of only paired devices with SecureScan service UUID
+    /// </summary>
+    public async Task<(ulong address, BluetoothLEAdvertisement advertisement)[]> ScanAdvertisementsAsync(TimeSpan timeOut, Action<(ulong address, BluetoothLEAdvertisement advertisement)> onAdvertisement, CancellationToken cancellationToken)
     {
       advertisementIsFound = false;
       var startedOn = DateTime.Now;
@@ -73,18 +76,34 @@ namespace SecureScan.Bluetooth.Server
         watcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(2000);
 
         watcher.AllowExtendedAdvertisements = true;
-        watcher.Received += (s, e) =>
+        watcher.Received += async (s, e) =>
         {
-          if (e.IsScanResponse)
+          if (!e.IsConnectable)
           {
+            return;
+          }
 
+          var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress, e.BluetoothAddressType);
+
+          if (device == null)
+          {
+            return;
+          }
+
+          if (!device.DeviceInformation.Pairing.IsPaired)
+          {
+           // return;
           }
 
           if (e.Advertisement.ServiceUuids.Contains(Constants.SECURESCANSERVICE))
           {
-            list.TryAdd(e.BluetoothAddress, e.Advertisement);
+            if (list.TryAdd(e.BluetoothAddress, e.Advertisement))
+            {
+              onAdvertisement((e.BluetoothAddress, e.Advertisement));
+            }
           }
         };
+
         watcher.Start();
         Log("Advertisement watcher started.");
 

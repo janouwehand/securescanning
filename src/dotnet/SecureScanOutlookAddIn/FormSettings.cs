@@ -1,26 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SecureScan.Base.Interfaces;
 
 namespace SecureScanOutlookAddIn
 {
   public partial class FormSettings : Form
   {
-    public FormSettings()
-    {
-      InitializeComponent();
-    }
+    public FormSettings() => InitializeComponent();
 
-   public X509Certificate2 Certificate { get; set; }
+    public X509Certificate2 Certificate { get; set; }
 
-    protected override void OnShown(EventArgs e)
+    public IBluetoothUIFunctions BluetoothUIFunctions { get; internal set; }
+
+    protected override async void OnShown(EventArgs e)
     {
       base.OnShown(e);
 
@@ -28,12 +22,23 @@ namespace SecureScanOutlookAddIn
       {
         labelCertificaat.Text = Certificate.ToString();
       }
-      
+
+      await PopulateDevices();
     }
 
-    private void buttonOK_Click(object sender, EventArgs e)
+    private async Task PopulateDevices()
     {
-      DialogResult = DialogResult.OK;
+      listBoxDevices.Items.Clear();
+      var devices = await BluetoothUIFunctions.GetPairedDevicesAsync();
+      listBoxDevices.Items.AddRange(devices);
+    }
+
+    private void buttonOK_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;
+
+    private async void buttonPairNew_Click(object sender, EventArgs e)
+    {
+      BluetoothUIFunctions.PairNewDevice();
+      await PopulateDevices();
     }
   }
 }
