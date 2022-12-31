@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,12 +10,12 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace SecureScan.Bluetooth.Server
 {
-  public class GattServer : IDisposable
+  public class GattClient : IDisposable
   {
     private bool advertisementIsFound;
     private readonly List<IDisposable> listOfDisposables = new List<IDisposable>();
 
-    public GattServer(Guid serviceUUID) => ServiceUUID = serviceUUID;
+    public GattClient(Guid serviceUUID) => ServiceUUID = serviceUUID;
 
     public Guid ServiceUUID { get; }
 
@@ -43,10 +44,82 @@ namespace SecureScan.Bluetooth.Server
         throw new Exception($"Could not get characteristics ({characteristics.ProtocolError})");
       }
 
-      return new GattConnection(bluetoothLEAdvertisementReceivedEventArgs, device, gattService, characteristics.Characteristics.ToArray());
+      return new GattConnection(bluetoothLEAdvertisementReceivedEventArgs.Advertisement, device, gattService, characteristics.Characteristics.ToArray());
     }
 
-    public async Task<GattConnection> ScanAsync(TimeSpan timeOut, CancellationToken cancellationToken)
+    /// <summary>
+    /// Scan advertisements of only paired devices with SecureScan service UUID
+    /// </summary>
+    public async Task<(ulong address, BluetoothLEAdvertisement advertisement)[]> ScanAdvertisementsAsync(TimeSpan timeOut, Action<(ulong address, BluetoothLEAdvertisement advertisement)> onAdvertisement, CancellationToken cancellationToken)
+    {
+      advertisementIsFound = false;
+      var startedOn = DateTime.Now;
+      GattConnection result = null;
+
+      var list = new ConcurrentDictionary<ulong, BluetoothLEAdvertisement>();
+
+      var localAdapter = await BluetoothAdapter.GetDefaultAsync();
+      if (localAdapter.IsCentralRoleSupported)
+      {
+        var watcher = new BluetoothLEAdvertisementWatcher();
+
+        //Set the in-range threshold to -70dBm. This means advertisements with RSSI >= -70dBm 
+        //will start to be considered "in-range"
+        watcher.SignalStrengthFilter.InRangeThresholdInDBm = -70;
+
+        // Set the out-of-range threshold to -75dBm (give some buffer). Used in conjunction with OutOfRangeTimeout
+        // to determine when an advertisement is no longer considered "in-range"
+        watcher.SignalStrengthFilter.OutOfRangeThresholdInDBm = -75;
+
+        // Set the out-of-range timeout to be 2 seconds. Used in conjunction with OutOfRangeThresholdInDBm
+        // to determine when an advertisement is no longer considered "in-range"
+        watcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(2000);
+
+        watcher.AllowExtendedAdvertisements = true;
+        watcher.Received += async (s, e) =>
+        {
+          if (!e.IsConnectable)
+          {
+            return;
+          }
+
+          var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress, e.BluetoothAddressType);
+
+          if (device == null)
+          {
+            return;
+          }
+
+          if (!device.DeviceInformation.Pairing.IsPaired)
+          {
+           // return;
+          }
+
+          if (e.Advertisement.ServiceUuids.Contains(Constants.SECURESCANSERVICE))
+          {
+            if (list.TryAdd(e.BluetoothAddress, e.Advertisement))
+            {
+              onAdvertisement((e.BluetoothAddress, e.Advertisement));
+            }
+          }
+        };
+
+        watcher.Start();
+        Log("Advertisement watcher started.");
+
+        while (DateTime.Now - startedOn < timeOut && !cancellationToken.IsCancellationRequested && result == null)
+        {
+          await Task.Delay(200, cancellationToken);
+        }
+
+        return list.Select(x=>(x.Key, x.Value)).ToArray();
+      }
+
+      Log("Error: central role not supported");
+      return null;
+    }
+
+    public async Task<GattConnection> ScanAsync(TimeSpan timeOut, ulong[] ignoreIds, CancellationToken cancellationToken)
     {
       advertisementIsFound = false;
       var startedOn = DateTime.Now;
@@ -72,6 +145,12 @@ namespace SecureScan.Bluetooth.Server
         watcher.AllowExtendedAdvertisements = true;
         watcher.Received += async (s, e) =>
         {
+          // Next?
+          if (ignoreIds.Contains(e.BluetoothAddress))
+          {
+            return;
+          }
+
           if (e.Advertisement.ServiceUuids.Contains(Constants.SECURESCANSERVICE))
           {
             Console.WriteLine(string.Concat(e.Advertisement.LocalName, ", ", string.Join(" | ", e.Advertisement.ServiceUuids)));

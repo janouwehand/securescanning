@@ -16,6 +16,7 @@ namespace SecureScanOutlookAddIn
   {
     private void SecureScanRibbon_Load(object sender, RibbonUIEventArgs e)
     {
+      LoadInterface();
       CheckState();
 
       var ex = Context as Explorer;
@@ -98,6 +99,22 @@ namespace SecureScanOutlookAddIn
       buttonReadSecureDocument.Enabled = contentType == "application/ou-secure-document";
     }
 
+    private IBluetoothUIFunctions bluetoothUIFunctions;
+
+    private void LoadInterface()
+    {
+      var uri = new Uri(Assembly.GetExecutingAssembly().CodeBase);
+      var codeBaseDir = new DirectoryInfo(Path.GetDirectoryName(uri.LocalPath));
+      var projDir = codeBaseDir.Parent.Parent.Parent.FullName;
+      var uiDir = Path.Combine(projDir, "SecureScan.Bluetooth.UI", "bin", "debug");
+      var uilib = Path.Combine(uiDir, "SecureScan.Bluetooth.UI.dll");
+
+      var ass = Assembly.LoadFrom(uilib);
+      var types = ass.GetTypes();
+      var type = types.FirstOrDefault(x => x.Name == "BluetoothUIFunctions");
+      bluetoothUIFunctions = (IBluetoothUIFunctions)Activator.CreateInstance(type);
+    }
+
     private const string PR_ATTACH_DATA_BIN = "http://schemas.microsoft.com/mapi/proptag/0x37010102";
 
     private void button1_Click(object sender, RibbonControlEventArgs e)
@@ -122,17 +139,7 @@ namespace SecureScanOutlookAddIn
       var attachmentData = attachment.PropertyAccessor.GetProperty(PR_ATTACH_DATA_BIN);
       byte[] bs = attachmentData;
 
-      var uri = new Uri(Assembly.GetExecutingAssembly().CodeBase);
-      var codeBaseDir = new DirectoryInfo(Path.GetDirectoryName(uri.LocalPath));
-      var projDir = codeBaseDir.Parent.Parent.Parent.FullName;
-      var uiDir = Path.Combine(projDir, "SecureScan.Bluetooth.UI", "bin", "debug");
-      var uilib = Path.Combine(uiDir, "SecureScan.Bluetooth.UI.dll");
-
-      var ass = Assembly.LoadFrom(uilib);
-      var types = ass.GetTypes();
-      var type = types.FirstOrDefault(x => x.Name == "BluetoothUIFunctions");
-      var bt = (IBluetoothUIFunctions)Activator.CreateInstance(type);
-      var result = bt.RetrieveKeyForSecureDocument(bs, certificate);
+      var result = bluetoothUIFunctions.RetrieveKeyForSecureDocument(bs, certificate);
 
       if (!string.IsNullOrEmpty(result.error) || result.key == null || !result.key.Any())
       {
@@ -185,6 +192,7 @@ namespace SecureScanOutlookAddIn
     {
       using (var formSettings = new FormSettings())
       {
+        formSettings.BluetoothUIFunctions = bluetoothUIFunctions;
         formSettings.Certificate = GetCertificate();
         formSettings.ShowDialog();
       }

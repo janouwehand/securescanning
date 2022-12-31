@@ -57,6 +57,7 @@
       this.buttonAbort.TabIndex = 2;
       this.buttonAbort.Text = "Abort";
       this.buttonAbort.UseVisualStyleBackColor = true;
+      this.buttonAbort.Click += new System.EventHandler(this.buttonAbort_Click);
       // 
       // pictureBox1
       // 

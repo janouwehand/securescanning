@@ -1,25 +1,35 @@
-﻿using Windows.Devices.Bluetooth;
+﻿using System;
+using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace SecureScan.Bluetooth.Server
 {
-  public class GattConnection
+  public class GattConnection: IDisposable
   {
-    public GattConnection(BluetoothLEAdvertisementReceivedEventArgs bluetoothLEAdvertisementReceivedEventArgs, BluetoothLEDevice Device, GattDeviceService gattService, GattCharacteristic[] characteristics)
+    public GattConnection(BluetoothLEAdvertisement advertisement, BluetoothLEDevice Device, GattDeviceService gattService, GattCharacteristic[] characteristics)
     {
-      BluetoothLEAdvertisementReceivedEventArgs = bluetoothLEAdvertisementReceivedEventArgs;
+      Advertisement = advertisement;
       this.Device = Device;
       GattService = gattService;
       Characteristics = characteristics;
     }
 
-    public BluetoothLEAdvertisementReceivedEventArgs BluetoothLEAdvertisementReceivedEventArgs { get; }
+    public BluetoothLEAdvertisement Advertisement { get; }
 
     public BluetoothLEDevice Device { get; }
 
     public GattDeviceService GattService { get; }
 
     public GattCharacteristic[] Characteristics { get; }
+
+    public void Dispose()
+    {
+      // Dispose GattService
+      GattService.Dispose();
+
+      // Dispose Device
+     // Device.Dispose();
+    }
   }
 }

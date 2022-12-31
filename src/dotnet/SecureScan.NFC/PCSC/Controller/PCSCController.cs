@@ -53,6 +53,8 @@ namespace SecureScan.NFC.PCSC.Controller
         Data = Aid
       };
 
+      await Task.Delay(100); // pause to allow the reader to settle
+
       var response = isoReader.Transmit(apdu);
       if (response.HasData)
       {

@@ -8,12 +8,15 @@ using SecureScan.Base.Extensions;
 using SecureScan.Base.Interfaces;
 using SecureScan.Bluetooth.Extensions;
 using SecureScan.Bluetooth.Server;
+using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Windows.Devices.Enumeration;
 
 namespace SecureScan.Bluetooth.UI
 {
   public class BluetoothUIFunctions : IBluetoothUIFunctions
   {
-    private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+    private CancellationTokenSource cancellationTokenSource;
 
     public (byte[] key, string error) RetrieveKeyForSecureDocument(byte[] secureDocument, X509Certificate2 certificate)
     {
@@ -29,12 +32,12 @@ namespace SecureScan.Bluetooth.UI
       try
       {
         form.AddLog($"Secure container SHA1: {sha1str}");
-
+        form.CancellationTokenSource = cancellationTokenSource;
         form.FormClosing += (s, e) => cancellationTokenSource.Cancel();
 
         form.Show();
 
-        var task = Task.Run(() => ExecuteBluetoothAsync(sha1, certificate, str => form.AddLog(str)));
+        var task = Task.Run(() => ExecuteBluetoothForAllDevicesAsync(sha1, certificate, str => form.AddLog(str)));
         while (!task.IsCompleted)
         {
           Application.DoEvents();
@@ -50,33 +53,67 @@ namespace SecureScan.Bluetooth.UI
       }
     }
 
-    private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
+    private async Task<(byte[] key, string error)> ExecuteBluetoothForAllDevicesAsync(byte[] sha1, X509Certificate2 certificate, Action<string> log)
     {
+      (byte[] key, string error) result = (null, "Not executed, no devices found");
+
+      var disco = new GattDiscovery(Constants.SECURESCANSERVICE, log);
+      var discoveryItems = await disco.DiscoverDevicesAsync();
+
       try
       {
-        using (var gatt = new GattServer(Constants.SECURESCANSERVICE))
+        foreach (var discoveryItem in discoveryItems)
+        {
+          result = await ExecuteBluetoothAsync(discoveryItem, sha1, certificate, log);
+
+          if (result.error != "Document not available")
+          {
+            return result; // else try next device
+          }
+        }
+
+        return result;
+      }
+      finally
+      {
+        // Dispose
+        foreach (var discoveryItem in discoveryItems)
+        {
+          discoveryItem.Dispose();
+        }
+      }
+    }
+
+    private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(IDiscoveryItem discoveryItem, byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
+    {
+      cancellationTokenSource = new CancellationTokenSource();
+
+      try
+      {
+        using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
         {
           gatt.OnLog += (s, e) => log(e);
-          var gattConnection = await gatt.ScanAsync(TimeSpan.FromMinutes(2), cancellationTokenSource.Token);
-
-          var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
-          if (!documentAvailable)
+          using (var gattConnection = await CreateGattConnection(discoveryItem))
           {
-            return (null, "Document not available");
-          }
+            var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
+            if (!documentAvailable)
+            {
+              return (null, "Document not available");
+            }
 
-          await SendCertificateAsync(gattConnection, certificate, log);
+            await SendCertificateAsync(gattConnection, certificate, log);
 
-          var approved = await WaitForApprovalAsync(gattConnection, log);
+            var approved = await WaitForApprovalAsync(gattConnection, log);
 
-          if (!approved)
-          {
-            return (null, "Request denied by user!");
-          }
-          else
-          {
-            var key = await ReceiveKeyAsync(gattConnection, log);
-            return (key, null);
+            if (!approved)
+            {
+              return (null, "Request denied by user!");
+            }
+            else
+            {
+              var key = await ReceiveKeyAsync(gattConnection, log);
+              return (key, null);
+            }
           }
         }
       }
@@ -88,6 +125,32 @@ namespace SecureScan.Bluetooth.UI
       {
         return (null, ex.Message);
       }
+    }
+
+    private async Task<GattConnection> CreateGattConnection(IDiscoveryItem discoveryItem)
+    {
+      if (!(discoveryItem is GattDiscovery.Item item))
+      {
+        return null;
+      }
+
+      var device = await BluetoothLEDevice.FromBluetoothAddressAsync(item.Device.BluetoothAddress, item.Device.BluetoothAddressType);
+
+      var gattServices = await device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
+      if (gattServices.Status != GattCommunicationStatus.Success)
+      {
+        throw new Exception($"Could not get GattServices ({gattServices.ProtocolError})");
+      }
+
+      var gattService = gattServices.Services.FirstOrDefault(x => x.Uuid == Constants.SECURESCANSERVICE) ?? throw new Exception("Service UUID not found!");
+
+      var characteristics = await gattService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
+      if (characteristics.Status != GattCommunicationStatus.Success)
+      {
+        throw new Exception($"Could not get characteristics ({characteristics.ProtocolError})");
+      }
+
+      return new GattConnection(item.Advertisement, item.Device, gattService, characteristics.Characteristics.ToArray());
     }
 
     private async Task<bool> SendSecureContainerHashGetDocumentAvailableAsync(GattConnection gattConnection, byte[] secureContainerSHA1, Action<string> log)
@@ -210,6 +273,33 @@ namespace SecureScan.Bluetooth.UI
       {
         throw new Exception($"Invalid status: {status}");
       }
+    }
+
+    public async Task<PairedDevice[]> GetPairedDevicesAsync()
+    {
+      var selector = BluetoothDevice.GetDeviceSelector();
+      var devices = await DeviceInformation.FindAllAsync(selector);
+      return devices.Select(x => new PairedDevice
+      {
+        ID = x.Id,
+        Name = x.Name
+      })
+      .ToArray();
+    }
+
+    public void PairNewDevice()
+    {
+      using (var form = new FormPairNewDevice())
+      {
+        form.ShowDialog();
+      }
+    }
+
+    public async Task<IDiscoveryItem[]> DiscoverDevicesAsync(Action<string> log, CancellationToken cancellationToken = default)
+    {
+      var gattDiscovery = new GattDiscovery(Constants.SECURESCANSERVICE, log);
+      var results = await gattDiscovery.DiscoverDevicesAsync(null, cancellationToken);
+      return results;
     }
 
   }

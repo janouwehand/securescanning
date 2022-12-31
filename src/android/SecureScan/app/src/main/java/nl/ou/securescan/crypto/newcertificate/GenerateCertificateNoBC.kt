@@ -4,7 +4,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import nl.ou.securescan.crypto.CertificateManager
 import java.math.BigInteger
-import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -24,13 +23,13 @@ class GenerateCertificateNoBC {
 
         val builder = KeyGenParameterSpec.Builder(
             CertificateManager.ALIAS,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_VERIFY or KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_AGREE_KEY
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_VERIFY or KeyProperties.PURPOSE_SIGN  // or KeyProperties.PURPOSE_AGREE_KEY
         ).setDigests(KeyProperties.DIGEST_SHA256)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
             .setCertificateSubject(X500Principal("CN=$email, O=$name"))
             .setKeyValidityStart(startDate).setCertificateNotBefore(startDate)
             .setCertificateNotAfter(endDate).setKeySize(2048)
-            .setAttestationChallenge("hello world".toByteArray())
+            //.setAttestationChallenge("hello world".toByteArray())
             .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
             .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
             .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)

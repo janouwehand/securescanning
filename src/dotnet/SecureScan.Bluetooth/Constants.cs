@@ -14,6 +14,8 @@ namespace SecureScan.Bluetooth
 
     public static readonly Guid GETSTATUS = Guid.Parse("00000999-1999-1999-4999-009999999999");
 
+    public static readonly Guid GETNAME = Guid.Parse("00000999-1999-1999-4959-009999999999");
+
     public const byte STATUS_IDLE = 0xA0;
     public const byte STATUS_DOCUMENT_AVAILABLE = 0xE1;
     public const byte STATUS_DOCUMENT_NOT_AVAILABLE = 0xE2;

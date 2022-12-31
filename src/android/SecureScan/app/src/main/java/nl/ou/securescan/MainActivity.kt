@@ -1,45 +1,33 @@
 package nl.ou.securescan
 
-import android.Manifest
 import android.app.AlertDialog
-import android.app.PendingIntent
-import android.app.TaskStackBuilder
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertisingSet
-import android.bluetooth.le.AdvertisingSetCallback
-import android.bluetooth.le.AdvertisingSetParameters
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.nfc.NfcAdapter
+import android.nfc.cardemulation.CardEmulation
+import android.os.Build
 import android.os.Bundle
-import android.os.ParcelUuid
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
-import nl.ou.securescan.crypto.extensions.decryptData
-import nl.ou.securescan.crypto.extensions.encryptData
 import nl.ou.securescan.crypto.extensions.getNameAndEmail
-import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityMainBinding
-import nl.ou.securescan.helpers.NotificationUtils
-import java.util.*
-import kotlin.random.Random
+import nl.ou.securescan.helpers.alert
+import nl.ou.securescan.permissions.PermissionHandler
 
 
 class MainActivity : AppCompatActivity() {
 
     private val certificateManager: CertificateManager = CertificateManager()
     private lateinit var binding: ActivityMainBinding
+    private val permissionHandler = PermissionHandler(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,44 +36,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
-
-        checkPermissions()
-
-        binding.buttonEncrypt.setOnClickListener {
-            /*val ciphertext = tryEncrypt()
-            val str = tryDecrypt(ciphertext)
-            binding.buttonEncrypt.text = str*/
-            //StartBLE()
-
-
-            // Create an Intent for the activity you want to start
-            val resultIntent = Intent(this, DocumentAccessRequest::class.java)
-
-            resultIntent.putExtra("DocumentId", 3445)
-
-            // Create the TaskStackBuilder
-            val resultPendingIntent: PendingIntent? = TaskStackBuilder.create(this).run {
-                // Add the intent, which inflates the back stack
-                addNextIntentWithParentStack(resultIntent)
-
-                // Get the PendingIntent containing the entire back stack
-                getPendingIntent(
-                    0,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            }
-
-            var utils = NotificationUtils(this)
-            val not = utils.getNotificationbuilder(
-                "Test eerste",
-                "Bla die bla",
-                NotificationUtils.CHANNEL_REQUESTACCESS
-            )
-                .setTicker("sdfsdgsgsdgsdg")
-                .setContentIntent(resultPendingIntent)
-                .build()
-            utils.manager.notify(1001, not)
-        }
 
         //DocumentDatabase.deleteDatabaseFile(baseContext)
 
@@ -103,81 +53,75 @@ class MainActivity : AppCompatActivity() {
 
         refreshItems()
 
-        val ext = BluetoothAdapter.getDefaultAdapter().isLeExtendedAdvertisingSupported
-        binding.textView10.text = "isLeExtendedAdvertisingSupported: $ext"
+        if (permissionHandler.ensurePermissions(false)) {
+            startBluetoothService()
+        }
+
+//        meuk()
+    }
+
+    fun meuk() {
+        val cardEmulation = CardEmulation.getInstance(NfcAdapter.getDefaultAdapter(this))
+        val isDefaultCategorySelected = cardEmulation.isDefaultServiceForAid(
+            ComponentName(
+                this,
+                SecureScanApduService::class.java
+            ), "F4078D5A92B5B8"
+        )
+        Log.i("SecureScan", "** isDefaultCategorySelected: $isDefaultCategorySelected")
+    }
+
+    private fun startBluetoothService() {
+
+        Log.i("SecureScan", "Starting BT Service")
+
+        if (SecureScanBluetoothService.isAlive()) {
+            Log.i("SecureScan", "No worries, service was already running.")
+            return
+        }
 
         val intent = Intent(
             this, SecureScanBluetoothService::class.java
         )
 
-        startForegroundService(intent)
-    }
-
-    var currentAdvertisingSet: AdvertisingSet? = null
-
-    private fun checkPermissions() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_ADVERTISE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE),
-                1
-            )
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
-                1
-            )
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_ADMIN
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.BLUETOOTH_ADMIN),
-                1
-            )
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
         }
     }
+
+    private var showingPermissionError: Boolean = false
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        if (showingPermissionError) {
+            runBlocking {
+                Thread.sleep(5000)
+                finish()
+            }
+            return
+        }
+
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
+
+        showingPermissionError = true
+
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED
+        ) {
+            alert(
+                "No permission for ${permissions[0]}. This screen closes after 5 seconds.",
+                "Permission"
+            ) {
+                finish()
+            }
+            return
+        }
+
+        /*when (requestCode) {
             1 -> {
                 if (grantResults.isNotEmpty() && grantResults[0] ==
                     PackageManager.PERMISSION_GRANTED
@@ -195,7 +139,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 return
             }
-        }
+        }*/
     }
 
     private fun refreshItems() {
@@ -217,27 +161,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val rand = Random(5000)
-
-    private fun tryEncrypt(): ByteArray {
-        val cert = certificateManager.getCertificate()!!
-
-        val plaintext = "${rand.nextDouble()}".toByteArray()
-
-        Log.i("SecureScan", "PlainText  : ${plaintext.toHexString()}")
-
-        return cert.encryptData(plaintext)
-    }
-
-    private fun tryDecrypt(ciphertext: ByteArray): String {
-        val cert = certificateManager.getCertificate()!!
-        val plaintext = cert.decryptData(ciphertext)
-        Log.i("SecureScan", "PlainText 2: ${plaintext.toHexString()}")
-        return String(plaintext)
-    }
-
     override fun onResume() {
         super.onResume()
+
+        if (!permissionHandler.ensurePermissions()) {
+            val builder = AlertDialog.Builder(this@MainActivity)
+            builder.setMessage("No all permissions are currently enabled. Please restart the application to try again.")
+                .setCancelable(false)
+                .setTitle("Permissions")
+                .setNeutralButton("OK") { dialog, _ ->
+                    dialog.dismiss()
+                    finish()
+                }
+            val alert = builder.create()
+            alert.show()
+            return
+        }
 
         if (certificateManager.hasCertificate()) {
             val cert = certificateManager.getCertificate()!!

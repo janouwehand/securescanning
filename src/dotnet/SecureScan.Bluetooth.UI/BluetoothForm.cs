@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace SecureScan.Bluetooth.UI
@@ -7,18 +8,34 @@ namespace SecureScan.Bluetooth.UI
   {
     public BluetoothForm() => InitializeComponent();
 
+    public CancellationTokenSource CancellationTokenSource { get; set; }
+
     public void AddLog(string str)
     {
-      if (InvokeRequired)
+      try
       {
-        this.Invoke(new Action(() => AddLog(str))); 
+        if (InvokeRequired)
+        {
+          Invoke(new Action(() => AddLog(str)));
+        }
+        else
+        {
+          richTextBox1.AppendText(str + Environment.NewLine);
+          richTextBox1.ScrollToCaret();
+          Application.DoEvents();
+        }
       }
-      else
+      catch (ObjectDisposedException)
       {
-        richTextBox1.AppendText(str + Environment.NewLine);
-        richTextBox1.ScrollToCaret();
-        Application.DoEvents();
+        Console.WriteLine(str);
       }
+    }
+
+    private void buttonAbort_Click(object sender, EventArgs e)
+    {
+      AddLog("Aborting...");
+      CancellationTokenSource?.Cancel();
+      Application.DoEvents();
     }
   }
 }

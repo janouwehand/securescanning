@@ -1,11 +1,11 @@
 package nl.ou.securescan
 
-import android.Manifest.permission.BLUETOOTH_ADVERTISE
-import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.Service
 import android.app.TaskStackBuilder
 import android.bluetooth.*
+import android.bluetooth.BluetoothDevice.BOND_BONDED
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
@@ -14,7 +14,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
 import android.os.ParcelUuid
@@ -25,14 +24,21 @@ import nl.ou.securescan.crypto.extensions.getNameAndEmail
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.helpers.NotificationUtils
+import nl.ou.securescan.helpers.Status
 import java.io.File
 import java.io.FileOutputStream
 
-
+@SuppressLint("MissingPermission")
 class SecureScanBluetoothService : Service() {
 
     companion object {
         var documentAccessRequest: AppCompatActivity? = null
+        var instance: SecureScanBluetoothService? = null
+        fun isAlive(): Boolean = instance != null
+    }
+
+    init {
+        instance = this
     }
 
     private val TAG: String = "SecureScanBT"
@@ -40,7 +46,7 @@ class SecureScanBluetoothService : Service() {
     private lateinit var bluetoothManager: BluetoothManager
     private var bluetoothGattServer: BluetoothGattServer? = null
 
-    var status: Byte = SecureScanGattProfile.STATUS_IDLE
+    private var status: Status = Status()
 
     /* Collection of notification subscribers */
     private val registeredDevices = mutableSetOf<BluetoothDevice>()
@@ -106,30 +112,35 @@ class SecureScanBluetoothService : Service() {
             runBlocking {
                 Log.i(TAG, "Received secure document hash: ${value.toHexString()}")
                 val doc = dao.getByHash(value)
-                status = if (doc != null) {
+                if (doc != null) {
                     accessRequest!!.setDocument(doc)
-                    SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE
+                    status.setStatus(SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE)
                 } else {
-                    SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE
+                    status.setStatus(SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE)
                 }
+
+                Log.i(
+                    TAG,
+                    "Status prepared successfully for secure document hash: ${value.toHexString()}"
+                )
             }
 
         } catch (e: Exception) {
-            val logFile = File(getExternalFilesDir(null), "foutjeslog.txt")
+            Log.e(TAG, "Error: ${e.message}")
+            Log.e(TAG, "Error: $e")
+            val logFile = File(getExternalFilesDir(null), "error-log.txt")
             val fos = FileOutputStream(logFile, true)
             fos.write("Error: $e\n".toByteArray())
             fos.close()
         }
 
         if (responseNeeded) {
-            if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                bluetoothGattServer?.sendResponse(
-                    device,
-                    requestId,
-                    BluetoothGatt.GATT_SUCCESS,
-                    0, null
-                )
-            }
+            bluetoothGattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0, null
+            )
         }
     }
 
@@ -142,24 +153,24 @@ class SecureScanBluetoothService : Service() {
         value: ByteArray
     ) {
         if (value.isNotEmpty()) {
+            Log.i("SecureScan", "Receive pub cert part")
             certBytes = certBytes.plus(value.asList())
         } else {
+            Log.i("SecureScan", "Receive pub cert part: all is received")
             accessRequest!!.setPublicCertificate(certBytes.toByteArray())
-            status = SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER
+            status.setStatus(SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER)
             runBlocking {
                 notifyUserForRequestedDocument()
             }
         }
 
         if (responseNeeded) {
-            if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                bluetoothGattServer?.sendResponse(
-                    device,
-                    requestId,
-                    BluetoothGatt.GATT_SUCCESS,
-                    0, null
-                )
-            }
+            bluetoothGattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0, null
+            )
         }
     }
 
@@ -169,41 +180,58 @@ class SecureScanBluetoothService : Service() {
     ) {
         var returnValue = "".toByteArray()
 
-        if (status == SecureScanGattProfile.STATUS_REQUEST_ACCEPTED && accessRequest != null) {
+        if (status.getStatus() == SecureScanGattProfile.STATUS_REQUEST_ACCEPTED && accessRequest != null) {
             returnValue = accessRequest!!.getKey()
         }
 
-        if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            bluetoothGattServer?.sendResponse(
-                device,
-                requestId,
-                BluetoothGatt.GATT_SUCCESS,
-                0,
-                returnValue
-            )
-        }
+        bluetoothGattServer?.sendResponse(
+            device,
+            requestId,
+            BluetoothGatt.GATT_SUCCESS,
+            0,
+            returnValue
+        )
+
 
         accessRequest = null
-        status = SecureScanGattProfile.STATUS_IDLE
+        status.setStatus(SecureScanGattProfile.STATUS_IDLE)
     }
 
     fun getStatus(
         device: BluetoothDevice,
         requestId: Int
     ) {
-        Log.i(TAG, "GetStatus ... ")
+        val returnValue = arrayOf(status.getStatus()).toByteArray()
+        Log.i(TAG, "GetStatus : ${returnValue.toHexString()} ... ")
 
-        val returnValue = arrayOf(status).toByteArray()
+        bluetoothGattServer!!.sendResponse(
+            device,
+            requestId,
+            BluetoothGatt.GATT_SUCCESS,
+            0,
+            returnValue
+        )
 
-        if (checkSelfPermission(BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            bluetoothGattServer?.sendResponse(
-                device,
-                requestId,
-                BluetoothGatt.GATT_SUCCESS,
-                0,
-                returnValue
-            )
-        }
+        Log.i(TAG, "Status returned ")
+    }
+
+    fun getName(
+        device: BluetoothDevice,
+        requestId: Int
+    ) {
+        Log.i(TAG, "getName ... ")
+
+        val returnValue = arrayOf(status.getStatus()).toByteArray()
+
+        bluetoothGattServer!!.sendResponse(
+            device,
+            requestId,
+            BluetoothGatt.GATT_SUCCESS,
+            0,
+            returnValue
+        )
+
+        Log.i(TAG, "Status returned ")
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
@@ -226,10 +254,42 @@ class SecureScanBluetoothService : Service() {
             device: BluetoothDevice, requestId: Int, offset: Int,
             characteristic: BluetoothGattCharacteristic
         ) {
-            if (SecureScanGattProfile.GETKEY == characteristic.uuid) {
-                getKey(device, requestId)
-            } else if (SecureScanGattProfile.GETSTATUS == characteristic.uuid) {
-                getStatus(device, requestId)
+            if (device.bondState != BOND_BONDED) {
+                Log.e("SecureScan", "** not paired!!!")
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_FAILURE,
+                    0,
+                    "Not paired!".toByteArray()
+                )
+                return
+            }
+
+            try {
+                if (SecureScanGattProfile.GETKEY == characteristic.uuid) {
+                    getKey(device, requestId)
+                } else if (SecureScanGattProfile.GETSTATUS == characteristic.uuid) {
+                    getStatus(device, requestId)
+                } else if (SecureScanGattProfile.GETNAME == characteristic.uuid) {
+                    getName(device, requestId)
+                } else {
+                    bluetoothGattServer?.sendResponse(
+                        device,
+                        requestId,
+                        BluetoothGatt.GATT_FAILURE,
+                        0,
+                        arrayOf(0x00.toByte()).toByteArray()
+                    )
+                }
+            } catch (e: Exception) {
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_FAILURE,
+                    0,
+                    arrayOf(0x00.toByte()).toByteArray()
+                )
             }
         }
 
@@ -242,6 +302,18 @@ class SecureScanBluetoothService : Service() {
             offset: Int,
             value: ByteArray?
         ) {
+            if (device != null && device?.bondState != BOND_BONDED) {
+                Log.e("SecureScan", "** not paired!!!")
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_FAILURE,
+                    0,
+                    "Not paired!".toByteArray()
+                )
+                return
+            }
+
             if (SecureScanGattProfile.SENDSECURECONTAINERHASH == characteristic!!.uuid) {
                 sendSecurecontainerHash(device!!, requestId, responseNeeded, value!!)
             } else if (SecureScanGattProfile.PUBLICCERT == characteristic!!.uuid) {
@@ -251,10 +323,6 @@ class SecureScanBluetoothService : Service() {
     }
 
     private fun startServer() {
-        if (checkSelfPermission(BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "** NO PERMISSION! BLUETOOTH_CONNECT")
-            return
-        }
         bluetoothGattServer = bluetoothManager.openGattServer(this, gattServerCallback)
 
         bluetoothGattServer?.addService(SecureScanGattProfile.createSecureScanService())
@@ -262,10 +330,6 @@ class SecureScanBluetoothService : Service() {
     }
 
     private fun stopServer() {
-        if (checkSelfPermission(BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "** NO PERMISSION! BLUETOOTH_CONNECT")
-            return
-        }
         bluetoothGattServer?.close()
     }
 
@@ -273,10 +337,6 @@ class SecureScanBluetoothService : Service() {
         val bluetoothLeAdvertiser: BluetoothLeAdvertiser? =
             bluetoothManager.adapter.bluetoothLeAdvertiser
         bluetoothLeAdvertiser?.let {
-            if (checkSelfPermission(BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "** NO PERMISSION! BLUETOOTH_ADVERTISE")
-                return
-            }
             it.stopAdvertising(advertiseCallback)
         } ?: Log.w(TAG, "Failed to create advertiser")
     }
@@ -299,11 +359,13 @@ class SecureScanBluetoothService : Service() {
                 .addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
                 .build()
 
-            if (checkSelfPermission(BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "** NO PERMISSION! BLUETOOTH_ADVERTISE")
-                return
-            }
-            it.startAdvertising(settings, data, advertiseCallback)
+            val rdata = AdvertiseData.Builder()
+                .setIncludeDeviceName(true)
+                //.setIncludeTxPowerLevel(true)
+                //.addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
+                .build()
+
+            it.startAdvertising(settings, data, rdata, advertiseCallback)
         } ?: Log.w(TAG, "Failed to create advertiser")
     }
 
@@ -329,10 +391,7 @@ class SecureScanBluetoothService : Service() {
         registerReceiver(bluetoothReceiver, filter)
         if (!bluetoothAdapter.isEnabled) {
             Log.d(TAG, "Bluetooth is currently disabled...enabling")
-            if (checkSelfPermission(BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "** NO PERMISSION! BLUETOOTH_CONNECT")
-            } else
-                bluetoothAdapter.enable()
+            bluetoothAdapter.enable()
         } else {
             Log.d(TAG, "Bluetooth enabled...starting services")
             startAdvertising()
@@ -400,10 +459,13 @@ class SecureScanBluetoothService : Service() {
 
     fun setApproval(approved: Boolean) {
         Log.i(TAG, "Approved: $approved")
-        status = if (approved) {
-            SecureScanGattProfile.STATUS_REQUEST_ACCEPTED
+        if (approved) {
+            status.setStatus(SecureScanGattProfile.STATUS_REQUEST_ACCEPTED)
         } else {
-            SecureScanGattProfile.STATUS_REQUEST_DENIED
+            status.setStatus(SecureScanGattProfile.STATUS_REQUEST_DENIED)
         }
+
+        val returnValue = arrayOf(status.getStatus()).toByteArray()
+        Log.i(TAG, " ********* APROVED GetStatus : ${returnValue.toHexString()} ... ")
     }
 }
