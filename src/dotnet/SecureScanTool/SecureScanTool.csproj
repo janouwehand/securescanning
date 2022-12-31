@@ -89,6 +89,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SecureScan.Base\SecureScan.Base.csproj">
+      <Project>{e84831e5-fdbb-48e7-b30d-e1e9d6bdf294}</Project>
+      <Name>SecureScan.Base</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SecureScan.Bluetooth.UI\SecureScan.Bluetooth.UI.csproj">
       <Project>{AF15595D-1834-4C53-9CA8-E7996C44CA5B}</Project>
       <Name>SecureScan.Bluetooth.UI</Name>

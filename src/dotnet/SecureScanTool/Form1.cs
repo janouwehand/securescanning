@@ -169,10 +169,15 @@ device.DeviceAccessInformation.CurrentStatus: {device.DeviceAccessInformation.Cu
       }
     }
 
-    private void button1_Click(object sender, EventArgs e)
+    private async void button1_Click(object sender, EventArgs e)
     {
       var func = new BluetoothUIFunctions();
-      func.PairNewDevice();
+      var items = await func.DiscoverDevicesAsync(log);
+
+      foreach(var item in items)
+      {
+        func.RetrieveKeyForSecureDocumentAsync(item, log);
+      }
     }
   }
 }

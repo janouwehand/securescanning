@@ -75,11 +75,18 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\GattConnection.cs" />
     <Compile Include="Server\GattClient.cs" />
+    <Compile Include="Server\GattDiscovery.cs" />
+    <Compile Include="Server\GattServiceClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\SecureScan.Base\SecureScan.Base.csproj">
+      <Project>{E84831E5-FDBB-48E7-B30D-E1E9D6BDF294}</Project>
+      <Name>SecureScan.Base</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

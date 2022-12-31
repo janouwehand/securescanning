@@ -6,15 +6,15 @@ namespace SecureScan.Bluetooth.Server
 {
   public class GattConnection
   {
-    public GattConnection(BluetoothLEAdvertisementReceivedEventArgs bluetoothLEAdvertisementReceivedEventArgs, BluetoothLEDevice Device, GattDeviceService gattService, GattCharacteristic[] characteristics)
+    public GattConnection(BluetoothLEAdvertisement advertisement, BluetoothLEDevice Device, GattDeviceService gattService, GattCharacteristic[] characteristics)
     {
-      BluetoothLEAdvertisementReceivedEventArgs = bluetoothLEAdvertisementReceivedEventArgs;
+      Advertisement = advertisement;
       this.Device = Device;
       GattService = gattService;
       Characteristics = characteristics;
     }
 
-    public BluetoothLEAdvertisementReceivedEventArgs BluetoothLEAdvertisementReceivedEventArgs { get; }
+    public BluetoothLEAdvertisement Advertisement { get; }
 
     public BluetoothLEDevice Device { get; }
 

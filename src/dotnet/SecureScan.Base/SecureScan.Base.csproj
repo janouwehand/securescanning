@@ -71,6 +71,7 @@
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Extensions\X509Extensions.cs" />
     <Compile Include="Interfaces\IBluetoothUIFunctions.cs" />
+    <Compile Include="Interfaces\IDiscoveryItem.cs" />
     <Compile Include="Interfaces\PairedDevice.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\LogEventArgs.cs" />

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -10,6 +9,7 @@ using SecureScan.Base.Interfaces;
 using SecureScan.Bluetooth.Extensions;
 using SecureScan.Bluetooth.Server;
 using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
 
 namespace SecureScan.Bluetooth.UI
@@ -18,7 +18,7 @@ namespace SecureScan.Bluetooth.UI
   {
     private CancellationTokenSource cancellationTokenSource;
 
-    public (byte[] key, string error) RetrieveKeyForSecureDocument(byte[] secureDocument, X509Certificate2 certificate)
+    public (byte[] key, string error) RetrieveKeyForSecureDocument(IDiscoveryItem discoveryItem, byte[] secureDocument, X509Certificate2 certificate)
     {
       if (secureDocument is null)
       {
@@ -37,7 +37,7 @@ namespace SecureScan.Bluetooth.UI
 
         form.Show();
 
-        var task = Task.Run(() => ExecuteBluetoothAsync(sha1, certificate, str => form.AddLog(str)));
+        var task = Task.Run(() => ExecuteBluetoothAsync(discoveryItem, sha1, certificate, str => form.AddLog(str)));
         while (!task.IsCompleted)
         {
           Application.DoEvents();
@@ -53,45 +53,21 @@ namespace SecureScan.Bluetooth.UI
       }
     }
 
-    private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
-    {
-      var ignoreIds = new List<ulong>();
-      (ulong id, byte[] key, string error) result = (0UL, null, "niet uitgevoerd");
-
-      while (true)
-      {
-        result = await ExecuteBluetoothNextAsync(ignoreIds.ToArray(), secureContainerSHA1, certificate, log);
-
-        ignoreIds.Add(result.id);
-
-        if (result.error != "Document not available")
-        {
-          // Only continue when document is not available
-          break;
-        }
-      }
-
-      return (result.key, result.error);
-    }
-
-    private async Task<(ulong id, byte[] key, string error)> ExecuteBluetoothNextAsync(ulong[] ignoreIds, byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
+    private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(IDiscoveryItem discoveryItem, byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
     {
       cancellationTokenSource = new CancellationTokenSource();
-      var id = 0UL;
 
       try
       {
         using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
         {
           gatt.OnLog += (s, e) => log(e);
-          var gattConnection = await gatt.ScanAsync(TimeSpan.FromMinutes(2), ignoreIds, cancellationTokenSource.Token);
-
-          id = gattConnection.BluetoothLEAdvertisementReceivedEventArgs.BluetoothAddress;
+          var gattConnection = await CreateGattConnection(discoveryItem);
 
           var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
           if (!documentAvailable)
           {
-            return (id, null, "Document not available");
+            return (null, "Document not available");
           }
 
           await SendCertificateAsync(gattConnection, certificate, log);
@@ -100,23 +76,49 @@ namespace SecureScan.Bluetooth.UI
 
           if (!approved)
           {
-            return (id, null, "Request denied by user!");
+            return (null, "Request denied by user!");
           }
           else
           {
             var key = await ReceiveKeyAsync(gattConnection, log);
-            return (id, key, null);
+            return (key, null);
           }
         }
       }
       catch (ObjectDisposedException)
       {
-        return (id, null, "Communication aborted");
+        return (null, "Communication aborted");
       }
       catch (Exception ex)
       {
-        return (id, null, ex.Message);
+        return (null, ex.Message);
       }
+    }
+
+    private async Task<GattConnection> CreateGattConnection(IDiscoveryItem discoveryItem)
+    {
+      if (!(discoveryItem is GattDiscovery.Item item))
+      {
+        return null;
+      }
+
+      var device = await BluetoothLEDevice.FromBluetoothAddressAsync(item.Device.BluetoothAddress, item.Device.BluetoothAddressType);
+
+      var gattServices = await device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
+      if (gattServices.Status != GattCommunicationStatus.Success)
+      {
+        throw new Exception($"Could not get GattServices ({gattServices.ProtocolError})");
+      }
+
+      var gattService = gattServices.Services.FirstOrDefault(x => x.Uuid == Constants.SECURESCANSERVICE) ?? throw new Exception("Service UUID not found!");
+
+      var characteristics = await gattService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
+      if (characteristics.Status != GattCommunicationStatus.Success)
+      {
+        throw new Exception($"Could not get characteristics ({characteristics.ProtocolError})");
+      }
+
+      return new GattConnection(item.Advertisement, item.Device, gattService, characteristics.Characteristics.ToArray());
     }
 
     private async Task<bool> SendSecureContainerHashGetDocumentAvailableAsync(GattConnection gattConnection, byte[] secureContainerSHA1, Action<string> log)
@@ -259,6 +261,13 @@ namespace SecureScan.Bluetooth.UI
       {
         form.ShowDialog();
       }
+    }
+
+    public async Task<IDiscoveryItem[]> DiscoverDevicesAsync(Action<string> log, CancellationToken cancellationToken = default)
+    {
+      var gattDiscovery = new GattDiscovery(Constants.SECURESCANSERVICE, log);
+      var results = await gattDiscovery.DiscoverDevicesAsync(null, cancellationToken);
+      return results;
     }
 
   }
