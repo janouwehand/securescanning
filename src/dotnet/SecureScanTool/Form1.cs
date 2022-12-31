@@ -33,7 +33,7 @@ namespace SecureScanTool
 
     private async void buttonScan_Click(object sender, EventArgs e)
     {
-      using (var gatt = new GattServer(Constants.SECURESCANSERVICE))
+      using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
       {
         gatt.OnLog += (s, e2) => log(e2);
         var advs = await gatt.ScanAdvertisementsAsync(TimeSpan.FromSeconds(10), async ad => await LogAdvertisement(ad.address, ad.advertisement),

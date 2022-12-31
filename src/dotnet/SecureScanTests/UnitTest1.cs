@@ -15,7 +15,7 @@ namespace SecureScanTests
     {
       var c = new CancellationTokenSource();
 
-      using (var gatt = new GattServer(Constants.SECURESCANSERVICE))
+      using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
       {
         var task = await gatt.ScanAsync(TimeSpan.FromMinutes(20), c.Token);
       }

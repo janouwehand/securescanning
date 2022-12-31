@@ -15,7 +15,7 @@ namespace SecureScan.Bluetooth.UI
 {
   public class BluetoothUIFunctions : IBluetoothUIFunctions
   {
-    private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+    private CancellationTokenSource cancellationTokenSource;
 
     public (byte[] key, string error) RetrieveKeyForSecureDocument(byte[] secureDocument, X509Certificate2 certificate)
     {
@@ -54,9 +54,11 @@ namespace SecureScan.Bluetooth.UI
 
     private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
     {
+      cancellationTokenSource = new CancellationTokenSource();
+
       try
       {
-        using (var gatt = new GattServer(Constants.SECURESCANSERVICE))
+        using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
         {
           gatt.OnLog += (s, e) => log(e);
           var gattConnection = await gatt.ScanAsync(TimeSpan.FromMinutes(2), cancellationTokenSource.Token);

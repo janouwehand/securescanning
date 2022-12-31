@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.app.TaskStackBuilder
 import android.bluetooth.*
+import android.bluetooth.BluetoothDevice.BOND_BONDED
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
@@ -151,8 +152,10 @@ class SecureScanBluetoothService : Service() {
         value: ByteArray
     ) {
         if (value.isNotEmpty()) {
+            Log.i("SecureScan", "Receive pub cert part")
             certBytes = certBytes.plus(value.asList())
         } else {
+            Log.i("SecureScan", "Receive pub cert part: all is received")
             accessRequest!!.setPublicCertificate(certBytes.toByteArray())
             status = SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER
             runBlocking {
@@ -197,7 +200,26 @@ class SecureScanBluetoothService : Service() {
         device: BluetoothDevice,
         requestId: Int
     ) {
-        Log.i(TAG, "GetStatus ... ")
+        val returnValue = arrayOf(status).toByteArray()
+
+        Log.i(TAG, "GetStatus : ${returnValue.toHexString()} ... ")
+
+        bluetoothGattServer!!.sendResponse(
+            device,
+            requestId,
+            BluetoothGatt.GATT_SUCCESS,
+            0,
+            returnValue
+        )
+
+        Log.i(TAG, "Status returned ")
+    }
+
+    fun getName(
+        device: BluetoothDevice,
+        requestId: Int
+    ) {
+        Log.i(TAG, "getName ... ")
 
         val returnValue = arrayOf(status).toByteArray()
 
@@ -232,11 +254,25 @@ class SecureScanBluetoothService : Service() {
             device: BluetoothDevice, requestId: Int, offset: Int,
             characteristic: BluetoothGattCharacteristic
         ) {
+            if (device.bondState != BOND_BONDED) {
+                Log.e("SecureScan", "** not paired!!!")
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_FAILURE,
+                    0,
+                    "Not paired!".toByteArray()
+                )
+                return
+            }
+
             try {
                 if (SecureScanGattProfile.GETKEY == characteristic.uuid) {
                     getKey(device, requestId)
                 } else if (SecureScanGattProfile.GETSTATUS == characteristic.uuid) {
                     getStatus(device, requestId)
+                } else if (SecureScanGattProfile.GETNAME == characteristic.uuid) {
+                    getName(device, requestId)
                 } else {
                     bluetoothGattServer?.sendResponse(
                         device,
@@ -266,6 +302,18 @@ class SecureScanBluetoothService : Service() {
             offset: Int,
             value: ByteArray?
         ) {
+            if (device != null && device?.bondState != BOND_BONDED) {
+                Log.e("SecureScan", "** not paired!!!")
+                bluetoothGattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_FAILURE,
+                    0,
+                    "Not paired!".toByteArray()
+                )
+                return
+            }
+
             if (SecureScanGattProfile.SENDSECURECONTAINERHASH == characteristic!!.uuid) {
                 sendSecurecontainerHash(device!!, requestId, responseNeeded, value!!)
             } else if (SecureScanGattProfile.PUBLICCERT == characteristic!!.uuid) {
@@ -416,5 +464,8 @@ class SecureScanBluetoothService : Service() {
         } else {
             SecureScanGattProfile.STATUS_REQUEST_DENIED
         }
+
+        val returnValue = arrayOf(status).toByteArray()
+        Log.i(TAG, " ********* APROVED GetStatus : ${returnValue.toHexString()} ... ")
     }
 }

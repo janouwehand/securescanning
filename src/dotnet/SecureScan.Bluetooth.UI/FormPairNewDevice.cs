@@ -10,7 +10,7 @@ namespace SecureScan.Bluetooth.UI
 {
   public partial class FormPairNewDevice : Form
   {
-    private GattServer gattServer = new GattServer(Constants.SECURESCANSERVICE);
+    private GattClient gattServer = new GattClient(Constants.SECURESCANSERVICE);
     private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
     protected override void OnFormClosed(FormClosedEventArgs e)

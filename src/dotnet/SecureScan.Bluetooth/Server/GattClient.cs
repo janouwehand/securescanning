@@ -10,12 +10,12 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace SecureScan.Bluetooth.Server
 {
-  public class GattServer : IDisposable
+  public class GattClient : IDisposable
   {
     private bool advertisementIsFound;
     private readonly List<IDisposable> listOfDisposables = new List<IDisposable>();
 
-    public GattServer(Guid serviceUUID) => ServiceUUID = serviceUUID;
+    public GattClient(Guid serviceUUID) => ServiceUUID = serviceUUID;
 
     public Guid ServiceUUID { get; }
 

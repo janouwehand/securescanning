@@ -10,6 +10,7 @@ object SecureScanGattProfile {
     val PUBLICCERT: UUID = UUID.fromString("00000999-1999-1999-6999-009999999999")
     val GETKEY: UUID = UUID.fromString("00000999-1999-1999-5999-009999999999")
     val GETSTATUS: UUID = UUID.fromString("00000999-1999-1999-4999-009999999999")
+    val GETNAME: UUID = UUID.fromString("00000999-1999-1999-4959-009999999999")
 
     const val STATUS_IDLE: Byte = 0xA0.toByte()
     const val STATUS_DOCUMENT_AVAILABLE: Byte = 0xE1.toByte()
@@ -46,10 +47,17 @@ object SecureScanGattProfile {
             BluetoothGattCharacteristic.PERMISSION_READ
         )
 
+        val getName = BluetoothGattCharacteristic(
+            GETSTATUS,
+            BluetoothGattCharacteristic.PROPERTY_READ,
+            BluetoothGattCharacteristic.PERMISSION_READ
+        )
+
         service.addCharacteristic(initRequest)
         service.addCharacteristic(publicCert)
         service.addCharacteristic(getKey)
         service.addCharacteristic(getStatus)
+        service.addCharacteristic(getName)
 
         return service
     }

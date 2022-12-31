@@ -12,15 +12,22 @@ namespace SecureScan.Bluetooth.UI
 
     public void AddLog(string str)
     {
-      if (InvokeRequired)
+      try
       {
-        Invoke(new Action(() => AddLog(str)));
+        if (InvokeRequired)
+        {
+          Invoke(new Action(() => AddLog(str)));
+        }
+        else
+        {
+          richTextBox1.AppendText(str + Environment.NewLine);
+          richTextBox1.ScrollToCaret();
+          Application.DoEvents();
+        }
       }
-      else
+      catch (ObjectDisposedException)
       {
-        richTextBox1.AppendText(str + Environment.NewLine);
-        richTextBox1.ScrollToCaret();
-        Application.DoEvents();
+        Console.WriteLine(str);
       }
     }
 
