@@ -35,6 +35,10 @@ class SecureScanBluetoothService : Service() {
         var documentAccessRequest: AppCompatActivity? = null
         var instance: SecureScanBluetoothService? = null
         fun isAlive(): Boolean = instance != null
+
+        private var status: Status = Status()
+        private var accessRequest: AccessRequest? = null
+        private var certBytes: List<Byte> = listOf()
     }
 
     init {
@@ -45,8 +49,6 @@ class SecureScanBluetoothService : Service() {
 
     private lateinit var bluetoothManager: BluetoothManager
     private var bluetoothGattServer: BluetoothGattServer? = null
-
-    private var status: Status = Status()
 
     /* Collection of notification subscribers */
     private val registeredDevices = mutableSetOf<BluetoothDevice>()
@@ -90,8 +92,6 @@ class SecureScanBluetoothService : Service() {
 
     fun ByteArray.toHex(): String =
         joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-
-    private var accessRequest: AccessRequest? = null
 
     fun sendSecurecontainerHash(
         device: BluetoothDevice,
@@ -143,8 +143,6 @@ class SecureScanBluetoothService : Service() {
             )
         }
     }
-
-    private var certBytes: List<Byte> = listOf()
 
     fun sendPublicCertPart(
         device: BluetoothDevice,
