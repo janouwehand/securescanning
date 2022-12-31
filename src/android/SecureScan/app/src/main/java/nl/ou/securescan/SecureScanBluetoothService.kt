@@ -45,7 +45,8 @@ class SecureScanBluetoothService : Service() {
     private lateinit var bluetoothManager: BluetoothManager
     private var bluetoothGattServer: BluetoothGattServer? = null
 
-    var status: Byte = SecureScanGattProfile.STATUS_IDLE
+    private var status: Byte = SecureScanGattProfile.STATUS_IDLE
+    private var status2: Byte = SecureScanGattProfile.STATUS_IDLE
 
     /* Collection of notification subscribers */
     private val registeredDevices = mutableSetOf<BluetoothDevice>()
@@ -201,8 +202,10 @@ class SecureScanBluetoothService : Service() {
         requestId: Int
     ) {
         val returnValue = arrayOf(status).toByteArray()
-
         Log.i(TAG, "GetStatus : ${returnValue.toHexString()} ... ")
+
+        val returnValue2 = arrayOf(status2).toByteArray()
+        Log.i(TAG, "GetStatus2 : ${returnValue2.toHexString()} ... ")
 
         bluetoothGattServer!!.sendResponse(
             device,
@@ -465,7 +468,16 @@ class SecureScanBluetoothService : Service() {
             SecureScanGattProfile.STATUS_REQUEST_DENIED
         }
 
+        status2 = if (approved) {
+            SecureScanGattProfile.STATUS_REQUEST_ACCEPTED
+        } else {
+            SecureScanGattProfile.STATUS_REQUEST_DENIED
+        }
+
         val returnValue = arrayOf(status).toByteArray()
         Log.i(TAG, " ********* APROVED GetStatus : ${returnValue.toHexString()} ... ")
+
+        val returnValue2 = arrayOf(status).toByteArray()
+        Log.i(TAG, " ********* APROVED GetStatus2 : ${returnValue2.toHexString()} ... ")
     }
 }

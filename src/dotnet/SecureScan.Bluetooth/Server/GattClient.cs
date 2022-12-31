@@ -119,7 +119,7 @@ namespace SecureScan.Bluetooth.Server
       return null;
     }
 
-    public async Task<GattConnection> ScanAsync(TimeSpan timeOut, CancellationToken cancellationToken)
+    public async Task<GattConnection> ScanAsync(TimeSpan timeOut, ulong[] ignoreIds, CancellationToken cancellationToken)
     {
       advertisementIsFound = false;
       var startedOn = DateTime.Now;
@@ -145,6 +145,12 @@ namespace SecureScan.Bluetooth.Server
         watcher.AllowExtendedAdvertisements = true;
         watcher.Received += async (s, e) =>
         {
+          // Next?
+          if (ignoreIds.Contains(e.BluetoothAddress))
+          {
+            return;
+          }
+
           if (e.Advertisement.ServiceUuids.Contains(Constants.SECURESCANSERVICE))
           {
             Console.WriteLine(string.Concat(e.Advertisement.LocalName, ", ", string.Join(" | ", e.Advertisement.ServiceUuids)));

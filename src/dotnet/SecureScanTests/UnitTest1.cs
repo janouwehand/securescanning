@@ -17,7 +17,7 @@ namespace SecureScanTests
 
       using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
       {
-        var task = await gatt.ScanAsync(TimeSpan.FromMinutes(20), c.Token);
+        var task = await gatt.ScanAsync(TimeSpan.FromMinutes(20), new ulong[] {   34 }, c.Token);
       }
     }
   }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -54,19 +55,43 @@ namespace SecureScan.Bluetooth.UI
 
     private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
     {
+      var ignoreIds = new List<ulong>();
+      (ulong id, byte[] key, string error) result = (0UL, null, "niet uitgevoerd");
+
+      while (true)
+      {
+        result = await ExecuteBluetoothNextAsync(ignoreIds.ToArray(), secureContainerSHA1, certificate, log);
+
+        ignoreIds.Add(result.id);
+
+        if (result.error != "Document not available")
+        {
+          // Only continue when document is not available
+          break;
+        }
+      }
+
+      return (result.key, result.error);
+    }
+
+    private async Task<(ulong id, byte[] key, string error)> ExecuteBluetoothNextAsync(ulong[] ignoreIds, byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
+    {
       cancellationTokenSource = new CancellationTokenSource();
+      var id = 0UL;
 
       try
       {
         using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
         {
           gatt.OnLog += (s, e) => log(e);
-          var gattConnection = await gatt.ScanAsync(TimeSpan.FromMinutes(2), cancellationTokenSource.Token);
+          var gattConnection = await gatt.ScanAsync(TimeSpan.FromMinutes(2), ignoreIds, cancellationTokenSource.Token);
+
+          id = gattConnection.BluetoothLEAdvertisementReceivedEventArgs.BluetoothAddress;
 
           var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
           if (!documentAvailable)
           {
-            return (null, "Document not available");
+            return (id, null, "Document not available");
           }
 
           await SendCertificateAsync(gattConnection, certificate, log);
@@ -75,22 +100,22 @@ namespace SecureScan.Bluetooth.UI
 
           if (!approved)
           {
-            return (null, "Request denied by user!");
+            return (id, null, "Request denied by user!");
           }
           else
           {
             var key = await ReceiveKeyAsync(gattConnection, log);
-            return (key, null);
+            return (id, key, null);
           }
         }
       }
       catch (ObjectDisposedException)
       {
-        return (null, "Communication aborted");
+        return (id, null, "Communication aborted");
       }
       catch (Exception ex)
       {
-        return (null, ex.Message);
+        return (id, null, ex.Message);
       }
     }
 
@@ -230,7 +255,7 @@ namespace SecureScan.Bluetooth.UI
 
     public void PairNewDevice()
     {
-      using (var form=new FormPairNewDevice())
+      using (var form = new FormPairNewDevice())
       {
         form.ShowDialog();
       }
