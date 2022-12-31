@@ -7,7 +7,7 @@ namespace SecureScan.Base.Interfaces
 {
   public interface IBluetoothUIFunctions
   {
-    (byte[] key, string error) RetrieveKeyForSecureDocument(IDiscoveryItem discoveryItem, byte[] secureDocument, X509Certificate2 certificate);
+    (byte[] key, string error) RetrieveKeyForSecureDocument(byte[] secureDocument, X509Certificate2 certificate);
 
     Task<PairedDevice[]> GetPairedDevicesAsync();
 

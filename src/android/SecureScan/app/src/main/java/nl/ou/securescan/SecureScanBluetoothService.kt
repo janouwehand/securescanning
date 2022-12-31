@@ -24,6 +24,7 @@ import nl.ou.securescan.crypto.extensions.getNameAndEmail
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.helpers.NotificationUtils
+import nl.ou.securescan.helpers.Status
 import java.io.File
 import java.io.FileOutputStream
 
@@ -45,8 +46,7 @@ class SecureScanBluetoothService : Service() {
     private lateinit var bluetoothManager: BluetoothManager
     private var bluetoothGattServer: BluetoothGattServer? = null
 
-    private var status: Byte = SecureScanGattProfile.STATUS_IDLE
-    private var status2: Byte = SecureScanGattProfile.STATUS_IDLE
+    private var status: Status = Status()
 
     /* Collection of notification subscribers */
     private val registeredDevices = mutableSetOf<BluetoothDevice>()
@@ -112,11 +112,11 @@ class SecureScanBluetoothService : Service() {
             runBlocking {
                 Log.i(TAG, "Received secure document hash: ${value.toHexString()}")
                 val doc = dao.getByHash(value)
-                status = if (doc != null) {
+                if (doc != null) {
                     accessRequest!!.setDocument(doc)
-                    SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE
+                    status.setStatus(SecureScanGattProfile.STATUS_DOCUMENT_AVAILABLE)
                 } else {
-                    SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE
+                    status.setStatus(SecureScanGattProfile.STATUS_DOCUMENT_NOT_AVAILABLE)
                 }
 
                 Log.i(
@@ -158,7 +158,7 @@ class SecureScanBluetoothService : Service() {
         } else {
             Log.i("SecureScan", "Receive pub cert part: all is received")
             accessRequest!!.setPublicCertificate(certBytes.toByteArray())
-            status = SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER
+            status.setStatus(SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER)
             runBlocking {
                 notifyUserForRequestedDocument()
             }
@@ -180,7 +180,7 @@ class SecureScanBluetoothService : Service() {
     ) {
         var returnValue = "".toByteArray()
 
-        if (status == SecureScanGattProfile.STATUS_REQUEST_ACCEPTED && accessRequest != null) {
+        if (status.getStatus() == SecureScanGattProfile.STATUS_REQUEST_ACCEPTED && accessRequest != null) {
             returnValue = accessRequest!!.getKey()
         }
 
@@ -194,18 +194,15 @@ class SecureScanBluetoothService : Service() {
 
 
         accessRequest = null
-        status = SecureScanGattProfile.STATUS_IDLE
+        status.setStatus(SecureScanGattProfile.STATUS_IDLE)
     }
 
     fun getStatus(
         device: BluetoothDevice,
         requestId: Int
     ) {
-        val returnValue = arrayOf(status).toByteArray()
+        val returnValue = arrayOf(status.getStatus()).toByteArray()
         Log.i(TAG, "GetStatus : ${returnValue.toHexString()} ... ")
-
-        val returnValue2 = arrayOf(status2).toByteArray()
-        Log.i(TAG, "GetStatus2 : ${returnValue2.toHexString()} ... ")
 
         bluetoothGattServer!!.sendResponse(
             device,
@@ -224,7 +221,7 @@ class SecureScanBluetoothService : Service() {
     ) {
         Log.i(TAG, "getName ... ")
 
-        val returnValue = arrayOf(status).toByteArray()
+        val returnValue = arrayOf(status.getStatus()).toByteArray()
 
         bluetoothGattServer!!.sendResponse(
             device,
@@ -462,22 +459,13 @@ class SecureScanBluetoothService : Service() {
 
     fun setApproval(approved: Boolean) {
         Log.i(TAG, "Approved: $approved")
-        status = if (approved) {
-            SecureScanGattProfile.STATUS_REQUEST_ACCEPTED
+        if (approved) {
+            status.setStatus(SecureScanGattProfile.STATUS_REQUEST_ACCEPTED)
         } else {
-            SecureScanGattProfile.STATUS_REQUEST_DENIED
+            status.setStatus(SecureScanGattProfile.STATUS_REQUEST_DENIED)
         }
 
-        status2 = if (approved) {
-            SecureScanGattProfile.STATUS_REQUEST_ACCEPTED
-        } else {
-            SecureScanGattProfile.STATUS_REQUEST_DENIED
-        }
-
-        val returnValue = arrayOf(status).toByteArray()
+        val returnValue = arrayOf(status.getStatus()).toByteArray()
         Log.i(TAG, " ********* APROVED GetStatus : ${returnValue.toHexString()} ... ")
-
-        val returnValue2 = arrayOf(status).toByteArray()
-        Log.i(TAG, " ********* APROVED GetStatus2 : ${returnValue2.toHexString()} ... ")
     }
 }

@@ -17,6 +17,5 @@ namespace SecureScan.Bluetooth.Server
       this.log = log;
     }
 
-    public async Task 
   }
 }

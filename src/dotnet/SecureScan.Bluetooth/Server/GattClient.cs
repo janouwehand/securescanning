@@ -44,7 +44,7 @@ namespace SecureScan.Bluetooth.Server
         throw new Exception($"Could not get characteristics ({characteristics.ProtocolError})");
       }
 
-      return new GattConnection(bluetoothLEAdvertisementReceivedEventArgs, device, gattService, characteristics.Characteristics.ToArray());
+      return new GattConnection(bluetoothLEAdvertisementReceivedEventArgs.Advertisement, device, gattService, characteristics.Characteristics.ToArray());
     }
 
     /// <summary>

@@ -19,6 +19,18 @@ object SecureScanGattProfile {
     const val STATUS_REQUEST_ACCEPTED: Byte = 0xA2.toByte()
     const val STATUS_REQUEST_DENIED: Byte = 0xA3.toByte()
 
+    fun getStatusDescription(status: Byte): String {
+        return when (status) {
+            STATUS_IDLE -> "Idle"
+            STATUS_DOCUMENT_AVAILABLE -> "Document available"
+            STATUS_DOCUMENT_NOT_AVAILABLE -> "Document not available"
+            STATUS_REQUEST_WAITFORUSER -> "Waiting for user response"
+            STATUS_REQUEST_ACCEPTED -> "User approved request"
+            STATUS_REQUEST_DENIED -> "User denied request"
+            else -> "Unknown!"
+        }
+    }
+
     fun createSecureScanService(): BluetoothGattService {
         val service =
             BluetoothGattService(SECURESCANSERVICE, BluetoothGattService.SERVICE_TYPE_PRIMARY)

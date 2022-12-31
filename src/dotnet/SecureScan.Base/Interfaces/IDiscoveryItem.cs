@@ -1,6 +1,8 @@
-﻿namespace SecureScan.Base.Interfaces
+﻿using System;
+
+namespace SecureScan.Base.Interfaces
 {
-  public interface IDiscoveryItem
+  public interface IDiscoveryItem : IDisposable
   {
     ulong Id { get; }
 

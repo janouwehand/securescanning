@@ -29,6 +29,13 @@ namespace SecureScan.Bluetooth.Server
       public ulong Id => Device.BluetoothAddress;
 
       public string Name => Device?.Name ?? Device?.DeviceInformation?.Name;
+
+      public void Dispose()
+      {
+        Advertisement = null;
+        Device?.Dispose();
+        Device = null;
+      }
     }
 
     public Guid ServiceUUID { get; }

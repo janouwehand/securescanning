@@ -1,10 +1,11 @@
-﻿using Windows.Devices.Bluetooth;
+﻿using System;
+using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace SecureScan.Bluetooth.Server
 {
-  public class GattConnection
+  public class GattConnection: IDisposable
   {
     public GattConnection(BluetoothLEAdvertisement advertisement, BluetoothLEDevice Device, GattDeviceService gattService, GattCharacteristic[] characteristics)
     {
@@ -21,5 +22,14 @@ namespace SecureScan.Bluetooth.Server
     public GattDeviceService GattService { get; }
 
     public GattCharacteristic[] Characteristics { get; }
+
+    public void Dispose()
+    {
+      // Dispose GattService
+      GattService.Dispose();
+
+      // Dispose Device
+     // Device.Dispose();
+    }
   }
 }

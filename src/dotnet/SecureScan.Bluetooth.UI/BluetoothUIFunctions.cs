@@ -18,7 +18,7 @@ namespace SecureScan.Bluetooth.UI
   {
     private CancellationTokenSource cancellationTokenSource;
 
-    public (byte[] key, string error) RetrieveKeyForSecureDocument(IDiscoveryItem discoveryItem, byte[] secureDocument, X509Certificate2 certificate)
+    public (byte[] key, string error) RetrieveKeyForSecureDocument(byte[] secureDocument, X509Certificate2 certificate)
     {
       if (secureDocument is null)
       {
@@ -37,7 +37,7 @@ namespace SecureScan.Bluetooth.UI
 
         form.Show();
 
-        var task = Task.Run(() => ExecuteBluetoothAsync(discoveryItem, sha1, certificate, str => form.AddLog(str)));
+        var task = Task.Run(() => ExecuteBluetoothForAllDevicesAsync(sha1, certificate, str => form.AddLog(str)));
         while (!task.IsCompleted)
         {
           Application.DoEvents();
@@ -53,6 +53,37 @@ namespace SecureScan.Bluetooth.UI
       }
     }
 
+    private async Task<(byte[] key, string error)> ExecuteBluetoothForAllDevicesAsync(byte[] sha1, X509Certificate2 certificate, Action<string> log)
+    {
+      (byte[] key, string error) result = (null, "Not executed, no devices found");
+
+      var disco = new GattDiscovery(Constants.SECURESCANSERVICE, log);
+      var discoveryItems = await disco.DiscoverDevicesAsync();
+
+      try
+      {
+        foreach (var discoveryItem in discoveryItems)
+        {
+          result = await ExecuteBluetoothAsync(discoveryItem, sha1, certificate, log);
+
+          if (result.error != "Document not available")
+          {
+            return result; // else try next device
+          }
+        }
+
+        return result;
+      }
+      finally
+      {
+        // Dispose
+        foreach (var discoveryItem in discoveryItems)
+        {
+          discoveryItem.Dispose();
+        }
+      }
+    }
+
     private async Task<(byte[] key, string error)> ExecuteBluetoothAsync(IDiscoveryItem discoveryItem, byte[] secureContainerSHA1, X509Certificate2 certificate, Action<string> log)
     {
       cancellationTokenSource = new CancellationTokenSource();
@@ -62,26 +93,27 @@ namespace SecureScan.Bluetooth.UI
         using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
         {
           gatt.OnLog += (s, e) => log(e);
-          var gattConnection = await CreateGattConnection(discoveryItem);
-
-          var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
-          if (!documentAvailable)
+          using (var gattConnection = await CreateGattConnection(discoveryItem))
           {
-            return (null, "Document not available");
-          }
+            var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
+            if (!documentAvailable)
+            {
+              return (null, "Document not available");
+            }
 
-          await SendCertificateAsync(gattConnection, certificate, log);
+            await SendCertificateAsync(gattConnection, certificate, log);
 
-          var approved = await WaitForApprovalAsync(gattConnection, log);
+            var approved = await WaitForApprovalAsync(gattConnection, log);
 
-          if (!approved)
-          {
-            return (null, "Request denied by user!");
-          }
-          else
-          {
-            var key = await ReceiveKeyAsync(gattConnection, log);
-            return (key, null);
+            if (!approved)
+            {
+              return (null, "Request denied by user!");
+            }
+            else
+            {
+              var key = await ReceiveKeyAsync(gattConnection, log);
+              return (key, null);
+            }
           }
         }
       }

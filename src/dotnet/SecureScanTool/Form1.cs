@@ -176,7 +176,7 @@ device.DeviceAccessInformation.CurrentStatus: {device.DeviceAccessInformation.Cu
 
       foreach(var item in items)
       {
-        func.RetrieveKeyForSecureDocumentAsync(item, log);
+        //func.RetrieveKeyForSecureDocumentAsync(item, log);
       }
     }
   }
