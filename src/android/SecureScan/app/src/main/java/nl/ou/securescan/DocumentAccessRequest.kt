@@ -40,18 +40,18 @@ class DocumentAccessRequest : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         binding.toolbar.title = "Secure Scan"
-        binding.toolbar.subtitle = "Aprove document access request"
+        binding.toolbar.subtitle = "Approve document access request"
 
         binding.buttonApprove.setOnClickListener { setApproval(true) }
         binding.buttonDeny.setOnClickListener { setApproval(false) }
-        
+
         SecureScanBluetoothService.documentAccessRequest = this
     }
 
     private fun setApproval(approved: Boolean) {
-        val serviceIntent = Intent(this, SecureScanBluetoothService::class.java)
-        serviceIntent.putExtra("LeDot", ".")
+        SecureScanBluetoothService.accessRequestIntent = null
 
+        val serviceIntent = Intent(this, SecureScanBluetoothService::class.java)
         val serviceConnection =
             object : ServiceConnection {
                 override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -67,8 +67,7 @@ class DocumentAccessRequest : AppCompatActivity() {
 
                     try {
                         finishAndRemoveTask()
-                    }
-                    catch (e: Exception) {
+                    } catch (e: Exception) {
                         finish()
                     }
                 }

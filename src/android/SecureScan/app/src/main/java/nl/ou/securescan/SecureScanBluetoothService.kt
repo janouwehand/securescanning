@@ -36,7 +36,9 @@ class SecureScanBluetoothService : Service() {
         var instance: SecureScanBluetoothService? = null
         fun isAlive(): Boolean = instance != null
 
-        private var status: Status = Status()
+        var status: Status = Status()
+        var accessRequestIntent: Intent? = null
+
         private var accessRequest: AccessRequest? = null
         private var certBytes: List<Byte> = listOf()
     }
@@ -432,10 +434,14 @@ class SecureScanBluetoothService : Service() {
         resultIntent.putExtra("documentId", doc.id)
         resultIntent.putExtra("documentHash", doc.documentHash)
 
+        accessRequestIntent = resultIntent
+
+        val mainActivityIntent = Intent(this, MainActivity::class.java)
+
         // Create the TaskStackBuilder
         val resultPendingIntent: PendingIntent? = TaskStackBuilder.create(this).run {
             // Add the intent, which inflates the back stack
-            addNextIntentWithParentStack(resultIntent)
+            addNextIntentWithParentStack(mainActivityIntent)
 
             // Get the PendingIntent containing the entire back stack
             getPendingIntent(
