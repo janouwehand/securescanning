@@ -31,18 +31,6 @@ namespace SecureScanTool
 
     private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-    private async void buttonScan_Click(object sender, EventArgs e)
-    {
-      using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
-      {
-        gatt.OnLog += (s, e2) => log(e2);
-        var advs = await gatt.ScanAdvertisementsAsync(TimeSpan.FromSeconds(10), async ad => await LogAdvertisement(ad.address, ad.advertisement),
-        cancellationTokenSource.Token);
-      }
-
-      log("finito");
-    }
-
     private async Task LogAdvertisement(ulong address, BluetoothLEAdvertisement advertisement)
     {
       foreach (var sec in advertisement.DataSections)
@@ -94,7 +82,7 @@ device.DeviceInformation.Name: {device.DeviceInformation.Name}
         var result = await device.DeviceInformation.Pairing.Custom.PairAsync(DevicePairingKinds.ConfirmOnly);
         log($"pairing result: {result.Status}");
       }
-      return;
+      
       log($@"
 device.DeviceId: {device.DeviceId}
 device.Name: {device.Name}  

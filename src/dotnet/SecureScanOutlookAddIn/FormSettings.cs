@@ -33,12 +33,6 @@ namespace SecureScanOutlookAddIn
       listBoxDevices.Items.AddRange(devices);
     }
 
-    private void buttonOK_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;
-
-    private async void buttonPairNew_Click(object sender, EventArgs e)
-    {
-      BluetoothUIFunctions.PairNewDevice();
-      await PopulateDevices();
-    }
+    private void buttonOK_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;    
   }
 }

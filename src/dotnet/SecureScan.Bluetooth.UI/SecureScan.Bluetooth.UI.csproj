@@ -56,12 +56,6 @@
       <DependentUpon>BluetoothForm.cs</DependentUpon>
     </Compile>
     <Compile Include="BluetoothUIFunctions.cs" />
-    <Compile Include="FormPairNewDevice.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="FormPairNewDevice.Designer.cs">
-      <DependentUpon>FormPairNewDevice.cs</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -88,9 +82,6 @@
   <ItemGroup>
     <EmbeddedResource Include="BluetoothForm.resx">
       <DependentUpon>BluetoothForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="FormPairNewDevice.resx">
-      <DependentUpon>FormPairNewDevice.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

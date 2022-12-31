@@ -90,30 +90,26 @@ namespace SecureScan.Bluetooth.UI
 
       try
       {
-        using (var gatt = new GattClient(Constants.SECURESCANSERVICE))
+        using (var gattConnection = await CreateGattConnection(discoveryItem))
         {
-          gatt.OnLog += (s, e) => log(e);
-          using (var gattConnection = await CreateGattConnection(discoveryItem))
+          var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
+          if (!documentAvailable)
           {
-            var documentAvailable = await SendSecureContainerHashGetDocumentAvailableAsync(gattConnection, secureContainerSHA1, log);
-            if (!documentAvailable)
-            {
-              return (null, "Document not available");
-            }
+            return (null, "Document not available");
+          }
 
-            await SendCertificateAsync(gattConnection, certificate, log);
+          await SendCertificateAsync(gattConnection, certificate, log);
 
-            var approved = await WaitForApprovalAsync(gattConnection, log);
+          var approved = await WaitForApprovalAsync(gattConnection, log);
 
-            if (!approved)
-            {
-              return (null, "Request denied by user!");
-            }
-            else
-            {
-              var key = await ReceiveKeyAsync(gattConnection, log);
-              return (key, null);
-            }
+          if (!approved)
+          {
+            return (null, "Request denied by user!");
+          }
+          else
+          {
+            var key = await ReceiveKeyAsync(gattConnection, log);
+            return (key, null);
           }
         }
       }
@@ -285,14 +281,6 @@ namespace SecureScan.Bluetooth.UI
         Name = x.Name
       })
       .ToArray();
-    }
-
-    public void PairNewDevice()
-    {
-      using (var form = new FormPairNewDevice())
-      {
-        form.ShowDialog();
-      }
     }
 
     public async Task<IDiscoveryItem[]> DiscoverDevicesAsync(Action<string> log, CancellationToken cancellationToken = default)
