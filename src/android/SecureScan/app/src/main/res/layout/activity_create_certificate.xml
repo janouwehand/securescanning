@@ -20,7 +20,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FFC107"
+            android:background="@color/AppBarNiceColor"
             app:popupTheme="@style/Theme.SecureScan.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>

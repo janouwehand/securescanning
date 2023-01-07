@@ -1,6 +1,8 @@
 package nl.ou.securescan.crypto.extensions
 
+import android.security.keystore.KeyInfo
 import nl.ou.securescan.crypto.CertificateManager
+import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.PrivateKey
@@ -63,6 +65,15 @@ fun X509Certificate.getPrivateKey(): PrivateKey? {
     } else {
         null
     }
+}
+
+fun X509Certificate.getKeyInfo(): KeyInfo? {
+    val privateKey = getPrivateKey()!!
+
+    val factory = KeyFactory.getInstance(privateKey.algorithm, CertificateManager.ANDROIDKEYSTORE)
+    val keyInfo = factory.getKeySpec(privateKey, KeyInfo::class.java)
+
+    return keyInfo
 }
 
 const val TRANSFORMATION = "RSA/ECB/PKCS1Padding"

@@ -37,11 +37,14 @@ class CertificateInfoActivity : AppCompatActivity() {
 
         binding.buttonCer.setOnClickListener { storeCertificate() }
         binding.buttonDeleteCer.setOnClickListener { deleteCertificate() }
+
+        val keyInfo = cert.getKeyInfo()
+        binding.textViewInsideSecureHardware.text = keyInfo!!.isInsideSecureHardware.toString()
     }
 
     private fun deleteCertificate() {
         confirm("Are you sure that you want to delete your certificate and private key?") { ok ->
-            if (ok){
+            if (ok) {
                 runBlocking {
                     DocumentDatabase.getDatabase(baseContext).documentDao().deleteAll()
                 }
