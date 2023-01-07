@@ -33,6 +33,9 @@ class DocumentInfoActivity : AppCompatActivity() {
 
         binding.toolbar.title = "Document $documentId"
         binding.toolbar.setNavigationOnClickListener {
+            if (binding.editTextDocumentName.hasFocus()) {
+                binding.editTextDocumentName.hideKeyboard()
+            }
             finish()
         }
 
@@ -49,11 +52,11 @@ class DocumentInfoActivity : AppCompatActivity() {
         binding.editTextDocumentName.requestFocus()
 
         binding.buttonSave.setOnClickListener {
-            Save()
+            save()
         }
     }
 
-    private fun Save() {
+    private fun save() {
 
         val newName = binding.editTextDocumentName.text.toString()
         if (newName.isBlank()) {
@@ -68,6 +71,10 @@ class DocumentInfoActivity : AppCompatActivity() {
             if (document.name != newName) {
                 db.documentDao().updateName(documentId, newName)
             }
+        }
+
+        if (binding.editTextDocumentName.hasFocus()) {
+            binding.editTextDocumentName.hideKeyboard()
         }
 
         finish()

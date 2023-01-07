@@ -1,11 +1,8 @@
 package nl.ou.securescan
 
 import android.app.AlertDialog
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.nfc.NfcAdapter
-import android.nfc.cardemulation.CardEmulation
 import android.os.Build
 import android.os.Bundle
 import android.util.Log

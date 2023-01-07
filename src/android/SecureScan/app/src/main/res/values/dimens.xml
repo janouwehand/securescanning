@@ -6,4 +6,5 @@
 
     <dimen name="list_item_height">46dp</dimen>
     <dimen name="margin_medium">8dp</dimen>
+    <dimen name="margin_small">0dp</dimen>
 </resources>

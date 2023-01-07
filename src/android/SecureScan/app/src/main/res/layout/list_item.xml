@@ -1,37 +1,51 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="@dimen/list_item_height"
-    android:layout_marginLeft="@dimen/margin_medium"
-    android:layout_marginRight="@dimen/margin_medium"
+    android:layout_marginLeft="@dimen/margin_small"
+    android:layout_marginRight="@dimen/margin_small"
     android:clickable="true"
     android:gravity="center_vertical"
     android:hapticFeedbackEnabled="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
-    android:padding="4dp">
+    android:padding="2dp">
 
 
     <TextView
         android:id="@+id/textViewDateTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
         android:text="edtDateTime"
-        android:textSize="12sp"
-        android:textFontWeight="@integer/material_motion_duration_medium_2" />
+        android:textColor="#CCC0C0"
+        android:textFontWeight="@integer/material_motion_duration_medium_2"
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/textViewId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right"
+        android:layout_gravity="right|center"
         android:textSize="22sp"
+        android:textColor="#CCC0C0"
         android:text="1" />
 
     <TextView
         android:id="@+id/textViewName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:text="edtName" />
+        android:layout_gravity="center|bottom"
+        android:text="edtName"
+        android:textColor="#FFEB3B"
+        android:paddingBottom="4dp"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_height="wrap_content"
+        app:srcCompat="@android:drawable/ic_menu_edit" />
 
 </FrameLayout>
