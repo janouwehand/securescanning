@@ -69,10 +69,13 @@ namespace SecureScanOutlookAddIn
 
       MailItem first = null;
 
-      foreach (MailItem item in selection)
+      foreach (var item in selection)
       {
-        first = item;
-        break;
+        if (item is MailItem mailItem)
+        {
+          first = mailItem;
+          break;
+        }        
       }
 
       if (first == null)
