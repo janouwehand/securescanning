@@ -9,6 +9,7 @@ using Microsoft.Office.Tools.Ribbon;
 using SecureScan.Base.Crypto.Symmetric.AESGCM;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Interfaces;
+using SecureScan.Base.SecureContainer;
 
 namespace SecureScanOutlookAddIn
 {
@@ -34,10 +35,13 @@ namespace SecureScanOutlookAddIn
 
       MailItem first = null;
 
-      foreach (MailItem item in selection)
+      foreach (var item in selection)
       {
-        first = item;
-        break;
+        if (item is MailItem mailItem)
+        {
+          first = mailItem;
+          break;
+        }
       }
 
       return first;
@@ -66,6 +70,7 @@ namespace SecureScanOutlookAddIn
       var selection = explorer.Selection;
 
       buttonReadSecureDocument.Enabled = false;
+      buttonDocumentInfo.Enabled = false;
 
       MailItem first = null;
 
@@ -75,7 +80,7 @@ namespace SecureScanOutlookAddIn
         {
           first = mailItem;
           break;
-        }        
+        }
       }
 
       if (first == null)
@@ -100,6 +105,7 @@ namespace SecureScanOutlookAddIn
 
       var contentType = at.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001E");
       buttonReadSecureDocument.Enabled = contentType == "application/ou-secure-document";
+      buttonDocumentInfo.Enabled = buttonReadSecureDocument.Enabled;
     }
 
     private IBluetoothUIFunctions bluetoothUIFunctions;
@@ -140,9 +146,9 @@ namespace SecureScanOutlookAddIn
       var isOK = contentType == "application/ou-secure-document";
 
       var attachmentData = attachment.PropertyAccessor.GetProperty(PR_ATTACH_DATA_BIN);
-      byte[] bs = attachmentData;
+      byte[] bsAttachment = attachmentData;
 
-      var result = bluetoothUIFunctions.RetrieveKeyForSecureDocument(bs, certificate);
+      var result = bluetoothUIFunctions.RetrieveKeyForSecureDocument(bsAttachment, certificate);
 
       if (!string.IsNullOrEmpty(result.error) || result.key == null || !result.key.Any())
       {
@@ -150,9 +156,11 @@ namespace SecureScanOutlookAddIn
       }
       else
       {
+        var secureContainer = SecureContainerModel.Read(bsAttachment);
+
         var symmetricPassword = certificate.DecryptWithPrivateKey(result.key);
         var symmetricEncryption = new AESGCMSymmetricEncryption();
-        var decryptedDocument = symmetricEncryption.Decrypt(bs, symmetricPassword);
+        var decryptedDocument = symmetricEncryption.Decrypt(secureContainer.EncryptedData, symmetricPassword);
         symmetricPassword = null;
 
         using (var formRenderPDF = new FormRenderPDF())
@@ -201,5 +209,37 @@ namespace SecureScanOutlookAddIn
       }
     }
 
+    private void buttonDocumentInfo_Click(object sender, RibbonControlEventArgs e)
+    {
+      var mailItem = GetMailItem();
+      if (mailItem == null)
+      {
+        return;
+      }
+
+      var attachment = GetAttachment(mailItem);
+      if (attachment == null)
+      {
+        return;
+      }
+
+      var certificate = GetCertificate();
+
+      var contentType = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001E");
+      var isOK = contentType == "application/ou-secure-document";
+
+      var attachmentData = attachment.PropertyAccessor.GetProperty(PR_ATTACH_DATA_BIN);
+      byte[] bsAttachment = attachmentData;
+
+      var secureContainer = SecureContainerModel.Read(bsAttachment);
+
+      using (var form = new FormDocumentInfo())
+      {
+        form.SecureContainer = secureContainer;
+        form.ContentType = contentType;
+        form.FileName = attachment.FileName;
+        form.ShowDialog();
+      }
+    }
   }
 }

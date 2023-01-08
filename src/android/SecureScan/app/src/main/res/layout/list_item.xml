@@ -37,7 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center|bottom"
         android:text="edtName"
-        android:textColor="#FFEB3B"
+        android:theme="@style/Theme.SecureScan"
         android:paddingBottom="4dp"
         android:textStyle="bold" />
 
@@ -46,6 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_height="wrap_content"
-        app:srcCompat="@android:drawable/ic_menu_edit" />
+        app:srcCompat="@android:drawable/ic_menu_edit"
+        android:contentDescription="@string/edit" />
 
 </FrameLayout>

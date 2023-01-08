@@ -13,6 +13,6 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
         <item name="android:textColor">#ffffff</item>
-        <item name="customColorValue">#32312F</item>
+        <item name="customColorValue">#FFEB3B</item>
     </style>
 </resources>
