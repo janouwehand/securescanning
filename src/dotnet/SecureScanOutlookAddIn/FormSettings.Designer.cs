@@ -31,11 +31,10 @@
       this.panel1 = new System.Windows.Forms.Panel();
       this.buttonOK = new System.Windows.Forms.Button();
       this.panel2 = new System.Windows.Forms.Panel();
+      this.listBoxDevices = new System.Windows.Forms.ListBox();
+      this.label2 = new System.Windows.Forms.Label();
       this.labelCertificaat = new System.Windows.Forms.Label();
       this.label1 = new System.Windows.Forms.Label();
-      this.label2 = new System.Windows.Forms.Label();
-      this.listBoxDevices = new System.Windows.Forms.ListBox();
-      this.buttonPairNew = new System.Windows.Forms.Button();
       this.panel1.SuspendLayout();
       this.panel2.SuspendLayout();
       this.SuspendLayout();
@@ -63,7 +62,6 @@
       // 
       // panel2
       // 
-      this.panel2.Controls.Add(this.buttonPairNew);
       this.panel2.Controls.Add(this.listBoxDevices);
       this.panel2.Controls.Add(this.label2);
       this.panel2.Controls.Add(this.labelCertificaat);
@@ -73,6 +71,24 @@
       this.panel2.Name = "panel2";
       this.panel2.Size = new System.Drawing.Size(777, 449);
       this.panel2.TabIndex = 1;
+      // 
+      // listBoxDevices
+      // 
+      this.listBoxDevices.FormattingEnabled = true;
+      this.listBoxDevices.Location = new System.Drawing.Point(30, 311);
+      this.listBoxDevices.Name = "listBoxDevices";
+      this.listBoxDevices.Size = new System.Drawing.Size(358, 108);
+      this.listBoxDevices.TabIndex = 3;
+      // 
+      // label2
+      // 
+      this.label2.AutoSize = true;
+      this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.label2.Location = new System.Drawing.Point(12, 283);
+      this.label2.Name = "label2";
+      this.label2.Size = new System.Drawing.Size(118, 13);
+      this.label2.TabIndex = 2;
+      this.label2.Text = "Paired BLE devices";
       // 
       // labelCertificaat
       // 
@@ -91,35 +107,6 @@
       this.label1.Size = new System.Drawing.Size(65, 13);
       this.label1.TabIndex = 0;
       this.label1.Text = "Certificaat";
-      // 
-      // label2
-      // 
-      this.label2.AutoSize = true;
-      this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-      this.label2.Location = new System.Drawing.Point(12, 283);
-      this.label2.Name = "label2";
-      this.label2.Size = new System.Drawing.Size(118, 13);
-      this.label2.TabIndex = 2;
-      this.label2.Text = "Paired BLE devices";
-      // 
-      // listBoxDevices
-      // 
-      this.listBoxDevices.FormattingEnabled = true;
-      this.listBoxDevices.Location = new System.Drawing.Point(30, 311);
-      this.listBoxDevices.Name = "listBoxDevices";
-      this.listBoxDevices.Size = new System.Drawing.Size(358, 108);
-      this.listBoxDevices.TabIndex = 3;
-      // 
-      // buttonPairNew
-      // 
-      this.buttonPairNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-      this.buttonPairNew.Location = new System.Drawing.Point(394, 311);
-      this.buttonPairNew.Name = "buttonPairNew";
-      this.buttonPairNew.Size = new System.Drawing.Size(105, 34);
-      this.buttonPairNew.TabIndex = 4;
-      this.buttonPairNew.Text = "Pair smartphone";
-      this.buttonPairNew.UseVisualStyleBackColor = true;
-      this.buttonPairNew.Click += new System.EventHandler(this.buttonPairNew_Click);
       // 
       // FormSettings
       // 
@@ -152,6 +139,5 @@
     private System.Windows.Forms.Label labelCertificaat;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ListBox listBoxDevices;
-        private System.Windows.Forms.Button buttonPairNew;
     }
 }

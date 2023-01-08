@@ -168,6 +168,12 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="FormDocumentInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormDocumentInfo.Designer.cs">
+      <DependentUpon>FormDocumentInfo.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormRenderPDF.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -184,6 +190,9 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <EmbeddedResource Include="FormDocumentInfo.resx">
+      <DependentUpon>FormDocumentInfo.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormRenderPDF.resx">
       <DependentUpon>FormRenderPDF.cs</DependentUpon>
     </EmbeddedResource>
@@ -254,6 +263,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\document_key5.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\any-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\wait3.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\info.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\info2.png" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

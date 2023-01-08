@@ -35,6 +35,12 @@ class SecureScanBluetoothService : Service() {
         var documentAccessRequest: AppCompatActivity? = null
         var instance: SecureScanBluetoothService? = null
         fun isAlive(): Boolean = instance != null
+
+        var status: Status = Status()
+        var accessRequestIntent: Intent? = null
+
+        private var accessRequest: AccessRequest? = null
+        private var certBytes: List<Byte> = listOf()
     }
 
     init {
@@ -45,8 +51,6 @@ class SecureScanBluetoothService : Service() {
 
     private lateinit var bluetoothManager: BluetoothManager
     private var bluetoothGattServer: BluetoothGattServer? = null
-
-    private var status: Status = Status()
 
     /* Collection of notification subscribers */
     private val registeredDevices = mutableSetOf<BluetoothDevice>()
@@ -90,8 +94,6 @@ class SecureScanBluetoothService : Service() {
 
     fun ByteArray.toHex(): String =
         joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-
-    private var accessRequest: AccessRequest? = null
 
     fun sendSecurecontainerHash(
         device: BluetoothDevice,
@@ -143,8 +145,6 @@ class SecureScanBluetoothService : Service() {
             )
         }
     }
-
-    private var certBytes: List<Byte> = listOf()
 
     fun sendPublicCertPart(
         device: BluetoothDevice,
@@ -434,10 +434,14 @@ class SecureScanBluetoothService : Service() {
         resultIntent.putExtra("documentId", doc.id)
         resultIntent.putExtra("documentHash", doc.documentHash)
 
+        accessRequestIntent = resultIntent
+
+        val mainActivityIntent = Intent(this, MainActivity::class.java)
+
         // Create the TaskStackBuilder
         val resultPendingIntent: PendingIntent? = TaskStackBuilder.create(this).run {
             // Add the intent, which inflates the back stack
-            addNextIntentWithParentStack(resultIntent)
+            addNextIntentWithParentStack(mainActivityIntent)
 
             // Get the PendingIntent containing the entire back stack
             getPendingIntent(

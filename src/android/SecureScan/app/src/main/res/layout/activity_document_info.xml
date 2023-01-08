@@ -29,7 +29,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FFC107"
+            android:background="@color/AppBarNiceColor"
             app:navigationIcon="?attr/homeAsUpIndicator"
             app:popupTheme="@style/Theme.SecureScan.PopupOverlay" />
 

@@ -10,6 +10,7 @@ using SecureScan.Base.Crypto;
 using SecureScan.Base.Crypto.Symmetric;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
+using SecureScan.Base.SecureContainer;
 using SecureScan.NFC;
 
 namespace SecureScanMFP
@@ -21,7 +22,7 @@ namespace SecureScanMFP
     private readonly ISymmetricEncryption symmetricEncryption;
     private OwnerInfo ownerInfo;
     private CancellationTokenSource cancellationTokenSource;
-    private byte[] bsenc;
+    //private byte[] bsenc;
 
     public FormMFP(ILogger logger, ISecureScanNFC secureScanNFC, ISymmetricEncryption symmetricEncryption)
     {
@@ -251,17 +252,29 @@ namespace SecureScanMFP
       Log($"Protecting test file '{Path.GetFileName(testfile.Name)}' using AES-GCM (size: {testfile.Length:N0} bytes)", Color.DarkOliveGreen);
 
       var pdfFileName = File.Exists(labelPDF.Text) ? labelPDF.Text : testfile.FullName;
+      var bsSecureContainer = CreateSecureContainer(randomPassword, pdfFileName);
+      var hashSecureContainer = bsSecureContainer.ComputeSHA1();
 
-      var bs = File.ReadAllBytes(pdfFileName);
-      bsenc = symmetricEncryption.Encrypt(bs, randomPassword);
-      var hash = bsenc.ComputeSHA1();
+      Log($"Protected container created (size: {bsSecureContainer.Length:N0} bytes, sha1: {hashSecureContainer.ToHEX()})", Color.DarkOliveGreen);
 
-      Log($"Protected container created (size: {bsenc.Length:N0} bytes, sha1: {hash.ToHEX()})", Color.DarkOliveGreen);
-
-      ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
+      ExecuteSecureContainerCreatedWaitForNFC(bsSecureContainer, hashSecureContainer, encryptedPassword);
     }
 
-    private void ExecuteSecureContainerCreatedWaitForNFC(byte[] hash, byte[] encryptedPassword)
+    private byte[] CreateSecureContainer(byte[] randomPassword, string pdfFileName)
+    {
+      // Read PDF
+      var bs = File.ReadAllBytes(pdfFileName);
+
+      // Encrypt PDF
+      var bsEncryptedData = symmetricEncryption.Encrypt(bs, randomPassword);
+
+      // Build secure container
+      var secureContainer = new SecureContainerModel(ownerInfo.X509Certificate().Value, bsEncryptedData, "MFP@" + Environment.MachineName);
+      var bsSecureContainer = secureContainer.Write();
+      return bsSecureContainer;
+    }
+
+    private void ExecuteSecureContainerCreatedWaitForNFC(byte[] bsSecureContainer, byte[] hashSecureContainer, byte[] encryptedPassword)
     {
       if (ownerInfo == null)
       {
@@ -276,7 +289,7 @@ namespace SecureScanMFP
 
       cancellationTokenSource = new CancellationTokenSource();
 
-      var task = secureScanNFC.SendSymmetricPasswordAndHash(hash, encryptedPassword, ownerInfo.X509Certificate().Value, TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
+      var task = secureScanNFC.SendSymmetricPasswordAndHash(hashSecureContainer, encryptedPassword, ownerInfo.X509Certificate().Value, TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
       task.ResponsiveWait();
 
       var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);
@@ -284,7 +297,7 @@ namespace SecureScanMFP
       {
         Log("NFC time-out. Try again.", true);
         BeepError();
-        ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
+        ExecuteSecureContainerCreatedWaitForNFC(bsSecureContainer, hashSecureContainer, encryptedPassword);
       }
       else if (task.IsFaulted)
       {
@@ -294,7 +307,7 @@ namespace SecureScanMFP
         }
 
         Log("Please try again or abort.");
-        ExecuteSecureContainerCreatedWaitForNFC(hash, encryptedPassword);
+        ExecuteSecureContainerCreatedWaitForNFC(bsSecureContainer, hashSecureContainer, encryptedPassword);
       }
       else
       {
@@ -303,7 +316,7 @@ namespace SecureScanMFP
           // Success!
           var docInfo = task.Result;
           Log($"Succes! Document-Id: {docInfo.DocumentNumber}");
-          SendMail(docInfo);
+          SendMail(docInfo, bsSecureContainer);
           ExecuteClearCacheAndSetIdle();
         }
         else
@@ -314,7 +327,7 @@ namespace SecureScanMFP
       }
     }
 
-    private void SendMail(DocumentInfo docInfo)
+    private void SendMail(DocumentInfo docInfo, byte[] bsSecureContainer)
     {
       var subject = ownerInfo.X509Certificate().Value.GetSubjectParts();
       ownerInfo.Email = subject.CN;
@@ -340,7 +353,7 @@ Secure MFP"
       {
         ContentType = "application/ou-secure-document",
         FileName = $"secure-document-{docInfo.DocumentNumber}.enc",
-        Content = bsenc
+        Content = bsSecureContainer
       });
 
       var sender = new SecureScan.Email.MailSender("127.0.0.1", 25);
@@ -363,11 +376,6 @@ Secure MFP"
     });
 
     private void BeepOK() => Task.Run(() => Console.Beep(1000, 500));
-
-    private void panel2_Paint(object sender, PaintEventArgs e)
-    {
-
-    }
 
     private void buttonChoosePDF_Click(object sender, EventArgs e)
     {

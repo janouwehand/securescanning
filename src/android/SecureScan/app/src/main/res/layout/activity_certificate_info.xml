@@ -6,17 +6,25 @@
     android:layout_height="match_parent"
     tools:context=".CertificateInfoActivity">
 
-    <Button
-        android:id="@+id/buttonDeleteCer"
-        android:layout_width="292dp"
-        android:layout_height="43dp"
-        android:layout_marginTop="8dp"
-        android:text="Delete certificate"
-        android:textColor="#ff0000"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.504"
+    <TextView
+        android:id="@+id/textViewInsideSecureHardware"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="..."
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonCer" />
+        app:layout_constraintTop_toBottomOf="@+id/textView10" />
+
+    <TextView
+        android:id="@+id/textView10"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Private key is inside secure hardware"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewSHA1" />
 
     <TextView
         android:id="@+id/textView9"
@@ -100,7 +108,8 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FFC107"
+            android:background="#32312F"
+            app:navigationIcon="?attr/homeAsUpIndicator"
             app:popupTheme="@style/Theme.SecureScan.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -120,10 +129,25 @@
         android:id="@+id/buttonCer"
         android:layout_width="292dp"
         android:layout_height="43dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginEnd="60dp"
         android:text="Store certificate"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/buttonDeleteCer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewSHA1" />
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/buttonDeleteCer"
+        android:layout_width="292dp"
+        android:layout_height="43dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginEnd="60dp"
+        android:layout_marginBottom="16dp"
+        android:text="Delete certificate"
+        android:textColor="#ff0000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

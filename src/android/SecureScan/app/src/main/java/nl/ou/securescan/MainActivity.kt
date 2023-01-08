@@ -1,11 +1,8 @@
 package nl.ou.securescan
 
 import android.app.AlertDialog
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.nfc.NfcAdapter
-import android.nfc.cardemulation.CardEmulation
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -56,19 +53,6 @@ class MainActivity : AppCompatActivity() {
         if (permissionHandler.ensurePermissions(false)) {
             startBluetoothService()
         }
-
-//        meuk()
-    }
-
-    fun meuk() {
-        val cardEmulation = CardEmulation.getInstance(NfcAdapter.getDefaultAdapter(this))
-        val isDefaultCategorySelected = cardEmulation.isDefaultServiceForAid(
-            ComponentName(
-                this,
-                SecureScanApduService::class.java
-            ), "F4078D5A92B5B8"
-        )
-        Log.i("SecureScan", "** isDefaultCategorySelected: $isDefaultCategorySelected")
     }
 
     private fun startBluetoothService() {
@@ -120,26 +104,6 @@ class MainActivity : AppCompatActivity() {
             }
             return
         }
-
-        /*when (requestCode) {
-            1 -> {
-                if (grantResults.isNotEmpty() && grantResults[0] ==
-                    PackageManager.PERMISSION_GRANTED
-                ) {
-                    if ((ContextCompat.checkSelfPermission(
-                            this@MainActivity,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) ==
-                                PackageManager.PERMISSION_GRANTED)
-                    ) {
-                        Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-                }
-                return
-            }
-        }*/
     }
 
     private fun refreshItems() {
@@ -187,6 +151,12 @@ class MainActivity : AppCompatActivity() {
 
         } else {
             handleNoCertificate()
+        }
+
+        if (SecureScanBluetoothService.status.getStatus() == SecureScanGattProfile.STATUS_REQUEST_WAITFORUSER) {
+            if (SecureScanBluetoothService.accessRequestIntent != null) {
+                startActivity(SecureScanBluetoothService.accessRequestIntent)
+            }
         }
     }
 

@@ -18,6 +18,4 @@ class Status {
     }
 
     fun getStatus(): Byte = statusValue
-
-
 }

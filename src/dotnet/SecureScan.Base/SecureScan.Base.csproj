@@ -70,6 +70,8 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Extensions\X509Extensions.cs" />
+    <Compile Include="Files\CompoundFile.cs" />
+    <Compile Include="Files\CompoundFilePart.cs" />
     <Compile Include="Interfaces\IBluetoothUIFunctions.cs" />
     <Compile Include="Interfaces\IDiscoveryItem.cs" />
     <Compile Include="Interfaces\PairedDevice.cs" />
@@ -82,6 +84,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="SecureContainer\SecureContainerModel.cs" />
     <Compile Include="Services.cs" />
     <Compile Include="WaitForm\FormWaitModal.cs">
       <SubType>Form</SubType>

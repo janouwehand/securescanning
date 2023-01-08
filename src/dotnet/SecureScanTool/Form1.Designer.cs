@@ -42,8 +42,7 @@
       this.buttonScan.Size = new System.Drawing.Size(111, 31);
       this.buttonScan.TabIndex = 0;
       this.buttonScan.Text = "Scan devices";
-      this.buttonScan.UseVisualStyleBackColor = true;
-      this.buttonScan.Click += new System.EventHandler(this.buttonScan_Click);
+      this.buttonScan.UseVisualStyleBackColor = true;     
       // 
       // richTextBox1
       // 

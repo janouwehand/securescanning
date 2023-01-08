@@ -38,6 +38,7 @@
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SecureScanRibbon));
       this.tabSecureScan = this.Factory.CreateRibbonTab();
       this.groupSecureScan = this.Factory.CreateRibbonGroup();
+      this.buttonDocumentInfo = this.Factory.CreateRibbonButton();
       this.buttonReadSecureDocument = this.Factory.CreateRibbonButton();
       this.tabSecureScan.SuspendLayout();
       this.groupSecureScan.SuspendLayout();
@@ -54,15 +55,26 @@
       // groupSecureScan
       // 
       this.groupSecureScan.DialogLauncher = ribbonDialogLauncherImpl1;
+      this.groupSecureScan.Items.Add(this.buttonDocumentInfo);
       this.groupSecureScan.Items.Add(this.buttonReadSecureDocument);
       this.groupSecureScan.Label = "Secure Scan";
       this.groupSecureScan.Name = "groupSecureScan";
       this.groupSecureScan.DialogLauncherClick += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.groupSecureScan_DialogLauncherClick);
       // 
+      // buttonDocumentInfo
+      // 
+      this.buttonDocumentInfo.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+      this.buttonDocumentInfo.Description = "Show Secure Document Info";
+      this.buttonDocumentInfo.Image = global::SecureScanOutlookAddIn.Properties.Resources.info2;
+      this.buttonDocumentInfo.Label = "Show Secure Document Info";
+      this.buttonDocumentInfo.Name = "buttonDocumentInfo";
+      this.buttonDocumentInfo.ShowImage = true;
+      this.buttonDocumentInfo.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonDocumentInfo_Click);
+      // 
       // buttonReadSecureDocument
       // 
       this.buttonReadSecureDocument.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
-      this.buttonReadSecureDocument.Description = "ndfndfndfndfndfndfndfdfnddfndfndndf";
+      this.buttonReadSecureDocument.Description = "Read secure document";
       this.buttonReadSecureDocument.Image = global::SecureScanOutlookAddIn.Properties.Resources.document_key5;
       this.buttonReadSecureDocument.Label = "Read Secure Document";
       this.buttonReadSecureDocument.Name = "buttonReadSecureDocument";
@@ -88,9 +100,10 @@
     internal Microsoft.Office.Tools.Ribbon.RibbonTab tabSecureScan;
     internal Microsoft.Office.Tools.Ribbon.RibbonGroup groupSecureScan;
     internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonReadSecureDocument;
-  }
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonDocumentInfo;
+    }
 
-  partial class ThisRibbonCollection
+    partial class ThisRibbonCollection
   {
     internal SecureScanRibbon SecureScanRibbon
     {

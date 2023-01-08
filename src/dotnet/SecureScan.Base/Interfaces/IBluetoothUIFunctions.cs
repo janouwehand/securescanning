@@ -11,8 +11,6 @@ namespace SecureScan.Base.Interfaces
 
     Task<PairedDevice[]> GetPairedDevicesAsync();
 
-    void PairNewDevice();
-
     Task<IDiscoveryItem[]> DiscoverDevicesAsync(Action<string> log, CancellationToken cancellationToken = default);
   }
 }
