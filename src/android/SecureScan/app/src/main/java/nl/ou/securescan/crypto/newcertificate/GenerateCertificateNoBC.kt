@@ -29,7 +29,6 @@ class GenerateCertificateNoBC {
             .setCertificateSubject(X500Principal("CN=$email, O=$name"))
             .setKeyValidityStart(startDate).setCertificateNotBefore(startDate)
             .setCertificateNotAfter(endDate).setKeySize(2048)
-            //.setAttestationChallenge("hello world".toByteArray())
             .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
             .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
             .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)

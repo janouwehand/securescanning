@@ -14,10 +14,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.getNameAndEmail
+import nl.ou.securescan.crypto.newcertificate.GenerateAttributeCertificate
+import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.databinding.ActivityMainBinding
 import nl.ou.securescan.helpers.alert
 import nl.ou.securescan.permissions.PermissionHandler
+import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
@@ -28,6 +31,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val cer = GenerateAttributeCertificate().execute()
+        if (cer!=null) {
+            val bs = cer.encoded
+            val file = File(baseContext.filesDir, "bctestje.cer")
+            file.createNewFile()
+            file.writeBytes(bs)
+        }
+
+        //CertificateManager().createCertificate("safdasf asfasf", "jan@sodftable.nl")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
