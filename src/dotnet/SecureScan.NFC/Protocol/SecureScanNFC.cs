@@ -80,6 +80,10 @@ namespace SecureScan.NFC.Protocol
       {
         logger.Log($"Signature sucessfully verified!", Color.DarkOliveGreen);
       }
+      else
+      {
+        logger.Log($"Signature verification failed for {signature.ToHEX()}", Color.DarkOliveGreen);
+      }
 
       return valid;
     }
