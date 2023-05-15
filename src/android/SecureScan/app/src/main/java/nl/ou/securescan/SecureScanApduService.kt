@@ -6,10 +6,12 @@ import android.util.Log
 import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.decryptData
+import nl.ou.securescan.crypto.extensions.encryptAES256GCM
 import nl.ou.securescan.crypto.extensions.getPrivateKey
 import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.data.Document
 import nl.ou.securescan.data.DocumentDatabase
+import nl.ou.securescan.state.qrCodeKeyData
 import java.security.Signature
 import java.security.cert.X509Certificate
 import java.time.ZonedDateTime
@@ -24,6 +26,8 @@ class SecureScanApduService : HostApduService() {
     private var securecontainerhash: ByteArray? = null
     private var securecontainerpassword: ByteArray? = null
 
+    private var x509Encrypted: ByteArray? = null
+
     init {
         val cm = CertificateManager()
         hasCertificate = cm.hasCertificate()
@@ -34,6 +38,9 @@ class SecureScanApduService : HostApduService() {
         apdu!!.size >= 2 && apdu[0] == 0.toByte() && apdu[1] == 0xa4.toByte()
 
     override fun processCommandApdu(apdu: ByteArray?, extra: Bundle?): ByteArray {
+
+        var key = qrCodeKeyData.key
+
 
         val str = apdu!!.toHexString()
         Log.i("SecureScan", "Received APDU: $str")
@@ -137,7 +144,12 @@ class SecureScanApduService : HostApduService() {
         return data.sliceArray(fromIndex..toIndex)
     }
 
-    private fun processGetKey(block: Int): ByteArray = sliceData(x509!!.encoded, block)
+    private fun processGetKey(block: Int): ByteArray {
+        if (block == 1) {
+            x509Encrypted =x509!!.encoded.encryptAES256GCM(qrCodeKeyData.key!!)
+        }
+        return sliceData(x509Encrypted!!, block)
+    }
 
     private fun combineResult(data: ByteArray, sw1: Byte = 0x00, sw2: Byte = 0x00): ByteArray =
         data.plus(sw1).plus(sw2)

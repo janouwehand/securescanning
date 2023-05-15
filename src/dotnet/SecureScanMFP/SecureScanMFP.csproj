@@ -45,6 +45,9 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="QrCodeGenerator, Version=1.6.0.0, Culture=neutral, PublicKeyToken=6aa6bd7a159d47c2, processorArchitecture=MSIL">
+      <HintPath>..\packages\Net.Codecrete.QrCodeGenerator.2.0.3\lib\netstandard2.0\QrCodeGenerator.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -75,6 +78,13 @@
     <Compile Include="MFPStates.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QRCodeGenerator.cs" />
+    <Compile Include="QRControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="QRControl.Designer.cs">
+      <DependentUpon>QRControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Services.cs" />
     <EmbeddedResource Include="FormMFP.resx">
       <DependentUpon>FormMFP.cs</DependentUpon>
@@ -89,6 +99,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="QRControl.resx">
+      <DependentUpon>QRControl.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

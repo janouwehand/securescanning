@@ -77,6 +77,7 @@ namespace SecureScan.NFC.PCSC.Controller
       while (@continue);
 
       responses = resps.ToArray();
+
       return list.ToArray();
     }
 

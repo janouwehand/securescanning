@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SecureScan.Base.Crypto;
+using SecureScan.Base.Crypto.Symmetric.AESGCM;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
 using SecureScan.NFC.PCSC.Controller;
@@ -18,17 +19,17 @@ namespace SecureScan.NFC.Protocol
 
     public SecureScanNFC(ILogger logger) => this.logger = logger;
 
-    public async Task<OwnerInfo> RetrieveOwnerInfoAsync(TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
+    public async Task<OwnerInfo> RetrieveOwnerInfoAsync(byte[] aesKey, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
     {
       var controller = new PCSCController(Constants.APPLICATIONID);
-      using (var connection = await controller.WaitForConnectionAsync(waitForNFCTimeout.Seconds, cancellationToken))
-      {        
-        var ownerInfo = RetrieveInfo(connection);
+      using (var connection = await controller.WaitForConnectionAsync((int)waitForNFCTimeout.TotalSeconds, cancellationToken))
+      {
+        var ownerInfo = RetrieveInfo(aesKey, connection);
         return ownerInfo;
       }
     }
 
-    private OwnerInfo RetrieveInfo(PCSCConnection nfc)
+    private OwnerInfo RetrieveInfo(byte[] aesKey, PCSCConnection nfc)
     {
       var info = new OwnerInfo();
 
@@ -43,6 +44,10 @@ namespace SecureScan.NFC.Protocol
 
       info.X509 = RetrieveX509(nfc.Transceiver);
 
+      var aes = new AESGCMSymmetricEncryption2();
+      var bsDec = aes.Decrypt(info.X509, aesKey);
+      info.X509 = bsDec;
+
       if (info.X509 == null || !info.X509.Any())
       {
         throw new Exception($"NFC: did not receive X509 certificate!");
@@ -50,12 +55,9 @@ namespace SecureScan.NFC.Protocol
 
       logger.Log($"NFC: X.509 received successfully (size: {info.X509.Length} bytes)", Color.DarkGoldenrod);
 
-      if (!PerformChallenge(nfc.Transceiver, info.X509Certificate().Value))
-      {
-        throw new Exception("Challenge failed: smartphone did not prove to own private key.");
-      }
-
-      return info;
+      return !PerformChallenge(nfc.Transceiver, info.X509Certificate().Value)
+        ? throw new Exception("Challenge failed: smartphone did not prove to own private key.")
+        : info;
     }
 
     private bool PerformChallenge(Transceiver transceiver, X509Certificate2 x509)
