@@ -190,8 +190,14 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_settings -> true
             R.id.action_certificateInfo -> showCertificateInfo()
+            R.id.action_enrollmfp -> enrollMFP()
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun enrollMFP(): Boolean {
+        startActivity(Intent(baseContext, EnrollMfpActivity::class.java))
+        return true
     }
 
     private fun showCertificateInfo(): Boolean {

@@ -26,6 +26,7 @@ class PermissionHandler(private val activity: AppCompatActivity) {
         ok = ok && ensurePermission_ACCESS_COARSE_LOCATION(requestMissingPermissions)
         ok = ok && ensurePermission_ACCESS_FINE_LOCATION(requestMissingPermissions)
         ok = ok && ensurePermission_RECEIVE_BOOT_COMPLETED(requestMissingPermissions)
+        ok = ok && ensurePermission_CAMERA(requestMissingPermissions)
 
         return ok
     }
@@ -40,6 +41,23 @@ class PermissionHandler(private val activity: AppCompatActivity) {
                 ActivityCompat.requestPermissions(
                     activity,
                     arrayOf(Manifest.permission.BLUETOOTH),
+                    1
+                )
+            return false
+        }
+        return true
+    }
+
+    private fun ensurePermission_CAMERA(requestMissingPermissions: Boolean): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (requestMissingPermissions)
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.CAMERA),
                     1
                 )
             return false
