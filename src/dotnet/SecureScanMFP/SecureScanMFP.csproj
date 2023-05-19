@@ -102,6 +102,9 @@
     <EmbeddedResource Include="QRControl.resx">
       <DependentUpon>QRControl.cs</DependentUpon>
     </EmbeddedResource>
+    <Content Include="MFP.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

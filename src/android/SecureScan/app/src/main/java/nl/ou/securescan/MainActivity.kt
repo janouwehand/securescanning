@@ -69,7 +69,8 @@ class MainActivity : AppCompatActivity() {
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            startForegroundService(intent)
+            startService(intent)
+            //startForegroundService(intent)
         } else {
             startService(intent)
         }

@@ -2,7 +2,9 @@ package nl.ou.securescan.crypto
 
 import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
 import nl.ou.securescan.crypto.newcertificate.GenerateCertificateNoBC
+import java.io.ByteArrayInputStream
 import java.security.KeyStore
+import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
 class CertificateManager {
@@ -61,4 +63,10 @@ class CertificateManager {
         //return existingKey?.secretKey ?: createKey()
         return existingKey?.secretKey
     }*/
+
+    fun getCertificateFromByteArray(data: ByteArray): X509Certificate {
+        val factory = CertificateFactory.getInstance("X.509")
+        var cert = factory.generateCertificate(ByteArrayInputStream(data))
+        return cert as X509Certificate
+    }
 }

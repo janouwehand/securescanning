@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -412,11 +413,13 @@ Secure MFP"
       qrControl1.ShowQR(CryptoRandom.GetBytes(32));
 
       Log($"Symmetric key in QR-code: 0x{qrControl1.QRKey.ToHEX()}");
-      
+
       cancellationTokenSource = new CancellationTokenSource();
 
+      var x509 = new X509Certificate2("MFP.pfx", "123");
+
       Log("Please hold your smartphone to the NFC tag.");
-      var task = secureScanNFC.RetrieveOwnerInfoAsync(qrControl1.QRKey, TimeSpan.FromMinutes(30D), cancellationTokenSource.Token);
+      var task = secureScanNFC.StartEnrolling(qrControl1.QRKey, x509, TimeSpan.FromMinutes(30D), cancellationTokenSource.Token);
       task.ResponsiveWait();
 
       var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);

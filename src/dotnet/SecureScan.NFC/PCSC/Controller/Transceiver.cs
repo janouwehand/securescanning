@@ -21,10 +21,15 @@ namespace SecureScan.NFC.PCSC.Controller
         throw new ArgumentNullException(nameof(command));
       }
 
+      return SendMultiApduData(command.Instruction, data);
+    }
+
+    public TransceiverResponse[] SendMultiApduData(byte instruction, byte[] data)
+    {
       var useBlocks = data != null && data.Length > MAXBLOCKSIZE;
       if (!useBlocks)
       {
-        var response = Transceive(0x00, command.Instruction, 0x00, 0x00, data);
+        var response = Transceive(0x00, instruction, 0x00, 0xFF, data);
         return new[] { response };
       }
 
@@ -36,7 +41,7 @@ namespace SecureScan.NFC.PCSC.Controller
         var isLastBlock = block == apduDatas.Length;
 
         var apduData = apduDatas[block - 1].ToArray();
-        var response = Transceive(0x00, command.Instruction, (byte)block, isLastBlock ? (byte)0xFF : (byte)0xFE, apduData);
+        var response = Transceive(0x00, instruction, (byte)block, isLastBlock ? (byte)0xFF : (byte)0xFE, apduData);
         responses.Add(response);
       }
 
@@ -50,12 +55,17 @@ namespace SecureScan.NFC.PCSC.Controller
         throw new ArgumentNullException(nameof(command));
       }
 
+      return RetrieveMultiApduData(command.Instruction, data, out responses);
+    }
+
+    public byte[] RetrieveMultiApduData(byte instruction, byte[] data, out TransceiverResponse[] responses)
+    {
       var resps = new List<TransceiverResponse>();
       var list = new List<byte>();
 
       bool AddPart(int partnr)
       {
-        var response = Transceive(0x00, command.Instruction, (byte)partnr, 0x00, data);
+        var response = Transceive(0x00, instruction, (byte)partnr, 0x00, data);
         resps.Add(response);
         if (response.Data != null && response.Data.Any())
         {

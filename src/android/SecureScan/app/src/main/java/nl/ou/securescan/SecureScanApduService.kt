@@ -5,19 +5,21 @@ import android.os.Bundle
 import android.util.Log
 import kotlinx.coroutines.runBlocking
 import nl.ou.securescan.crypto.CertificateManager
-import nl.ou.securescan.crypto.extensions.decryptData
-import nl.ou.securescan.crypto.extensions.encryptAES256GCM
-import nl.ou.securescan.crypto.extensions.getPrivateKey
-import nl.ou.securescan.crypto.extensions.toHexString
+import nl.ou.securescan.crypto.extensions.*
 import nl.ou.securescan.data.Document
 import nl.ou.securescan.data.DocumentDatabase
 import nl.ou.securescan.state.qrCodeKeyData
 import java.security.Signature
+import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.time.ZonedDateTime
 
 
 class SecureScanApduService : HostApduService() {
+
+    private val EnrollMessage1SendX509OfMFP: Byte = 0x51
+    private val EnrollMessage2RetrieveX509OfSmartphone: Byte = 0x52
+    private val EnrollMessage3SendBindingSignatureToMFP: Byte = 0x53
 
     private var challengeSignature: ByteArray? = null
     private val hasCertificate: Boolean
@@ -25,6 +27,8 @@ class SecureScanApduService : HostApduService() {
 
     private var securecontainerhash: ByteArray? = null
     private var securecontainerpassword: ByteArray? = null
+    private var symmetricCipherTextPart: ByteArray? = null
+    private var signaturePart: ByteArray? = null
 
     private var x509Encrypted: ByteArray? = null
 
@@ -67,6 +71,21 @@ class SecureScanApduService : HostApduService() {
         val data = getDataFromAPDU(apdu)
 
         return when (instruction) {
+            EnrollMessage1SendX509OfMFP -> ProcessResult(
+                processEnrollMessage1SendX509OfMFP(data!!, blockInfo),
+                instruction,
+                block
+            )
+            EnrollMessage2RetrieveX509OfSmartphone -> ProcessResult(
+                processEnrollMessage2RetrieveX509OfSmartphone(block.toInt()),
+                instruction,
+                block
+            )
+            EnrollMessage3SendBindingSignatureToMFP ->ProcessResult(
+                processEnrollMessage3SendBindingSignatureToMFP(data!!, blockInfo),
+                instruction,
+                block
+            )
             0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
             0x60.toByte() -> ProcessResult(
                 processGetChallengeResult(data!!, block.toInt()), instruction, block
@@ -146,7 +165,7 @@ class SecureScanApduService : HostApduService() {
 
     private fun processGetKey(block: Int): ByteArray {
         if (block == 1) {
-            x509Encrypted =x509!!.encoded.encryptAES256GCM(qrCodeKeyData.key!!)
+            x509Encrypted = x509!!.encoded.encryptAES256GCM(qrCodeKeyData.key!!)
         }
         return sliceData(x509Encrypted!!, block)
     }
@@ -166,16 +185,71 @@ class SecureScanApduService : HostApduService() {
 
         Log.i("SecureScan", "Hash of secure container received: ${hash.toHexString()}")
 
-        /*if (this.securecontainerpassword != null) {
-            val documentId = storeLicense()
-            val bs = documentId.toString().toByteArray()
-            Log.i("SecureScan", "BS: ${bs.toHexString()}")
-            return bs
-        } else {
-            return arrayOf<Byte>().toByteArray()
-        }*/
-
         return arrayOf<Byte>().toByteArray()
+    }
+
+    private fun processEnrollMessage1SendX509OfMFP(
+        symmetricCipherTextPart: ByteArray,
+        blockInfo: Byte
+    ): ByteArray {
+
+        Log.i(
+            "SecureScan",
+            "Receive symmetricCipherTextPart block ${symmetricCipherTextPart.toHexString()}"
+        )
+
+        if (this.symmetricCipherTextPart == null) {
+            this.symmetricCipherTextPart = symmetricCipherTextPart
+        } else {
+            this.symmetricCipherTextPart =
+                this.symmetricCipherTextPart!!.plus(symmetricCipherTextPart)
+        }
+
+        if (blockInfo == 0xFF.toByte()) {
+            Log.i(
+                "SecureScan",
+                "This was the last block. Value:  ${this.symmetricCipherTextPart!!.toHexString()}"
+            )
+
+            var x509OfMFP = this.symmetricCipherTextPart!!.decryptAES256GCM(qrCodeKeyData.key!!)
+            Log.i("SecureScan", "Decrypted:  ${x509OfMFP!!.toHexString()}")
+
+            var cert = CertificateManager().getCertificateFromByteArray(x509OfMFP)
+            var subject = cert.subjectX500Principal.toString()
+            Log.i("SecureScan", "subject:  ${subject}")
+        }
+
+        return arrayOf<Byte>(0xAA.toByte()).toByteArray()
+    }
+
+    private fun processEnrollMessage2RetrieveX509OfSmartphone(block: Int): ByteArray {
+        if (block == 1) {
+            x509Encrypted = x509!!.encoded.encryptAES256GCM(qrCodeKeyData.key!!)
+        }
+        return sliceData(x509Encrypted!!, block)
+    }
+
+    private fun processEnrollMessage3SendBindingSignatureToMFP(
+        symmetricCipherTextPart: ByteArray,
+        blockInfo: Byte
+    ): ByteArray {
+
+        if (this.signaturePart == null) {
+            this.signaturePart = symmetricCipherTextPart
+        } else {
+            this.signaturePart =
+                this.signaturePart!!.plus(symmetricCipherTextPart)
+        }
+
+        Log.i(                "SecureScan",                "Part of signature received:  ${this.signaturePart!!.toHexString()}")
+
+        if (blockInfo == 0xFF.toByte()) {
+            Log.i(                "SecureScan",                "Signature received:  ${this.signaturePart!!.toHexString()}"
+            )
+
+        }
+
+        return arrayOf<Byte>(0xAA.toByte()).toByteArray()
     }
 
     private fun processRetrieveSecureContainerPassword(
@@ -190,12 +264,6 @@ class SecureScanApduService : HostApduService() {
         } else {
             this.securecontainerpassword = this.securecontainerpassword!!.plus(keyPart)
         }
-
-        /*if (blockInfo == 0xFF.toByte() && this.securecontainerpassword != null) {
-            val documentId = storeLicense()
-            return documentId.toString().toByteArray()
-        } else
-            return arrayOf<Byte>().toByteArray()*/
 
         return arrayOf<Byte>().toByteArray()
     }

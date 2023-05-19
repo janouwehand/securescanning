@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -10,6 +11,7 @@ using SecureScan.Base.Crypto.Symmetric.AESGCM;
 using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
 using SecureScan.NFC.PCSC.Controller;
+using SecureScan.NFC.Protocol.Messages;
 
 namespace SecureScan.NFC.Protocol
 {
@@ -17,19 +19,67 @@ namespace SecureScan.NFC.Protocol
   {
     private readonly ILogger logger;
 
-    public SecureScanNFC(ILogger logger) => this.logger = logger;
+    public SecureScanNFC(ILogger logger)
+    {
+      this.logger = logger;
+    }
 
-    public async Task<OwnerInfo> RetrieveOwnerInfoAsync(byte[] aesKey, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
+    /// <summary>
+    /// Retrieve X.509 from smartphone.
+    /// </summary>
+    /// <param name="qrSessionKey"></param>
+    /// <param name="waitForNFCTimeout"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<OwnerInfo> RetrieveOwnerInfoAsync(byte[] qrSessionKey, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
     {
       var controller = new PCSCController(Constants.APPLICATIONID);
       using (var connection = await controller.WaitForConnectionAsync((int)waitForNFCTimeout.TotalSeconds, cancellationToken))
       {
-        var ownerInfo = RetrieveInfo(aesKey, connection);
+        var ownerInfo = RetrieveInfo(qrSessionKey, connection);
         return ownerInfo;
       }
     }
 
-    private OwnerInfo RetrieveInfo(byte[] aesKey, PCSCConnection nfc)
+    public async Task<OwnerInfo> StartEnrolling(byte[] qrSessionKey, X509Certificate2 certificateOfMFP, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
+    {
+      var controller = new PCSCController(Constants.APPLICATIONID);
+      using (var connection = await controller.WaitForConnectionAsync((int)waitForNFCTimeout.TotalSeconds, cancellationToken))
+      {
+        // Send AES-GCM encrypted certificate of MFP to smartphone
+        var message1 = MessageFactory.Enrolling.CreateEnrollMessage1SendX509OfMFP(connection);
+        message1.Execute(new EnrollMessage1SendX509OfMFP.Input(qrSessionKey, certificateOfMFP));
+
+        // Retrieve AES-GCM encrypted certificate from the smartphone
+        var message2 = MessageFactory.Enrolling.CreateEnrollMessage2RetrieveX509OfSmartphone(connection);
+        var message2result = message2.Execute(new EnrollMessage2RetrieveX509OfSmartphone.Input(qrSessionKey));
+
+        // Sign combination of certificates.
+        byte[] signature;
+        var bytesToSign = certificateOfMFP.RawData.Concat(message2result.SmartphoneCertificate.RawData).ToArray();
+        using (var pk = certificateOfMFP.GetRSAPrivateKey())
+        {
+          signature = pk.SignData(bytesToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        }
+
+        // Send signature and have the smartphone verify the signature
+        var message3 = MessageFactory.Enrolling.CreateEnrollMessage3SendBindingSignatureToMFP(connection);
+        var message3Output = message3.Execute(new EnrollMessage3SendBindingSignatureToMFP.Input(signature));
+
+        if (!message3Output.SignatureVerifiedOKBySmartphone)
+        {
+          throw new Exception("Smartphone didn't verify signature successfully. No need to proceed with the enrollment.");
+        }
+
+        // Retrieve signature from smartphone and verify it.
+
+        //var ownerInfo = RetrieveInfo(aesKey, connection);
+        //return ownerInfo;
+        return null;
+      }
+    }
+
+    private OwnerInfo RetrieveInfo(byte[] qrSessionKey, PCSCConnection nfc)
     {
       var info = new OwnerInfo();
 
@@ -45,7 +95,7 @@ namespace SecureScan.NFC.Protocol
       info.X509 = RetrieveX509(nfc.Transceiver);
 
       var aes = new AESGCMSymmetricEncryption2();
-      var bsDec = aes.Decrypt(info.X509, aesKey);
+      var bsDec = aes.Decrypt(info.X509, qrSessionKey);
       info.X509 = bsDec;
 
       if (info.X509 == null || !info.X509.Any())
