@@ -19,10 +19,7 @@ namespace SecureScan.NFC.Protocol
   {
     private readonly ILogger logger;
 
-    public SecureScanNFC(ILogger logger)
-    {
-      this.logger = logger;
-    }
+    public SecureScanNFC(ILogger logger) => this.logger = logger;
 
     /// <summary>
     /// Retrieve X.509 from smartphone.
@@ -72,6 +69,17 @@ namespace SecureScan.NFC.Protocol
         }
 
         // Retrieve signature from smartphone and verify it.
+        var message4 = new EnrollMessage4RetrieveBindingSignatureFromSmartphone(connection);
+        var message4Output = message4.Execute(new EnrollMessage4RetrieveBindingSignatureFromSmartphone.Input());
+
+        // Verify
+        var data = message2result.SmartphoneCertificate.RawData.Concat(certificateOfMFP.RawData).ToArray();
+        var signatureOK = message2result.SmartphoneCertificate.VerifySignature(data, message4Output.Signature);
+
+        if (!signatureOK)
+        {
+          throw new Exception("Smartphone didn't produce a valid signature. No need to proceed with the enrollment.");
+        }
 
         //var ownerInfo = RetrieveInfo(aesKey, connection);
         //return ownerInfo;

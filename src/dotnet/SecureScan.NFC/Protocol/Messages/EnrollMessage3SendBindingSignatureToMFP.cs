@@ -37,7 +37,7 @@ namespace SecureScan.NFC.Protocol.Messages
     {
       var responses = Connection.Transceiver.SendMultiApduData(APDUINSTRUCTION, input.DigitalSignatureOfBothCertificatesCombined);
       var lastResponse = responses.Last();
-      var success = lastResponse.Data.TimedEquals(new byte[] { 0xFF });
+      var success = lastResponse.Data.TimedEquals(new byte[] { Constants.AFFIRMATIVE });
       return new Output(success);
     }
   }

@@ -8,9 +8,8 @@ import nl.ou.securescan.crypto.CertificateManager
 import nl.ou.securescan.crypto.extensions.*
 import nl.ou.securescan.data.Document
 import nl.ou.securescan.data.DocumentDatabase
-import nl.ou.securescan.state.qrCodeKeyData
+import nl.ou.securescan.state.EnrollingState
 import java.security.Signature
-import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.time.ZonedDateTime
 
@@ -20,6 +19,7 @@ class SecureScanApduService : HostApduService() {
     private val EnrollMessage1SendX509OfMFP: Byte = 0x51
     private val EnrollMessage2RetrieveX509OfSmartphone: Byte = 0x52
     private val EnrollMessage3SendBindingSignatureToMFP: Byte = 0x53
+    private val EnrollMessage4RetrieveBindingSignatureFromSmartphone: Byte = 0x54
 
     private var challengeSignature: ByteArray? = null
     private val hasCertificate: Boolean
@@ -42,10 +42,6 @@ class SecureScanApduService : HostApduService() {
         apdu!!.size >= 2 && apdu[0] == 0.toByte() && apdu[1] == 0xa4.toByte()
 
     override fun processCommandApdu(apdu: ByteArray?, extra: Bundle?): ByteArray {
-
-        var key = qrCodeKeyData.key
-
-
         val str = apdu!!.toHexString()
         Log.i("SecureScan", "Received APDU: $str")
 
@@ -81,8 +77,13 @@ class SecureScanApduService : HostApduService() {
                 instruction,
                 block
             )
-            EnrollMessage3SendBindingSignatureToMFP ->ProcessResult(
+            EnrollMessage3SendBindingSignatureToMFP -> ProcessResult(
                 processEnrollMessage3SendBindingSignatureToMFP(data!!, blockInfo),
+                instruction,
+                block
+            )
+            EnrollMessage4RetrieveBindingSignatureFromSmartphone -> ProcessResult(
+                processEnrollMessage4RetrieveBindingSignatureFromSmartphone(data!!, blockInfo),
                 instruction,
                 block
             )
@@ -165,7 +166,7 @@ class SecureScanApduService : HostApduService() {
 
     private fun processGetKey(block: Int): ByteArray {
         if (block == 1) {
-            x509Encrypted = x509!!.encoded.encryptAES256GCM(qrCodeKeyData.key!!)
+            x509Encrypted = x509!!.encoded.encryptAES256GCM(EnrollingState.qrCodeKey!!)
         }
         return sliceData(x509Encrypted!!, block)
     }
@@ -211,11 +212,15 @@ class SecureScanApduService : HostApduService() {
                 "This was the last block. Value:  ${this.symmetricCipherTextPart!!.toHexString()}"
             )
 
-            var x509OfMFP = this.symmetricCipherTextPart!!.decryptAES256GCM(qrCodeKeyData.key!!)
+            var x509OfMFP =
+                this.symmetricCipherTextPart!!.decryptAES256GCM(EnrollingState.qrCodeKey!!)
             Log.i("SecureScan", "Decrypted:  ${x509OfMFP!!.toHexString()}")
 
             var cert = CertificateManager().getCertificateFromByteArray(x509OfMFP)
             var subject = cert.subjectX500Principal.toString()
+
+            EnrollingState.mfpCertificate = cert
+
             Log.i("SecureScan", "subject:  ${subject}")
         }
 
@@ -224,7 +229,7 @@ class SecureScanApduService : HostApduService() {
 
     private fun processEnrollMessage2RetrieveX509OfSmartphone(block: Int): ByteArray {
         if (block == 1) {
-            x509Encrypted = x509!!.encoded.encryptAES256GCM(qrCodeKeyData.key!!)
+            x509Encrypted = x509!!.encoded.encryptAES256GCM(EnrollingState.qrCodeKey!!)
         }
         return sliceData(x509Encrypted!!, block)
     }
@@ -241,15 +246,21 @@ class SecureScanApduService : HostApduService() {
                 this.signaturePart!!.plus(symmetricCipherTextPart)
         }
 
-        Log.i(                "SecureScan",                "Part of signature received:  ${this.signaturePart!!.toHexString()}")
+        Log.i("SecureScan", "Part of signature received:  ${this.signaturePart!!.toHexString()}")
 
         if (blockInfo == 0xFF.toByte()) {
-            Log.i(                "SecureScan",                "Signature received:  ${this.signaturePart!!.toHexString()}"
-            )
+            Log.i("SecureScan", "Signature received:  ${this.signaturePart!!.toHexString()}")
 
+            // Let's see if we can verify the signature.
+            val data = EnrollingState.mfpCertificate!!.encoded.plus(x509!!.encoded)
+            val valid = EnrollingState.mfpCertificate!!.verifySignature(data, this.signaturePart!!)
+
+            Log.i("SecureScan", "VALID?:  $valid")
+
+            return if (valid) arrayOf(constants.AFFIRMATIVE).toByteArray() else arrayOf(constants.NEGATIVE).toByteArray()
         }
 
-        return arrayOf<Byte>(0xAA.toByte()).toByteArray()
+        return arrayOf(constants.WAITINGFORMOREDATA).toByteArray()
     }
 
     private fun processRetrieveSecureContainerPassword(

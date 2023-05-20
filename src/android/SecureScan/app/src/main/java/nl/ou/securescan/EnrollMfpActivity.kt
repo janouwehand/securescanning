@@ -4,11 +4,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.budiyev.android.codescanner.*
-import nl.ou.securescan.crypto.extensions.decryptAES256GCM
-import nl.ou.securescan.crypto.extensions.encryptAES256GCM
-import nl.ou.securescan.crypto.extensions.toHexString
 import nl.ou.securescan.databinding.ActivityEnrollMfpBinding
-import nl.ou.securescan.state.qrCodeKeyData
+import nl.ou.securescan.state.EnrollingState
 import java.util.*
 
 class EnrollMfpActivity : AppCompatActivity() {
@@ -58,7 +55,7 @@ class EnrollMfpActivity : AppCompatActivity() {
     }
 
     fun qrScannedCallback(keyStr: String) {
-        qrCodeKeyData.key = Base64.getDecoder().decode(keyStr)
+        EnrollingState.qrCodeKey = Base64.getDecoder().decode(keyStr)
         //Toast.makeText(this, "Scan result: $str + $str2", Toast.LENGTH_LONG).show()
     }
 
