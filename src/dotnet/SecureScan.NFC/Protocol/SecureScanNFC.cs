@@ -43,13 +43,19 @@ namespace SecureScan.NFC.Protocol
       var controller = new PCSCController(Constants.APPLICATIONID);
       using (var connection = await controller.WaitForConnectionAsync((int)waitForNFCTimeout.TotalSeconds, cancellationToken))
       {
+        logger.Log("Send AES-GCM encrypted certificate of MFP to smartphone");
+
         // Send AES-GCM encrypted certificate of MFP to smartphone
         var message1 = MessageFactory.Enrolling.CreateEnrollMessage1SendX509OfMFP(connection);
         message1.Execute(new EnrollMessage1SendX509OfMFP.Input(qrSessionKey, certificateOfMFP));
 
+        logger.Log("Retrieve AES-GCM encrypted certificate from the smartphone");
+
         // Retrieve AES-GCM encrypted certificate from the smartphone
         var message2 = MessageFactory.Enrolling.CreateEnrollMessage2RetrieveX509OfSmartphone(connection);
         var message2result = message2.Execute(new EnrollMessage2RetrieveX509OfSmartphone.Input(qrSessionKey));
+
+        logger.Log("Sign combination of certificates and send to smartphone.");
 
         // Sign combination of certificates.
         byte[] signature;
@@ -68,6 +74,8 @@ namespace SecureScan.NFC.Protocol
           throw new Exception("Smartphone didn't verify signature successfully. No need to proceed with the enrollment.");
         }
 
+        logger.Log("Retrieve signature from smartphone and verify it.");
+
         // Retrieve signature from smartphone and verify it.
         var message4 = new EnrollMessage4RetrieveBindingSignatureFromSmartphone(connection);
         var message4Output = message4.Execute(new EnrollMessage4RetrieveBindingSignatureFromSmartphone.Input());
@@ -80,6 +88,20 @@ namespace SecureScan.NFC.Protocol
         {
           throw new Exception("Smartphone didn't produce a valid signature. No need to proceed with the enrollment.");
         }
+
+        var message5 = new EnrollMessage5FinishEnrollment(connection);
+        var message5Output = message5.Execute(new EnrollMessage5FinishEnrollment.Input());
+
+        if (message5Output.Success)
+        {
+          // Finish: store signature
+        }
+        else
+        {
+          // Failed. Do not do anything
+        }
+
+        logger.Log("Success");
 
         //var ownerInfo = RetrieveInfo(aesKey, connection);
         //return ownerInfo;

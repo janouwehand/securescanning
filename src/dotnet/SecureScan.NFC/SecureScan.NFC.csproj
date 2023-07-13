@@ -71,6 +71,7 @@
     <Compile Include="PCSC\Controller\TransceiverResponse.cs" />
     <Compile Include="PCSC\Controller\PCSCController.cs" />
     <Compile Include="Protocol\Messages\EnrollMessage4RetrieveBindingSignatureFromSmartphone.cs" />
+    <Compile Include="Protocol\Messages\EnrollMessage5FinishEnrollment.cs" />
     <Compile Include="Protocol\Messages\EnrollMessage3SendBindingSignatureToMFP.cs" />
     <Compile Include="Protocol\Messages\EnrollMessage2RetrieveX509OfSmartphone.cs" />
     <Compile Include="Protocol\Messages\EnrollMessage1SendX509OfMFP.cs" />

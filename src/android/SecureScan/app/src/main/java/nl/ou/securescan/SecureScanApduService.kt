@@ -83,7 +83,7 @@ class SecureScanApduService : HostApduService() {
                 block
             )
             EnrollMessage4RetrieveBindingSignatureFromSmartphone -> ProcessResult(
-                processEnrollMessage4RetrieveBindingSignatureFromSmartphone(data!!, blockInfo),
+                processEnrollMessage4RetrieveBindingSignatureFromSmartphone(),
                 instruction,
                 block
             )
@@ -261,6 +261,14 @@ class SecureScanApduService : HostApduService() {
         }
 
         return arrayOf(constants.WAITINGFORMOREDATA).toByteArray()
+    }
+
+    private fun processEnrollMessage4RetrieveBindingSignatureFromSmartphone(): ByteArray {
+        val x509OfSmartphone = x509!!.encoded
+        var x509ofMFP = EnrollingState.mfpCertificate!!.encoded
+        var data = x509OfSmartphone.plus(x509ofMFP)
+        var signature = x509!!.createSignature(data)
+        return signature
     }
 
     private fun processRetrieveSecureContainerPassword(

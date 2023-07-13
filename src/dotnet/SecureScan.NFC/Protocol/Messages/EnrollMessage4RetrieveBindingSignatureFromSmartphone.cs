@@ -25,7 +25,7 @@ namespace SecureScan.NFC.Protocol.Messages
 
     protected override Output InnerExecute(Input input)
     {
-      var signature = Connection.Transceiver.RetrieveMultiApduData(APDUINSTRUCTION, null, out _);
+      var signature = Connection.Transceiver.Transceive(APDUINSTRUCTION);
       return new Output(signature);
     }
   }

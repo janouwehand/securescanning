@@ -438,8 +438,8 @@ Secure MFP"
       }
       else if (!task.IsCanceled)
       {
-        ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
-        X509Received(ownerInfo);
+        //ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
+        //X509Received(ownerInfo);
       }
     }
   }

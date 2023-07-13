@@ -14,15 +14,7 @@ namespace SecureScan.NFC.PCSC.Controller
 
     public Transceiver(IsoReader reader) => this.reader = reader;
 
-    public TransceiverResponse[] SendMultiApduData(Command command, byte[] data)
-    {
-      if (command is null)
-      {
-        throw new ArgumentNullException(nameof(command));
-      }
-
-      return SendMultiApduData(command.Instruction, data);
-    }
+    public TransceiverResponse[] SendMultiApduData(Command command, byte[] data) => command is null ? throw new ArgumentNullException(nameof(command)) : SendMultiApduData(command.Instruction, data);
 
     public TransceiverResponse[] SendMultiApduData(byte instruction, byte[] data)
     {
@@ -48,15 +40,9 @@ namespace SecureScan.NFC.PCSC.Controller
       return responses.ToArray();
     }
 
-    public byte[] RetrieveMultiApduData(Command command, byte[] data, out TransceiverResponse[] responses)
-    {
-      if (command is null)
-      {
-        throw new ArgumentNullException(nameof(command));
-      }
-
-      return RetrieveMultiApduData(command.Instruction, data, out responses);
-    }
+    public byte[] RetrieveMultiApduData(Command command, byte[] data, out TransceiverResponse[] responses) => command is null
+        ? throw new ArgumentNullException(nameof(command))
+        : RetrieveMultiApduData(command.Instruction, data, out responses);
 
     public byte[] RetrieveMultiApduData(byte instruction, byte[] data, out TransceiverResponse[] responses)
     {
@@ -89,6 +75,12 @@ namespace SecureScan.NFC.PCSC.Controller
       responses = resps.ToArray();
 
       return list.ToArray();
+    }
+
+    public byte[] Transceive(byte instruction, byte[] data = null)
+    {
+      var response = Transceive(0x00, instruction, 0x00, 0x00, data ?? new byte[] { });
+      return response.Data;
     }
 
     public TransceiverResponse Transceive(byte cla, byte instruction, byte p1, byte p2, byte[] data)

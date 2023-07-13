@@ -121,3 +121,10 @@ fun X509Certificate.verifySignature(data: ByteArray, signature: ByteArray): Bool
     signatureInstance.update(data)
     return signatureInstance.verify(signature)
 }
+
+fun X509Certificate.createSignature(data: ByteArray): ByteArray {
+    val signatureInstance = Signature.getInstance(sigAlgName)
+    signatureInstance.initSign(getPrivateKey())
+    signatureInstance.update(data)
+    return signatureInstance.sign()
+}
