@@ -8,6 +8,10 @@ namespace SecureScan.NFC.Protocol
 
     public const string APPVERSIONPREFIX = "APPV://";
 
+    public const byte AFFIRMATIVE = 0xA0;
+
+    public const byte NEGATIVE = 0xA1;
+
     /// <summary>
     /// Retrieve public x.509 from smartphone.
     /// </summary>

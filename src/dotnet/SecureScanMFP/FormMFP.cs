@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -22,7 +23,6 @@ namespace SecureScanMFP
     private readonly ISymmetricEncryption symmetricEncryption;
     private OwnerInfo ownerInfo;
     private CancellationTokenSource cancellationTokenSource;
-    //private byte[] bsenc;
 
     public FormMFP(ILogger logger, ISecureScanNFC secureScanNFC, ISymmetricEncryption symmetricEncryption)
     {
@@ -113,30 +113,42 @@ namespace SecureScanMFP
           buttonAbort.Enabled = false;
           buttonGO.Enabled = true;
           buttonSecureScan.Enabled = true;
+          buttonEnrollSmartphone.Enabled = true;
           break;
 
         case MFPStates.CopyingDocument:
           buttonAbort.Enabled = true;
           buttonGO.Enabled = false;
           buttonSecureScan.Enabled = false;
+          buttonEnrollSmartphone.Enabled = false;
           break;
 
         case MFPStates.SecureScanInitiated:
           buttonAbort.Enabled = true;
           buttonGO.Enabled = false;
           buttonSecureScan.Enabled = false;
+          buttonEnrollSmartphone.Enabled = false;
           break;
 
         case MFPStates.SecureScanWaitForGO:
           buttonAbort.Enabled = true;
           buttonGO.Enabled = true;
           buttonSecureScan.Enabled = false;
+          buttonEnrollSmartphone.Enabled = false;
           break;
 
         case MFPStates.CreatingSecureContainer:
           buttonAbort.Enabled = true;
           buttonGO.Enabled = false;
           buttonSecureScan.Enabled = false;
+          buttonEnrollSmartphone.Enabled = false;
+          break;
+
+        case MFPStates.EnrollShowQRWaitForNFC:
+          buttonAbort.Enabled = true;
+          buttonGO.Enabled = false;
+          buttonSecureScan.Enabled = false;
+          buttonEnrollSmartphone.Enabled = false;
           break;
 
         default:
@@ -146,6 +158,12 @@ namespace SecureScanMFP
       buttonAbort.BackColor = buttonAbort.Enabled ? Color.Red : Color.DarkGray;
       buttonGO.BackColor = buttonGO.Enabled ? Color.FromArgb(0, 192, 0) : Color.DarkGray;
       buttonSecureScan.BackColor = buttonSecureScan.Enabled ? Color.Yellow : Color.DarkGray;
+      buttonEnrollSmartphone.BackColor = buttonSecureScan.Enabled ? Color.Yellow : Color.DarkGray;
+
+      if (state != MFPStates.EnrollShowQRWaitForNFC)
+      {
+        qrControl1.Visible = false;
+      }
 
       Application.DoEvents();
     }
@@ -188,7 +206,7 @@ namespace SecureScanMFP
       cancellationTokenSource = new CancellationTokenSource();
 
       Log("Please hold your smartphone to the NFC tag.");
-      var task = secureScanNFC.RetrieveOwnerInfoAsync(TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
+      var task = secureScanNFC.RetrieveOwnerInfoAsync(null, TimeSpan.FromSeconds(10D), cancellationTokenSource.Token);
       task.ResponsiveWait();
 
       var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);
@@ -388,5 +406,42 @@ Secure MFP"
         }
       }
     }
+
+    private void buttonEnrollSmartphone_Click(object sender, EventArgs e)
+    {
+      SetState(MFPStates.EnrollShowQRWaitForNFC);
+      qrControl1.ShowQR(CryptoRandom.GetBytes(32));
+
+      Log($"Symmetric key in QR-code: 0x{qrControl1.QRKey.ToHEX()}");
+
+      cancellationTokenSource = new CancellationTokenSource();
+
+      var x509 = new X509Certificate2("MFP.pfx", "123");
+
+      Log("Please hold your smartphone to the NFC tag.");
+      var task = secureScanNFC.StartEnrolling(qrControl1.QRKey, x509, TimeSpan.FromMinutes(30D), cancellationTokenSource.Token);
+      task.ResponsiveWait();
+
+      var isTimeOut = task.IsFaulted && task.Exception.InnerExceptions.Any(x => x is TimeoutException);
+      if (isTimeOut)
+      {
+        Log("Waiting for NFC time-out", true);
+        SetState(MFPStates.Idle);
+      }
+      else if (task.IsFaulted)
+      {
+        foreach (var ex in task.Exception.InnerExceptions)
+        {
+          Log(ex.Message, true);
+        }
+        SetState(MFPStates.Idle);
+      }
+      else if (!task.IsCanceled)
+      {
+        //ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
+        //X509Received(ownerInfo);
+      }
+    }
   }
 }
+ 

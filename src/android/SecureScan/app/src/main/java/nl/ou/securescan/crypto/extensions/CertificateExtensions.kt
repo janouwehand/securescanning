@@ -2,10 +2,7 @@ package nl.ou.securescan.crypto.extensions
 
 import android.security.keystore.KeyInfo
 import nl.ou.securescan.crypto.CertificateManager
-import java.security.KeyFactory
-import java.security.KeyStore
-import java.security.MessageDigest
-import java.security.PrivateKey
+import java.security.*
 import java.security.cert.X509Certificate
 import java.util.*
 import java.util.regex.Matcher
@@ -116,4 +113,18 @@ fun X509Certificate.getSHA1(): ByteArray {
     val messageDigest = MessageDigest.getInstance("SHA-1")
     messageDigest.update(encoded)
     return messageDigest.digest()
+}
+
+fun X509Certificate.verifySignature(data: ByteArray, signature: ByteArray): Boolean {
+    val signatureInstance = Signature.getInstance(sigAlgName)
+    signatureInstance.initVerify(this)
+    signatureInstance.update(data)
+    return signatureInstance.verify(signature)
+}
+
+fun X509Certificate.createSignature(data: ByteArray): ByteArray {
+    val signatureInstance = Signature.getInstance(sigAlgName)
+    signatureInstance.initSign(getPrivateKey())
+    signatureInstance.update(data)
+    return signatureInstance.sign()
 }

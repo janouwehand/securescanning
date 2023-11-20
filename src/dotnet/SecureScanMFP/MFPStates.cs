@@ -7,6 +7,7 @@
     SecureScanInitiated,
     SecureScanWaitForGO,
     CreatingSecureContainer,
-    SecureContainerCreated
+    SecureContainerCreated,
+    EnrollShowQRWaitForNFC,
   }
 }

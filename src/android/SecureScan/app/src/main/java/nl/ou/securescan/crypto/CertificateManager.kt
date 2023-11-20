@@ -1,8 +1,9 @@
 package nl.ou.securescan.crypto
 
-import nl.ou.securescan.crypto.newcertificate.GenerateCertificateBC
 import nl.ou.securescan.crypto.newcertificate.GenerateCertificateNoBC
+import java.io.ByteArrayInputStream
 import java.security.KeyStore
+import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
 class CertificateManager {
@@ -45,20 +46,12 @@ class CertificateManager {
     fun createCertificate(name: String, email: String) {
         val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
         keyStore.load(null)
-
-        //val cmc = GenerateCertificateBC()
-        //val keypair = cmc.generateKeyPair()
         GenerateCertificateNoBC().execute(name, email)
-
-        //keyStore.setCertificateEntry(ALIAS, cert)
-        //keyStore.setKeyEntry(ALIAS, keypair.private, null, arrayOf(cert))
     }
 
-    /*fun getSecretKey(): SecretKey? {
-        val keyStore = KeyStore.getInstance(ANDROIDKEYSTORE)
-        keyStore.load(null)
-        val existingKey = keyStore.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry
-        //return existingKey?.secretKey ?: createKey()
-        return existingKey?.secretKey
-    }*/
+    fun getCertificateFromByteArray(data: ByteArray): X509Certificate {
+        val factory = CertificateFactory.getInstance("X.509")
+        var cert = factory.generateCertificate(ByteArrayInputStream(data))
+        return cert as X509Certificate
+    }
 }
