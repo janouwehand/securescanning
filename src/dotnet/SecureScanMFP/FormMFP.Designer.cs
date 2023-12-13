@@ -39,7 +39,11 @@
       this.panel2 = new System.Windows.Forms.Panel();
       this.panel6 = new System.Windows.Forms.Panel();
       this.panel4 = new System.Windows.Forms.Panel();
+      this.panel8 = new System.Windows.Forms.Panel();
       this.edtlog = new System.Windows.Forms.RichTextBox();
+      this.panel7 = new System.Windows.Forms.Panel();
+      this.panel10 = new System.Windows.Forms.Panel();
+      this.panel9 = new System.Windows.Forms.Panel();
       this.panel5 = new System.Windows.Forms.Panel();
       this.labelPDF = new System.Windows.Forms.Label();
       this.buttonChoosePDF = new System.Windows.Forms.Button();
@@ -47,11 +51,8 @@
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
       this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
       this.labelState = new System.Windows.Forms.ToolStripStatusLabel();
-      this.panel7 = new System.Windows.Forms.Panel();
-      this.panel8 = new System.Windows.Forms.Panel();
-      this.panel9 = new System.Windows.Forms.Panel();
-      this.panel10 = new System.Windows.Forms.Panel();
       this.qrControl1 = new SecureScanMFP.QRControl();
+      this.buttonTestEmail = new System.Windows.Forms.Button();
       this.panel1.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
@@ -62,12 +63,12 @@
       this.panel2.SuspendLayout();
       this.panel6.SuspendLayout();
       this.panel4.SuspendLayout();
+      this.panel8.SuspendLayout();
+      this.panel7.SuspendLayout();
+      this.panel9.SuspendLayout();
       this.panel5.SuspendLayout();
       this.panel3.SuspendLayout();
       this.statusStrip1.SuspendLayout();
-      this.panel7.SuspendLayout();
-      this.panel8.SuspendLayout();
-      this.panel9.SuspendLayout();
       this.SuspendLayout();
       // 
       // panel1
@@ -151,6 +152,7 @@
       this.buttonSecureScan.TabIndex = 1;
       this.buttonSecureScan.Text = "Initiate Secure Scan";
       this.buttonSecureScan.UseVisualStyleBackColor = false;
+      this.buttonSecureScan.Visible = false;
       this.buttonSecureScan.Click += new System.EventHandler(this.buttonSecureScan_Click);
       // 
       // buttonEnrollSmartphone
@@ -161,7 +163,7 @@
       this.buttonEnrollSmartphone.Name = "buttonEnrollSmartphone";
       this.buttonEnrollSmartphone.Size = new System.Drawing.Size(227, 164);
       this.buttonEnrollSmartphone.TabIndex = 2;
-      this.buttonEnrollSmartphone.Text = "Enroll";
+      this.buttonEnrollSmartphone.Text = "Enroll + Scan";
       this.buttonEnrollSmartphone.UseVisualStyleBackColor = false;
       this.buttonEnrollSmartphone.Click += new System.EventHandler(this.buttonEnrollSmartphone_Click);
       // 
@@ -196,6 +198,15 @@
       this.panel4.Size = new System.Drawing.Size(1314, 757);
       this.panel4.TabIndex = 2;
       // 
+      // panel8
+      // 
+      this.panel8.Controls.Add(this.edtlog);
+      this.panel8.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.panel8.Location = new System.Drawing.Point(16, 16);
+      this.panel8.Name = "panel8";
+      this.panel8.Size = new System.Drawing.Size(1054, 725);
+      this.panel8.TabIndex = 2;
+      // 
       // edtlog
       // 
       this.edtlog.BackColor = System.Drawing.SystemColors.Control;
@@ -208,8 +219,36 @@
       this.edtlog.TabIndex = 0;
       this.edtlog.Text = "";
       // 
+      // panel7
+      // 
+      this.panel7.Controls.Add(this.panel10);
+      this.panel7.Controls.Add(this.panel9);
+      this.panel7.Dock = System.Windows.Forms.DockStyle.Right;
+      this.panel7.Location = new System.Drawing.Point(1070, 16);
+      this.panel7.Name = "panel7";
+      this.panel7.Size = new System.Drawing.Size(228, 725);
+      this.panel7.TabIndex = 1;
+      // 
+      // panel10
+      // 
+      this.panel10.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.panel10.Location = new System.Drawing.Point(0, 222);
+      this.panel10.Name = "panel10";
+      this.panel10.Size = new System.Drawing.Size(228, 503);
+      this.panel10.TabIndex = 1;
+      // 
+      // panel9
+      // 
+      this.panel9.Controls.Add(this.qrControl1);
+      this.panel9.Dock = System.Windows.Forms.DockStyle.Top;
+      this.panel9.Location = new System.Drawing.Point(0, 0);
+      this.panel9.Name = "panel9";
+      this.panel9.Size = new System.Drawing.Size(228, 222);
+      this.panel9.TabIndex = 0;
+      // 
       // panel5
       // 
+      this.panel5.Controls.Add(this.buttonTestEmail);
       this.panel5.Controls.Add(this.labelPDF);
       this.panel5.Controls.Add(this.buttonChoosePDF);
       this.panel5.Dock = System.Windows.Forms.DockStyle.Top;
@@ -274,42 +313,6 @@
       this.labelState.Size = new System.Drawing.Size(43, 25);
       this.labelState.Text = "Idle";
       // 
-      // panel7
-      // 
-      this.panel7.Controls.Add(this.panel10);
-      this.panel7.Controls.Add(this.panel9);
-      this.panel7.Dock = System.Windows.Forms.DockStyle.Right;
-      this.panel7.Location = new System.Drawing.Point(1070, 16);
-      this.panel7.Name = "panel7";
-      this.panel7.Size = new System.Drawing.Size(228, 725);
-      this.panel7.TabIndex = 1;
-      // 
-      // panel8
-      // 
-      this.panel8.Controls.Add(this.edtlog);
-      this.panel8.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.panel8.Location = new System.Drawing.Point(16, 16);
-      this.panel8.Name = "panel8";
-      this.panel8.Size = new System.Drawing.Size(1054, 725);
-      this.panel8.TabIndex = 2;
-      // 
-      // panel9
-      // 
-      this.panel9.Controls.Add(this.qrControl1);
-      this.panel9.Dock = System.Windows.Forms.DockStyle.Top;
-      this.panel9.Location = new System.Drawing.Point(0, 0);
-      this.panel9.Name = "panel9";
-      this.panel9.Size = new System.Drawing.Size(228, 222);
-      this.panel9.TabIndex = 0;
-      // 
-      // panel10
-      // 
-      this.panel10.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.panel10.Location = new System.Drawing.Point(0, 222);
-      this.panel10.Name = "panel10";
-      this.panel10.Size = new System.Drawing.Size(228, 503);
-      this.panel10.TabIndex = 1;
-      // 
       // qrControl1
       // 
       this.qrControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -319,6 +322,18 @@
       this.qrControl1.Size = new System.Drawing.Size(228, 222);
       this.qrControl1.TabIndex = 0;
       this.qrControl1.Visible = false;
+      // 
+      // buttonTestEmail
+      // 
+      this.buttonTestEmail.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+      this.buttonTestEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.buttonTestEmail.Location = new System.Drawing.Point(1207, 6);
+      this.buttonTestEmail.Name = "buttonTestEmail";
+      this.buttonTestEmail.Size = new System.Drawing.Size(104, 36);
+      this.buttonTestEmail.TabIndex = 2;
+      this.buttonTestEmail.Text = "Test email";
+      this.buttonTestEmail.UseVisualStyleBackColor = true;
+      this.buttonTestEmail.Click += new System.EventHandler(this.buttonTestEmail_Click);
       // 
       // FormMFP
       // 
@@ -340,15 +355,15 @@
       this.panel2.ResumeLayout(false);
       this.panel6.ResumeLayout(false);
       this.panel4.ResumeLayout(false);
+      this.panel8.ResumeLayout(false);
+      this.panel7.ResumeLayout(false);
+      this.panel9.ResumeLayout(false);
       this.panel5.ResumeLayout(false);
       this.panel5.PerformLayout();
       this.panel3.ResumeLayout(false);
       this.panel3.PerformLayout();
       this.statusStrip1.ResumeLayout(false);
       this.statusStrip1.PerformLayout();
-      this.panel7.ResumeLayout(false);
-      this.panel8.ResumeLayout(false);
-      this.panel9.ResumeLayout(false);
       this.ResumeLayout(false);
 
     }
@@ -379,5 +394,6 @@
     private System.Windows.Forms.Panel panel10;
     private System.Windows.Forms.Panel panel9;
     private QRControl qrControl1;
+    private System.Windows.Forms.Button buttonTestEmail;
   }
 }

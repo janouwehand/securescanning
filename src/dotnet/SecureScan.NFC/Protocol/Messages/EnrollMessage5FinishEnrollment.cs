@@ -26,7 +26,7 @@ namespace SecureScan.NFC.Protocol.Messages
     protected override Output InnerExecute(Input input)
     {
       var result = Connection.Transceiver.Transceive(APDUINSTRUCTION);
-      return new Output(result.Length > 0 && result[0] == Constants.AFFIRMATIVE);
+      return new Output(result != null && result.Length > 0 && result[0] == Constants.AFFIRMATIVE);
     }
   }
 }

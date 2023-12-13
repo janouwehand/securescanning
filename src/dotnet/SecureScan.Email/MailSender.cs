@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Net;
 using MailKit.Net.Smtp;
 using MimeKit;
 using ContentDisposition = MimeKit.ContentDisposition;
@@ -7,15 +9,19 @@ namespace SecureScan.Email
 {
   public class MailSender
   {
-    public MailSender(string smtpHostOrIP, int smtpPort)
+    public MailSender(string smtpHostOrIP, int smtpPort, string userName, string password)
     {
       SmtpHostOrIP = smtpHostOrIP;
       SmtpPort = smtpPort;
+      UserName = userName;
+      Password = password;
     }
 
     public string SmtpHostOrIP { get; }
 
     public int SmtpPort { get; }
+    public string UserName { get; }
+    public string Password { get; }
 
     public string SendMail(MailInput input)
     {
@@ -51,11 +57,20 @@ namespace SecureScan.Email
 
       string serverResponse;
 
-      using (var client = new SmtpClient())
+      try
       {
-        client.Connect(SmtpHostOrIP, SmtpPort);
-        serverResponse = client.Send(message);
-        client.Disconnect(true);
+        using (var client = new SmtpClient())
+        {
+          ServicePointManager.ServerCertificateValidationCallback = (s, c, h, e) => true;
+          client.Connect(SmtpHostOrIP, SmtpPort, false);
+          client.Authenticate(UserName, Password);
+          serverResponse = client.Send(message);
+          client.Disconnect(true);
+        }
+      }
+      catch (Exception ex)
+      {
+        serverResponse = "Error sending email: " + (string.IsNullOrWhiteSpace(ex.Message) ? ex.ToString() : ex.Message);
       }
 
       return serverResponse;

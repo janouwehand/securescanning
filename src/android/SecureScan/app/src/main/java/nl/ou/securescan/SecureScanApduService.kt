@@ -20,6 +20,7 @@ class SecureScanApduService : HostApduService() {
     private val EnrollMessage2RetrieveX509OfSmartphone: Byte = 0x52
     private val EnrollMessage3SendBindingSignatureToMFP: Byte = 0x53
     private val EnrollMessage4RetrieveBindingSignatureFromSmartphone: Byte = 0x54
+    private val EnrollMessage5Finish: Byte = 0x55
 
     private var challengeSignature: ByteArray? = null
     private val hasCertificate: Boolean
@@ -84,6 +85,11 @@ class SecureScanApduService : HostApduService() {
             )
             EnrollMessage4RetrieveBindingSignatureFromSmartphone -> ProcessResult(
                 processEnrollMessage4RetrieveBindingSignatureFromSmartphone(),
+                instruction,
+                block
+            )
+            EnrollMessage5Finish -> ProcessResult(
+                processEnrollMessage5FinishingFromSmartphone(),
                 instruction,
                 block
             )
@@ -269,6 +275,13 @@ class SecureScanApduService : HostApduService() {
         var data = x509OfSmartphone.plus(x509ofMFP)
         var signature = x509!!.createSignature(data)
         return signature
+    }
+
+    private fun processEnrollMessage5FinishingFromSmartphone(): ByteArray {
+        // close activity
+
+
+        return arrayOf(constants.AFFIRMATIVE).toByteArray()
     }
 
     private fun processRetrieveSecureContainerPassword(

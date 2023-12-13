@@ -1,7 +1,30 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SecureScanMFP.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="SmtpHost" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">127.0.0.1</Value>
+    </Setting>
+    <Setting Name="SmtpPort" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">1025</Value>
+    </Setting>
+    <Setting Name="SmtpUserName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">mfp@softable.nl</Value>
+    </Setting>
+    <Setting Name="SmtpPasswordFile" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">c:\temp\smtppassword.txt</Value>
+    </Setting>
+    <Setting Name="FromName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">MFP prototype</Value>
+    </Setting>
+    <Setting Name="FromAddress" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">mfp@softable.nl</Value>
+    </Setting>
+    <Setting Name="TestmailToName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">J.L. Ouwehand</Value>
+    </Setting>
+    <Setting Name="TestmailToAddress" Type="System.String" Scope="User">
+      <Value Profile="(Default)">jan.ouwehand@mvgs.nl</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>
