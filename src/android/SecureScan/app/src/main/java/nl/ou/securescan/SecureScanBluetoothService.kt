@@ -354,15 +354,11 @@ class SecureScanBluetoothService : Service() {
                 .build()
 
             val data = AdvertiseData.Builder()
-                //.setIncludeDeviceName(true)
-                //.setIncludeTxPowerLevel(false)
                 .addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
                 .build()
 
             val rdata = AdvertiseData.Builder()
                 .setIncludeDeviceName(true)
-                //.setIncludeTxPowerLevel(true)
-                //.addServiceUuid(ParcelUuid(SecureScanGattProfile.SECURESCANSERVICE))
                 .build()
 
             it.startAdvertising(settings, data, rdata, advertiseCallback)

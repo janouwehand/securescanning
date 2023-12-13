@@ -15,13 +15,6 @@ import java.time.ZonedDateTime
 
 
 class SecureScanApduService : HostApduService() {
-
-    private val EnrollMessage1SendX509OfMFP: Byte = 0x51
-    private val EnrollMessage2RetrieveX509OfSmartphone: Byte = 0x52
-    private val EnrollMessage3SendBindingSignatureToMFP: Byte = 0x53
-    private val EnrollMessage4RetrieveBindingSignatureFromSmartphone: Byte = 0x54
-    private val EnrollMessage5Finish: Byte = 0x55
-
     private var challengeSignature: ByteArray? = null
     private val hasCertificate: Boolean
     private val x509: X509Certificate?
@@ -39,19 +32,23 @@ class SecureScanApduService : HostApduService() {
         x509 = if (hasCertificate) cm.getCertificate()!! else null
     }
 
+    // Verify whether the received APDU is a 'select' APDU
     private fun isSelectApdu(apdu: ByteArray?): Boolean =
-        apdu!!.size >= 2 && apdu[0] == 0.toByte() && apdu[1] == 0xa4.toByte()
+        apdu!!.size >= 2 && apdu[0] == 0.toByte() && apdu[1] == constants.SelectAPDU
 
+    // APDU processing hook
     override fun processCommandApdu(apdu: ByteArray?, extra: Bundle?): ByteArray {
         val str = apdu!!.toHexString()
         Log.i("SecureScan", "Received APDU: $str")
 
         return if (isSelectApdu(apdu)) {
-            val ret = "APPV://1.0.0"
+            // When it is a 'select' APDU, return version of the app for compatibility check.
+            val ret = constants.APPVERSION
             Log.i("SecureScan", ret)
             val bs = combineResult(ret.encodeToByteArray())
             bs
         } else {
+            // It is not a 'select'. Process the APDU in the context of the machine state.
             val (bs, sw1, sw2) = process(apdu)
             val result = bs.plus(sw1).plus(sw2)
             result
@@ -68,51 +65,51 @@ class SecureScanApduService : HostApduService() {
         val data = getDataFromAPDU(apdu)
 
         return when (instruction) {
-            EnrollMessage1SendX509OfMFP -> ProcessResult(
+            constants.Messages.Enrolling.EnrollMessage1SendX509OfMFP -> ProcessResult(
                 processEnrollMessage1SendX509OfMFP(data!!, blockInfo),
                 instruction,
                 block
             )
-            EnrollMessage2RetrieveX509OfSmartphone -> ProcessResult(
+            constants.Messages.Enrolling.EnrollMessage2RetrieveX509OfSmartphone -> ProcessResult(
                 processEnrollMessage2RetrieveX509OfSmartphone(block.toInt()),
                 instruction,
                 block
             )
-            EnrollMessage3SendBindingSignatureToMFP -> ProcessResult(
+            constants.Messages.Enrolling.EnrollMessage3SendBindingSignatureToMFP -> ProcessResult(
                 processEnrollMessage3SendBindingSignatureToMFP(data!!, blockInfo),
                 instruction,
                 block
             )
-            EnrollMessage4RetrieveBindingSignatureFromSmartphone -> ProcessResult(
+            constants.Messages.Enrolling.EnrollMessage4RetrieveBindingSignatureFromSmartphone -> ProcessResult(
                 processEnrollMessage4RetrieveBindingSignatureFromSmartphone(),
                 instruction,
                 block
             )
-            EnrollMessage5Finish -> ProcessResult(
+            constants.Messages.Enrolling.EnrollMessage5Finish -> ProcessResult(
                 processEnrollMessage5FinishingFromSmartphone(),
                 instruction,
                 block
             )
-            0x50.toByte() -> ProcessResult(processGetKey(block.toInt()), instruction, block)
-            0x60.toByte() -> ProcessResult(
+            constants.Messages.GetX509 -> ProcessResult(processGetKey(block.toInt()), instruction, block)
+            constants.Messages.Challenge -> ProcessResult(
                 processGetChallengeResult(data!!, block.toInt()), instruction, block
             )
-            0x80.toByte() -> ProcessResult(
+            constants.Messages.ReceiveHashOfSecureContainer -> ProcessResult(
                 processRetrieveSecureContainerHash(data!!),
                 instruction,
                 block
             )
-            0x90.toByte() -> ProcessResult(
+            constants.Messages.ReceiveEncryptedPassword -> ProcessResult(
                 processRetrieveSecureContainerPassword(data!!, blockInfo),
                 instruction,
                 block
             )
-            0x91.toByte() -> ProcessResult(
+            constants.Messages.StoreDocumentReturnDocumentId -> ProcessResult(
                 processStoreDocument(),
                 instruction,
                 block
             )
-            else -> ProcessResult(byteArrayOf(), 0x00, 0x00)
+            else -> ProcessResult(byteArrayOf(), constants.EmptyByte, constants.EmptyByte)
         }
     }
 
@@ -151,6 +148,7 @@ class SecureScanApduService : HostApduService() {
         return sliceData(challengeSignature!!, block)
     }
 
+    // Large messages a divided in multiple APDUs.
     private fun sliceData(data: ByteArray, block: Int): ByteArray {
         val size = 250
         val fromIndex = (block - 1) * size
@@ -171,7 +169,9 @@ class SecureScanApduService : HostApduService() {
     }
 
     private fun processGetKey(block: Int): ByteArray {
+        // When first block is requested (of multiple blocks) then the data need to be prepared first.
         if (block == 1) {
+            // encrypt x.509 using shared key
             x509Encrypted = x509!!.encoded.encryptAES256GCM(EnrollingState.qrCodeKey!!)
         }
         return sliceData(x509Encrypted!!, block)
