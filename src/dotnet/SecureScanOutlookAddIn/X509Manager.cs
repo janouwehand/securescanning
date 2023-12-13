@@ -119,6 +119,7 @@ namespace SecureScanOutlookAddIn
 
         if (activeCert != null)
         {
+          var pktest = activeCert.GetRSAPrivateKey();
           return activeCert;
         }
 
@@ -131,7 +132,9 @@ namespace SecureScanOutlookAddIn
           p12.SetKeyEntry(emailaddress, new AsymmetricKeyEntry(keypair.Private), new X509CertificateEntry[] { new X509CertificateEntry(bccert) });
           p12.Save(p12Stream, "--".ToCharArray(), rand);
 
-          activeCert = new X509Certificate2(p12Stream.ToArray(), "--", X509KeyStorageFlags.DefaultKeySet);
+          //activeCert = new X509Certificate2(p12Stream.ToArray(), "--", X509KeyStorageFlags.DefaultKeySet);
+          activeCert = new X509Certificate2(p12Stream.ToArray(), "--", X509KeyStorageFlags.Exportable);
+
           store.Add(activeCert);
         }
         store.Close();
