@@ -13,6 +13,7 @@ using SecureScan.Base.Extensions;
 using SecureScan.Base.Logger;
 using SecureScan.Base.SecureContainer;
 using SecureScan.NFC;
+using SecureScanMFP.Properties;
 
 namespace SecureScanMFP
 {
@@ -354,7 +355,7 @@ namespace SecureScanMFP
       var message = new SecureScan.Email.MailInput
       {
         EmailTo = new SecureScan.Email.MailInput.EmailAddress { Email = ownerInfo.Email, Name = ownerInfo.Name },
-        EmailFrom = new SecureScan.Email.MailInput.EmailAddress { Email = "mfp@company.nl", Name = "MFP" },
+        EmailFrom = new SecureScan.Email.MailInput.EmailAddress { Email = Settings.Default.FromAddress, Name = Settings.Default.FromName },
         Subject = $"Your securely scanned document. Document number: {docInfo.DocumentNumber}",
         BodyPlain = $@"Dear {ownerInfo.Name},
 
@@ -374,7 +375,7 @@ Secure MFP"
         Content = bsSecureContainer
       });
 
-      var sender = new SecureScan.Email.MailSender("127.0.0.1", 25);
+      var sender = new SecureScan.Email.MailSender(Settings.Default.SmtpHost, Settings.Default.SmtpPort, Settings.Default.SmtpUserName, File.ReadAllText(Settings.Default.SmtpPasswordFile).Trim());
       var response = sender.SendMail(message);
       Log($"Sending email result: " + response);
     }
@@ -442,6 +443,27 @@ Secure MFP"
         ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
         X509Received(ownerInfo);
       }
+    }
+
+    private void buttonTestEmail_Click(object _, EventArgs e)
+    {
+      var message = new SecureScan.Email.MailInput
+      {
+        EmailTo = new SecureScan.Email.MailInput.EmailAddress { Email = Settings.Default.TestmailToAddress, Name = Settings.Default.TestmailToName },
+        EmailFrom = new SecureScan.Email.MailInput.EmailAddress { Email = Settings.Default.FromAddress, Name = Settings.Default.FromName },
+        Subject = $"MFP test email",
+        BodyPlain = $@"Dear mam, sir,
+
+This is a test email from the MFP sent at {DateTime.Now:HH:mm:ss}.
+
+Kind regards,
+
+Secure MFP"
+      };
+
+      var sender = new SecureScan.Email.MailSender(Settings.Default.SmtpHost, Settings.Default.SmtpPort, Settings.Default.SmtpUserName, File.ReadAllText(Settings.Default.SmtpPasswordFile).Trim());
+      var response = sender.SendMail(message);
+      Log($"Sending email result: " + response);
     }
   }
 }

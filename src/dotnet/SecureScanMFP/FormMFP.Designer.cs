@@ -52,6 +52,7 @@
       this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
       this.labelState = new System.Windows.Forms.ToolStripStatusLabel();
       this.qrControl1 = new SecureScanMFP.QRControl();
+      this.buttonTestEmail = new System.Windows.Forms.Button();
       this.panel1.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
       this.splitContainer1.Panel1.SuspendLayout();
@@ -247,6 +248,7 @@
       // 
       // panel5
       // 
+      this.panel5.Controls.Add(this.buttonTestEmail);
       this.panel5.Controls.Add(this.labelPDF);
       this.panel5.Controls.Add(this.buttonChoosePDF);
       this.panel5.Dock = System.Windows.Forms.DockStyle.Top;
@@ -321,6 +323,18 @@
       this.qrControl1.TabIndex = 0;
       this.qrControl1.Visible = false;
       // 
+      // buttonTestEmail
+      // 
+      this.buttonTestEmail.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+      this.buttonTestEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.buttonTestEmail.Location = new System.Drawing.Point(1207, 6);
+      this.buttonTestEmail.Name = "buttonTestEmail";
+      this.buttonTestEmail.Size = new System.Drawing.Size(104, 36);
+      this.buttonTestEmail.TabIndex = 2;
+      this.buttonTestEmail.Text = "Test email";
+      this.buttonTestEmail.UseVisualStyleBackColor = true;
+      this.buttonTestEmail.Click += new System.EventHandler(this.buttonTestEmail_Click);
+      // 
       // FormMFP
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -380,5 +394,6 @@
     private System.Windows.Forms.Panel panel10;
     private System.Windows.Forms.Panel panel9;
     private QRControl qrControl1;
+    private System.Windows.Forms.Button buttonTestEmail;
   }
 }

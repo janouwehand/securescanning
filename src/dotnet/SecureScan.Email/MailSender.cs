@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using MailKit.Net.Smtp;
 using MimeKit;
 using ContentDisposition = MimeKit.ContentDisposition;
@@ -8,15 +9,19 @@ namespace SecureScan.Email
 {
   public class MailSender
   {
-    public MailSender(string smtpHostOrIP, int smtpPort)
+    public MailSender(string smtpHostOrIP, int smtpPort, string userName, string password)
     {
       SmtpHostOrIP = smtpHostOrIP;
       SmtpPort = smtpPort;
+      UserName = userName;
+      Password = password;
     }
 
     public string SmtpHostOrIP { get; }
 
     public int SmtpPort { get; }
+    public string UserName { get; }
+    public string Password { get; }
 
     public string SendMail(MailInput input)
     {
@@ -56,7 +61,9 @@ namespace SecureScan.Email
       {
         using (var client = new SmtpClient())
         {
-          client.Connect(SmtpHostOrIP, SmtpPort);
+          ServicePointManager.ServerCertificateValidationCallback = (s, c, h, e) => true;
+          client.Connect(SmtpHostOrIP, SmtpPort, false);
+          client.Authenticate(UserName, Password);
           serverResponse = client.Send(message);
           client.Disconnect(true);
         }
