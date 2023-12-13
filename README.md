@@ -62,7 +62,7 @@ This process queries Bluetooth to find an active (and paired) smartphone offerin
 
 ![image](https://github.com/janouwehand/securescanning/assets/64165589/f665e415-7f51-4a89-bf1c-4d80aea2fb39)
 
-The encrpytion key is only returned after explicit consent.
+The encryption key is only returned after the user has given their explicit consent.
 To this end the smartphone shows the user an 'access request' notification.
 
 <p float="left">
@@ -70,7 +70,7 @@ To this end the smartphone shows the user an 'access request' notification.
   <img src="https://github.com/janouwehand/securescanning/assets/64165589/61964427-1ffc-4277-9f0d-f9a31fc80227" width="300" /> 
 </p>
 
-After consent is given, the MUA add-in shows the document within the embedded secure document viewer.
+After consent is given, the MUA add-in receives the encryption key, decrypts the document and shows the document within the embedded secure document viewer, all within RAM.
 
 ![image](https://github.com/janouwehand/securescanning/assets/64165589/50c272de-ae53-451c-a2da-1a0342c8e73a)
 
