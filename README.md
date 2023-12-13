@@ -12,11 +12,25 @@ The Secure Scan architecture consists of three parts:
   <img src="https://github.com/janouwehand/securescanning/assets/64165589/3198962c-59c8-479c-810d-4869846f9bfb" width="300" /> 
 </p>
 
+MFP mock:
+
 ![image](https://github.com/janouwehand/securescanning/assets/64165589/dbf1793f-797a-40ee-bd0a-d0e99569b2f6)
 
+Click enroll+scan. 
+This refers to the combined process of authenticating the MFP and digitizing the document.
+While the smartphone communicates with the MFP over NFC, authentication is performed out-of-bound, using a QR code.
 
 ![image](https://github.com/janouwehand/securescanning/assets/64165589/48a492c5-8e54-48ce-bb3f-5bdb26a2ac15)
 
+
+
+Click enroll+scan within the app and then scan the QR code. 
+The QR code shares a symmetric key which is used for subsequent authenticated and encrypted communication.
+
+<p float="left">
+  <img src="https://github.com/janouwehand/securescanning/assets/64165589/4284217a-d50d-4591-a1a7-66f40d71ed68" width="300" />
+  <img src="https://github.com/janouwehand/securescanning/assets/64165589/e06fed5c-c9ea-4446-a3cb-7712fabb4ffe" width="300" /> 
+</p>
 
 
 ![image](https://github.com/janouwehand/securescanning/assets/64165589/1b3b3e64-f8a7-4483-b2a3-ec4529efeada)
