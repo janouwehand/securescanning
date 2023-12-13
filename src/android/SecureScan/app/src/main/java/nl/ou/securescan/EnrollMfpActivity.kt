@@ -56,7 +56,8 @@ class EnrollMfpActivity : AppCompatActivity() {
 
     fun qrScannedCallback(keyStr: String) {
         EnrollingState.qrCodeKey = Base64.getDecoder().decode(keyStr)
-        //Toast.makeText(this, "Scan result: $str + $str2", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Scan result: ${EnrollingState.qrCodeKey}", Toast.LENGTH_LONG).show()
+        finish()
     }
 
     override fun onSupportNavigateUp(): Boolean {

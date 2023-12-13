@@ -30,6 +30,11 @@ namespace SecureScan.NFC.Protocol
     /// <returns></returns>
     public async Task<OwnerInfo> RetrieveOwnerInfoAsync(byte[] qrSessionKey, TimeSpan waitForNFCTimeout, CancellationToken cancellationToken)
     {
+      if (qrSessionKey == null || !qrSessionKey.Any())
+      {
+        throw new Exception("QR session key is null or empty: enroll MFP first using out-of-bound channel via QR-code.");
+      }
+
       var controller = new PCSCController(Constants.APPLICATIONID);
       using (var connection = await controller.WaitForConnectionAsync((int)waitForNFCTimeout.TotalSeconds, cancellationToken))
       {
@@ -95,22 +100,27 @@ namespace SecureScan.NFC.Protocol
         if (message5Output.Success)
         {
           // Finish: store signature
+          logger.Log("Success");
+
+          var ownerInfo = RetrieveInfo(qrSessionKey, connection);
+          return ownerInfo;
         }
         else
         {
           // Failed. Do not do anything
         }
-
-        logger.Log("Success");
-
-        //var ownerInfo = RetrieveInfo(aesKey, connection);
-        //return ownerInfo;
+        
         return null;
       }
     }
 
     private OwnerInfo RetrieveInfo(byte[] qrSessionKey, PCSCConnection nfc)
     {
+      if (qrSessionKey==null || !qrSessionKey.Any())
+      {
+        throw new Exception("QR session key is null or empty: enroll MFP first using out-of-bound channel via QR-code.");
+      }
+
       var info = new OwnerInfo();
 
       var applicationVersion = Encoding.UTF8.GetString(nfc.ReturnData);

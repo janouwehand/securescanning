@@ -375,7 +375,8 @@ Secure MFP"
       });
 
       var sender = new SecureScan.Email.MailSender("127.0.0.1", 25);
-      sender.SendMail(message);
+      var response = sender.SendMail(message);
+      Log($"Sending email result: " + response);
     }
 
     private void ExecuteClearCacheAndSetIdle()
@@ -438,8 +439,8 @@ Secure MFP"
       }
       else if (!task.IsCanceled)
       {
-        //ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
-        //X509Received(ownerInfo);
+        ownerInfo = task.Result ?? throw new Exception("Owner info was expected to be present!");
+        X509Received(ownerInfo);
       }
     }
   }

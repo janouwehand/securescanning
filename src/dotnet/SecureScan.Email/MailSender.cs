@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using MailKit.Net.Smtp;
 using MimeKit;
 using ContentDisposition = MimeKit.ContentDisposition;
@@ -51,11 +52,18 @@ namespace SecureScan.Email
 
       string serverResponse;
 
-      using (var client = new SmtpClient())
+      try
       {
-        client.Connect(SmtpHostOrIP, SmtpPort);
-        serverResponse = client.Send(message);
-        client.Disconnect(true);
+        using (var client = new SmtpClient())
+        {
+          client.Connect(SmtpHostOrIP, SmtpPort);
+          serverResponse = client.Send(message);
+          client.Disconnect(true);
+        }
+      }
+      catch (Exception ex)
+      {
+        serverResponse = "Error sending email: " + (string.IsNullOrWhiteSpace(ex.Message) ? ex.ToString() : ex.Message);
       }
 
       return serverResponse;
