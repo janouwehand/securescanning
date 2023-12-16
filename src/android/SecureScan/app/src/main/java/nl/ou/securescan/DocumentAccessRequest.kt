@@ -8,9 +8,7 @@ import android.os.Bundle
 import android.os.IBinder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import nl.ou.securescan.databinding.ActivityCreateCertificateBinding
 import nl.ou.securescan.databinding.ActivityDocumentAccessRequestBinding
-import nl.ou.securescan.databinding.ActivityDocumentInfoBinding
 
 
 class DocumentAccessRequest : AppCompatActivity() {
@@ -42,7 +40,13 @@ class DocumentAccessRequest : AppCompatActivity() {
         binding.toolbar.title = "Secure Scan"
         binding.toolbar.subtitle = "Approve document access request"
 
-        binding.buttonApprove.setOnClickListener { setApproval(true) }
+        binding.buttonApprove.setOnClickListener {
+            BiometricPrompter.execute(this) {
+                setApproval(
+                    true
+                )
+            }
+        }
         binding.buttonDeny.setOnClickListener { setApproval(false) }
 
         SecureScanBluetoothService.documentAccessRequest = this
