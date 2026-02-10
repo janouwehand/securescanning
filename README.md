@@ -1,6 +1,9 @@
 # Intro
 
-The Secure Scan architecture consists of three parts:
+This repository contains the proof-of-concept (PoC) for my thesis on a privacy preserving document life-cycle.
+You van find the thesis here: https://cs.ou.nl/members/hugo/supervision/2023-jan.ouwehand-msc-thesis.pdf
+
+The PoC consists of three parts:
 1. The Multi-Function Printer (MFP) mock, that 'digitizes' a PDF, applies encryption to it, and submits it to an SMTP server. It communicates with the smartphone (application) for exchanging the public key.
 2. The Mail User Agent (MUA) add-in (for Outlook) that can communicatie with the smartphone over Bluetooth to obtain the encryption key for the document that is attached to the email.
 3. The smartphone app itself, which utilizes Host-Based Card Emulation (HCE) for communicating with the MFP's NFC reader and Bluetooth for the MUA.
@@ -12,7 +15,7 @@ The Secure Scan architecture consists of three parts:
   <img src="https://github.com/janouwehand/securescanning/assets/64165589/3198962c-59c8-479c-810d-4869846f9bfb" width="300" /> 
 </p>
 
-MFP mock:
+MFP:
 
 ![image](https://github.com/janouwehand/securescanning/assets/64165589/dbf1793f-797a-40ee-bd0a-d0e99569b2f6)
 
